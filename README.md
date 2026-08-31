@@ -54,7 +54,7 @@ Untuk revisi berikutnya:
 - **Login & registrasi dengan email/kata sandi** (Firebase Authentication). Pengingat hanya terlihat setelah masuk, dan tersimpan per akun.
 - **Sinkron ke cloud (Firestore)** — pengingat tersimpan di `users/{uid}/reminders` dan otomatis tersinkron real-time; buka akun yang sama di perangkat lain, pengingatnya ikut muncul.
 - **Kalender bulanan** dengan navigasi bulan, penanda "hari ini", dan ringkasan pengingat per hari.
-- **Jenis pengulangan**: sekali, tiap jam (interval bisa diatur), harian, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan — dengan tanggal berakhir opsional.
+- **Jenis pengulangan**: sekali, tiap jam (interval bisa diatur), harian, **setiap X hari sekali (interval bebas, mis. 2/3/4/5/6 hari sekali)**, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan — dengan tanggal berakhir opsional.
 - **Kategori berwarna, bisa dikustomisasi** — kelola daftar kategori (tambah, ubah nama/warna, hapus) dari tab Pengaturan → Kategori. Kategori juga tersinkron ke cloud per akun (`users/{uid}/settings/categories`), dan bisa disembunyikan/ditampilkan sebagai filter dari layar yang sama. Kategori yang masih dipakai pengingat tidak bisa dihapus sampai pengingatnya dipindah dulu.
 - **Daftar Mendatang** — semua pengingat 14 hari ke depan, dikelompokkan per tanggal.
 - **Notifikasi lokal** — saat aplikasi terbuka di tab/perangkat, EssentiaPath memeriksa pengingat yang jatuh tempo setiap 20 detik dan menampilkan notifikasi browser (perlu izin notifikasi, dan perangkat harus dalam keadaan menjalankan aplikasi — lihat catatan di bawah).

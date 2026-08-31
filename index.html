@@ -100,7 +100,8 @@
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
   }
 
-  .shell{max-width:1180px; margin:0 auto; padding:0 1.25rem;}
+  .shell{max-width:1320px; margin:0 auto; padding:0 0.75rem;}
+  @media (min-width:480px){ .shell{padding:0 1.25rem;} }
 
   /* ---------- Header / hero with trail motif ---------- */
   .hero{
@@ -195,16 +196,25 @@
   #notifyNotice[hidden] ~ #installNotice:not([hidden]) ~ .layout{margin-top:1.25rem;}
 
   /* ---------- Calendar ---------- */
-  .calendar{padding:1.1rem;}
-  .weekday-row{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px;}
+  .calendar{padding:0.6rem 0.45rem;}
+  @media (min-width:480px){ .calendar{padding:1.1rem;} }
+  .weekday-row{display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:6px;}
+  @media (min-width:480px){ .weekday-row{gap:6px;} }
   .weekday-row span{
     text-align:center; font-size:0.72rem; font-weight:600; color:var(--ink-soft);
   }
-  .day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+  @media (min-width:480px){ .day-grid{gap:6px;} }
   .day-cell{
-    min-height:96px; min-width:0; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft);
-    padding:0.4rem 0.4rem 0.35rem; cursor:pointer; text-align:left; display:flex; flex-direction:column;
-    gap:0.3rem; transition:box-shadow 0.12s ease, border-color 0.12s ease;
+    min-height:92px; min-width:0; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft);
+    padding:0.3rem 0.3rem 0.3rem; cursor:pointer; text-align:left; display:flex; flex-direction:column;
+    gap:0.25rem; transition:box-shadow 0.12s ease, border-color 0.12s ease;
+  }
+  @media (min-width:480px){
+    .day-cell{min-height:108px; padding:0.4rem 0.4rem 0.35rem; gap:0.3rem;}
+  }
+  @media (min-width:860px){
+    .day-cell{min-height:130px; padding:0.55rem 0.55rem 0.45rem;}
   }
   .day-cell:hover{border-color:var(--moss); box-shadow:0 0 0 1px var(--moss) inset;}
   .day-cell.muted{opacity:0.38;}
@@ -234,12 +244,19 @@
   .pin::after{content:""; position:absolute; inset:4.5px; border-radius:50%; background:#3E2A18;}
   .day-items{display:flex; flex-direction:column; gap:2px; overflow:hidden; min-width:0;}
   .chip{
-    display:flex; align-items:center; gap:0.3rem; font-size:0.68rem; padding:2px 5px; border-radius:6px;
+    display:flex; align-items:center; gap:0.3rem; font-size:0.66rem; padding:2px 5px; border-radius:6px;
     background:var(--line-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;
+  }
+  @media (min-width:480px){
+    .chip{font-size:0.7rem; padding:2px 6px;}
+  }
+  @media (min-width:860px){
+    .chip{font-size:0.76rem; padding:3px 7px; gap:0.4rem;}
   }
   .chip .dot{width:6px; height:6px; border-radius:50%; flex:none;}
   .chip .t{font-family:var(--font-mono); color:var(--ink-soft); flex:none;}
   .more-link{font-size:0.68rem; color:var(--moss-deep); font-weight:700; padding-left:2px;}
+  @media (min-width:860px){ .more-link{font-size:0.74rem;} }
 
   /* ---------- Sidebar ---------- */
   .sidebar{display:flex; flex-direction:column; gap:1rem;}
@@ -248,6 +265,10 @@
   .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:420px; overflow:auto;}
   .up-group-label{
     font-size:0.68rem; text-transform:none; color:var(--ink-soft); font-weight:700; padding:0.5rem 0.5rem 0.15rem;
+  }
+  .up-subgroup-label{
+    font-size:0.62rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); opacity:0.75;
+    font-weight:700; padding:0.3rem 0.5rem 0.1rem; font-family:var(--font-mono);
   }
   .up-item{
     display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:var(--surface);
@@ -382,6 +403,12 @@
   .upgrade-pagination button{border:1px solid rgba(var(--tint-rgb),0.2); background:transparent; color:var(--ink); padding:0.35rem 0.8rem; border-radius:999px; font-size:0.78rem; font-weight:700; cursor:pointer;}
   .upgrade-pagination button:disabled{opacity:0.35; cursor:default;}
   .upgrade-pagination .page-info{font-size:0.76rem; color:var(--ink-soft); font-family:var(--font-mono);}
+  .upgrade-done-toggle{display:flex; align-items:center; justify-content:space-between; width:100%; background:transparent; border:1px dashed var(--line-soft); border-radius:10px; padding:0.55rem 0.75rem; font-size:0.8rem; font-weight:700; color:var(--ink-soft); cursor:pointer; margin:0.6rem 0 0.5rem; font-family:inherit;}
+  .upgrade-done-toggle:hover{color:var(--ink); border-color:var(--line);}
+  .upgrade-done-caret{transition:transform 0.2s ease; display:inline-block;}
+  .upgrade-done-toggle.expanded .upgrade-done-caret{transform:rotate(180deg);}
+  .upgrade-done-list{margin-top:0.5rem;}
+  .upg-drag-handle-static{visibility:hidden;}
 
   .theme-tabs{display:flex; gap:0.4rem; background:var(--surface); padding:4px; border-radius:999px; margin-bottom:0.2rem;}
   .theme-tab{
@@ -420,8 +447,11 @@
   .field{margin-bottom:0.85rem;}
   .field label{display:block; font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin-bottom:0.3rem;}
   .field input, .field select, .field textarea{
-    width:100%; border:1px solid var(--line); border-radius:9px; padding:0.55rem 0.65rem; font-size:0.9rem;
+    width:100%; border:1px solid var(--line); border-radius:9px; padding:0.55rem 0.65rem; font-size:16px;
     font-family:inherit; background:var(--surface); color:var(--ink);
+  }
+  @media (min-width:640px){
+    .field input, .field select, .field textarea{ font-size:0.9rem; }
   }
   .field textarea{resize:vertical; min-height:60px;}
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
@@ -482,7 +512,7 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
 
-  footer{max-width:1180px; margin:2rem auto 0; padding:0 1.25rem; font-size:0.75rem; color:var(--ink-soft); text-align:center;}
+  footer{max-width:1320px; margin:2rem auto 0; padding:0 1.25rem; font-size:0.75rem; color:var(--ink-soft); text-align:center;}
 </style>
 </head>
 <body>
@@ -544,12 +574,6 @@
   <div class="shell hero-inner">
     <div class="hero-top">
       <div class="brand">
-        <span class="brand-mark">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="17" cy="7" r="3.4" fill="#3E2A18"/>
-            <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#3E2A18" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
-          </svg>
-        </span>
         <div>
           <div class="brand-name">EssentiaPath</div>
           <div class="brand-tag sync-indicator" id="syncIndicator" hidden>
@@ -604,14 +628,14 @@
     </section>
 
     <aside class="sidebar view-section" data-view="dashboard" aria-label="Dashboard">
-      <section class="panel" aria-label="Pengingat fleksibel">
-        <div class="sidebar-head"><h2>Fleksibel</h2></div>
-        <ul class="flex-list" id="flexibleList"></ul>
-      </section>
-
       <section class="panel" aria-label="Pengingat mendatang" style="flex:1;">
         <div class="sidebar-head"><h2>Mendatang</h2></div>
         <ul class="upcoming-list" id="upcomingList"></ul>
+      </section>
+
+      <section class="panel" aria-label="Pengingat fleksibel">
+        <div class="sidebar-head"><h2>Fleksibel</h2></div>
+        <ul class="flex-list" id="flexibleList"></ul>
       </section>
     </aside>
   </div>
@@ -619,7 +643,7 @@
   <section class="panel view-section settings-panel" data-view="settings" aria-label="Pengaturan">
     <div class="settings-block">
       <h2>Upgrade Aplikasi</h2>
-      <p class="hint">Daftar rencana/pembaruan aplikasi. Centang yang sudah selesai, seret ikon <span aria-hidden="true">⠿</span> untuk mengurutkan ulang prioritas.</p>
+      <p class="hint">Daftar rencana/pembaruan aplikasi. Centang yang sudah selesai, seret ikon <span aria-hidden="true">⠿</span> untuk mengurutkan ulang prioritas. Item yang sudah selesai otomatis disembunyikan di bagian "Selesai" di bawah.</p>
       <button type="button" class="btn btn-ghost" id="addUpgradeBtn" style="margin-bottom:0.8rem;">+ Tambah item upgrade</button>
       <div class="upgrade-progress-wrap">
         <div class="upgrade-progress-bar"><div class="upgrade-progress-fill" id="upgradeProgressFill" style="width:0%;"></div></div>
@@ -630,6 +654,16 @@
         <button type="button" id="upgradePrev">‹ Sebelumnya</button>
         <span class="page-info" id="upgradePageInfo"></span>
         <button type="button" id="upgradeNext">Selanjutnya ›</button>
+      </div>
+      <button type="button" class="upgrade-done-toggle" id="upgradeDoneToggle" aria-expanded="false" hidden>
+        <span id="upgradeDoneToggleLabel">Selesai (0)</span>
+        <span class="upgrade-done-caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="upgrade-list upgrade-done-list" id="upgradeDoneList" hidden></div>
+      <div class="upgrade-pagination" id="upgradeDonePagination" hidden>
+        <button type="button" id="upgradeDonePrev">‹ Sebelumnya</button>
+        <span class="page-info" id="upgradeDonePageInfo"></span>
+        <button type="button" id="upgradeDoneNext">Selanjutnya ›</button>
       </div>
     </div>
     <div class="settings-block">
@@ -746,6 +780,7 @@
             <option value="none">Tidak berulang</option>
             <option value="hourly">Tiap beberapa jam</option>
             <option value="daily">Harian</option>
+            <option value="everyNDays">Setiap X hari sekali</option>
             <option value="weekday">Hari kerja (Sen–Jum)</option>
             <option value="weekend">Akhir pekan (Sab–Min)</option>
             <option value="biweekly">Dua mingguan</option>
@@ -762,6 +797,16 @@
           <div class="field">
             <label>&nbsp;</label>
             <p class="hint" style="margin-top:0.6rem;">Mulai dari waktu di atas, diulang tiap N jam setiap harinya.</p>
+          </div>
+        </div>
+        <div class="row-2" id="everyNDaysRow" style="display:none;">
+          <div class="field">
+            <label for="fEveryNDays">Setiap berapa hari</label>
+            <input type="number" id="fEveryNDays" min="2" max="365" value="3">
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <p class="hint" style="margin-top:0.6rem;">Dihitung dari tanggal mulai di atas, lalu berulang tiap N hari (mis. 3 hari sekali, 5 hari sekali).</p>
           </div>
         </div>
         <div class="field" id="untilRow">
@@ -895,9 +940,20 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   ];
   var CATS = DEFAULT_CATS.slice();
   var REPEAT_LABEL = {
-    none:"Sekali", hourly:"Tiap jam", daily:"Harian", weekday:"Hari kerja", weekend:"Akhir pekan",
+    none:"Sekali", hourly:"Tiap jam", daily:"Harian", everyNDays:"Setiap X hari", weekday:"Hari kerja", weekend:"Akhir pekan",
     biweekly:"Dua mingguan", monthly:"Bulanan", quarterly:"Triwulanan", annually:"Tahunan"
   };
+  function repeatLabel(r){
+    if (r.repeat === 'hourly'){
+      var hi = Math.max(1, parseInt(r.hourlyInterval || 1, 10));
+      return hi===1 ? 'Tiap jam' : 'Tiap '+hi+' jam';
+    }
+    if (r.repeat === 'everyNDays'){
+      var nd = Math.max(2, parseInt(r.everyNDaysInterval || 2, 10));
+      return nd+' hari sekali';
+    }
+    return REPEAT_LABEL[r.repeat] || REPEAT_LABEL.none;
+  }
   var MONTH_NAMES = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
   // ---------- Hari libur nasional & cuti bersama Indonesia ----------
@@ -1128,6 +1184,11 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         return dateStr === r.date ? [r.time] : [];
       case 'daily':
         return [r.time];
+      case 'everyNDays': {
+        var nDays = Math.max(2, parseInt(r.everyNDaysInterval || 2, 10));
+        var diffDaysN = Math.round((d - start) / 86400000);
+        return (diffDaysN>=0 && diffDaysN % nDays === 0) ? [r.time] : [];
+      }
       case 'weekday': {
         var wd = d.getDay();
         return (wd>=1 && wd<=5) ? [r.time] : [];
@@ -1490,6 +1551,14 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   var upgradeProgressFillEl = document.getElementById('upgradeProgressFill');
   var upgradeProgressLabelEl = document.getElementById('upgradeProgressLabel');
   var upgradeProgressPctEl = document.getElementById('upgradeProgressPct');
+  // "Selesai" section is collapsed (auto-hidden) by default; user toggles it open.
+  var upgradeDoneExpanded = false;
+  var upgradeDonePage = 0;
+  var upgradeDoneToggleEl = document.getElementById('upgradeDoneToggle');
+  var upgradeDoneToggleLabelEl = document.getElementById('upgradeDoneToggleLabel');
+  var upgradeDoneListEl = document.getElementById('upgradeDoneList');
+  var upgradeDonePaginationEl = document.getElementById('upgradeDonePagination');
+  var upgradeDonePageInfoEl = document.getElementById('upgradeDonePageInfo');
 
   function upgradesDocRef(){
     return doc(db, 'users', currentUser.uid, 'settings', 'upgrades');
@@ -1513,48 +1582,25 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
   function upgUid(){ return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
 
-  function renderUpgradeSettings(){
-    var total = UPGRADES.length;
-    var done = UPGRADES.filter(function(it){ return it.done; }).length;
-    var pct = total ? Math.round((done / total) * 100) : 0;
-    upgradeProgressFillEl.style.width = pct + '%';
-    upgradeProgressLabelEl.textContent = done + ' dari ' + total + ' selesai';
-    upgradeProgressPctEl.textContent = pct + '%';
+  function upgradeRowHtml(it, absIndex, draggable){
+    return '<div class="upg-row'+(it.done?' done':'')+'" data-index="'+absIndex+'" data-id="'+it.id+'">' +
+      (draggable
+        ? '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>'
+        : '<span class="upg-drag-handle upg-drag-handle-static" aria-hidden="true">⠿</span>') +
+      '<input type="checkbox" class="upg-check" data-id="'+it.id+'"'+(it.done?' checked':'')+' aria-label="Tandai selesai">' +
+      '<div class="upg-body">' +
+        '<div class="upg-title">'+escapeHTML(it.title)+'</div>' +
+        (it.desc ? '<div class="upg-desc">'+escapeHTML(it.desc)+'</div>' : '') +
+      '</div>' +
+      '<div class="upg-acts">' +
+        '<button type="button" class="icon-btn edit-upgrade" data-id="'+it.id+'" aria-label="Ubah item">✎</button>' +
+        '<button type="button" class="icon-btn delete-upgrade" data-id="'+it.id+'" aria-label="Hapus item">🗑</button>' +
+      '</div>' +
+    '</div>';
+  }
 
-    if (!total){
-      upgradeListEl.innerHTML = '<p class="upgrade-empty">Belum ada item upgrade. Tambahkan rencana pembaruan aplikasi di bawah.</p>';
-      upgradePaginationEl.hidden = true;
-      return;
-    }
-
-    var totalPages = Math.max(1, Math.ceil(total / UPGRADE_PAGE_SIZE));
-    if (upgradePage >= totalPages) upgradePage = totalPages - 1;
-    if (upgradePage < 0) upgradePage = 0;
-    var start = upgradePage * UPGRADE_PAGE_SIZE;
-    var pageItems = UPGRADES.slice(start, start + UPGRADE_PAGE_SIZE);
-
-    upgradeListEl.innerHTML = pageItems.map(function(it, i){
-      var absIndex = start + i;
-      return '<div class="upg-row'+(it.done?' done':'')+'" data-index="'+absIndex+'" data-id="'+it.id+'">' +
-        '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>' +
-        '<input type="checkbox" class="upg-check" data-id="'+it.id+'"'+(it.done?' checked':'')+' aria-label="Tandai selesai">' +
-        '<div class="upg-body">' +
-          '<div class="upg-title">'+escapeHTML(it.title)+'</div>' +
-          (it.desc ? '<div class="upg-desc">'+escapeHTML(it.desc)+'</div>' : '') +
-        '</div>' +
-        '<div class="upg-acts">' +
-          '<button type="button" class="icon-btn edit-upgrade" data-id="'+it.id+'" aria-label="Ubah item">✎</button>' +
-          '<button type="button" class="icon-btn delete-upgrade" data-id="'+it.id+'" aria-label="Hapus item">🗑</button>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    upgradePaginationEl.hidden = total <= UPGRADE_PAGE_SIZE;
-    upgradePageInfoEl.textContent = 'Halaman ' + (upgradePage + 1) + ' dari ' + totalPages;
-    document.getElementById('upgradePrev').disabled = upgradePage <= 0;
-    document.getElementById('upgradeNext').disabled = upgradePage >= totalPages - 1;
-
-    Array.prototype.forEach.call(upgradeListEl.querySelectorAll('.upg-check'), function(cb){
+  function bindUpgradeRowEvents(container, draggable){
+    Array.prototype.forEach.call(container.querySelectorAll('.upg-check'), function(cb){
       cb.addEventListener('change', function(){
         var id = cb.getAttribute('data-id');
         var newList = UPGRADES.map(function(it){ return it.id===id ? Object.assign({}, it, { done: cb.checked }) : it; });
@@ -1564,40 +1610,130 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         });
       });
     });
-    Array.prototype.forEach.call(upgradeListEl.querySelectorAll('.edit-upgrade'), function(btn){
+    Array.prototype.forEach.call(container.querySelectorAll('.edit-upgrade'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
         openEditUpgradeForm(btn.getAttribute('data-id'));
       });
     });
-    Array.prototype.forEach.call(upgradeListEl.querySelectorAll('.delete-upgrade'), function(btn){
+    Array.prototype.forEach.call(container.querySelectorAll('.delete-upgrade'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
         deleteUpgradeItem(btn.getAttribute('data-id'));
       });
     });
-    Array.prototype.forEach.call(upgradeListEl.querySelectorAll('.upg-drag-handle'), function(handle){
-      handle.addEventListener('pointerdown', function(e){ startUpgradeDrag(e, handle); });
-    });
+    if (draggable){
+      Array.prototype.forEach.call(container.querySelectorAll('.upg-drag-handle'), function(handle){
+        handle.addEventListener('pointerdown', function(e){ startUpgradeDrag(e, handle, container); });
+      });
+    }
+  }
+
+  function renderUpgradeSettings(){
+    var total = UPGRADES.length;
+    var doneCount = UPGRADES.filter(function(it){ return it.done; }).length;
+    var pct = total ? Math.round((doneCount / total) * 100) : 0;
+    upgradeProgressFillEl.style.width = pct + '%';
+    upgradeProgressLabelEl.textContent = doneCount + ' dari ' + total + ' selesai';
+    upgradeProgressPctEl.textContent = pct + '%';
+
+    var pending = UPGRADES.filter(function(it){ return !it.done; });
+    var doneItems = UPGRADES.filter(function(it){ return it.done; });
+
+    // ---- Belum selesai ----
+    if (!pending.length){
+      upgradeListEl.innerHTML = '<p class="upgrade-empty">' +
+        (total ? 'Semua item upgrade sudah selesai. 🎉' : 'Belum ada item upgrade. Tambahkan rencana pembaruan aplikasi di bawah.') +
+        '</p>';
+      upgradePaginationEl.hidden = true;
+    } else {
+      var totalPages = Math.max(1, Math.ceil(pending.length / UPGRADE_PAGE_SIZE));
+      if (upgradePage >= totalPages) upgradePage = totalPages - 1;
+      if (upgradePage < 0) upgradePage = 0;
+      var start = upgradePage * UPGRADE_PAGE_SIZE;
+      var pageItems = pending.slice(start, start + UPGRADE_PAGE_SIZE);
+
+      upgradeListEl.innerHTML = pageItems.map(function(it, i){
+        return upgradeRowHtml(it, start + i, true);
+      }).join('');
+
+      upgradePaginationEl.hidden = pending.length <= UPGRADE_PAGE_SIZE;
+      upgradePageInfoEl.textContent = 'Halaman ' + (upgradePage + 1) + ' dari ' + totalPages;
+      document.getElementById('upgradePrev').disabled = upgradePage <= 0;
+      document.getElementById('upgradeNext').disabled = upgradePage >= totalPages - 1;
+      bindUpgradeRowEvents(upgradeListEl, true);
+    }
+
+    // ---- Selesai (auto-hide, collapsed by default) ----
+    if (!doneItems.length){
+      upgradeDoneToggleEl.hidden = true;
+      upgradeDoneListEl.hidden = true;
+      upgradeDoneListEl.innerHTML = '';
+      upgradeDonePaginationEl.hidden = true;
+      return;
+    }
+
+    upgradeDoneToggleEl.hidden = false;
+    upgradeDoneToggleLabelEl.textContent = 'Selesai (' + doneItems.length + ')';
+    upgradeDoneToggleEl.setAttribute('aria-expanded', upgradeDoneExpanded ? 'true' : 'false');
+    upgradeDoneToggleEl.classList.toggle('expanded', upgradeDoneExpanded);
+
+    if (!upgradeDoneExpanded){
+      upgradeDoneListEl.hidden = true;
+      upgradeDoneListEl.innerHTML = '';
+      upgradeDonePaginationEl.hidden = true;
+      return;
+    }
+
+    upgradeDoneListEl.hidden = false;
+    var dTotalPages = Math.max(1, Math.ceil(doneItems.length / UPGRADE_PAGE_SIZE));
+    if (upgradeDonePage >= dTotalPages) upgradeDonePage = dTotalPages - 1;
+    if (upgradeDonePage < 0) upgradeDonePage = 0;
+    var dStart = upgradeDonePage * UPGRADE_PAGE_SIZE;
+    var dPageItems = doneItems.slice(dStart, dStart + UPGRADE_PAGE_SIZE);
+
+    upgradeDoneListEl.innerHTML = dPageItems.map(function(it, i){
+      return upgradeRowHtml(it, dStart + i, false);
+    }).join('');
+
+    upgradeDonePaginationEl.hidden = doneItems.length <= UPGRADE_PAGE_SIZE;
+    upgradeDonePageInfoEl.textContent = 'Halaman ' + (upgradeDonePage + 1) + ' dari ' + dTotalPages;
+    document.getElementById('upgradeDonePrev').disabled = upgradeDonePage <= 0;
+    document.getElementById('upgradeDoneNext').disabled = upgradeDonePage >= dTotalPages - 1;
+    bindUpgradeRowEvents(upgradeDoneListEl, false);
   }
 
   document.getElementById('upgradePrev').addEventListener('click', function(){
     if (upgradePage > 0){ upgradePage--; renderUpgradeSettings(); }
   });
   document.getElementById('upgradeNext').addEventListener('click', function(){
-    var totalPages = Math.max(1, Math.ceil(UPGRADES.length / UPGRADE_PAGE_SIZE));
+    var pendingCount = UPGRADES.filter(function(it){ return !it.done; }).length;
+    var totalPages = Math.max(1, Math.ceil(pendingCount / UPGRADE_PAGE_SIZE));
     if (upgradePage < totalPages - 1){ upgradePage++; renderUpgradeSettings(); }
+  });
+  document.getElementById('upgradeDonePrev').addEventListener('click', function(){
+    if (upgradeDonePage > 0){ upgradeDonePage--; renderUpgradeSettings(); }
+  });
+  document.getElementById('upgradeDoneNext').addEventListener('click', function(){
+    var doneCount = UPGRADES.filter(function(it){ return it.done; }).length;
+    var totalPages = Math.max(1, Math.ceil(doneCount / UPGRADE_PAGE_SIZE));
+    if (upgradeDonePage < totalPages - 1){ upgradeDonePage++; renderUpgradeSettings(); }
+  });
+  upgradeDoneToggleEl.addEventListener('click', function(){
+    upgradeDoneExpanded = !upgradeDoneExpanded;
+    if (upgradeDoneExpanded) upgradeDonePage = 0;
+    renderUpgradeSettings();
   });
 
   // Drag-to-reorder: pointer-based (mouse + touch), swaps items whose
   // vertical position the dragged row crosses, restricted to the current
   // page (pages stay contiguous slices of the underlying UPGRADES array).
-  function startUpgradeDrag(e, handle){
+  function startUpgradeDrag(e, handle, container){
     if (!currentUser) return;
     e.preventDefault();
     var row = handle.closest('.upg-row');
     if (!row) return;
-    var siblings = Array.prototype.slice.call(upgradeListEl.querySelectorAll('.upg-row'));
+    var siblings = Array.prototype.slice.call(container.querySelectorAll('.upg-row'));
     var startY = e.clientY;
     row.classList.add('dragging');
     try { handle.setPointerCapture(e.pointerId); } catch(err){}
@@ -1612,13 +1748,22 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         if (ev.clientY > r.top && ev.clientY < r.bottom){
           var curIndex = parseInt(row.getAttribute('data-index'), 10);
           var sibIndex = parseInt(sib.getAttribute('data-index'), 10);
-          var tmp = UPGRADES[curIndex];
-          UPGRADES[curIndex] = UPGRADES[sibIndex];
-          UPGRADES[sibIndex] = tmp;
+          // Rows only show a filtered slice (belum selesai / selesai) of
+          // UPGRADES, so swap by id — the two dragged items' real positions
+          // in the underlying array, wherever they are — not by data-index.
+          var rowId = row.getAttribute('data-id');
+          var sibId = sib.getAttribute('data-id');
+          var iA = UPGRADES.findIndex(function(x){ return x.id === rowId; });
+          var iB = UPGRADES.findIndex(function(x){ return x.id === sibId; });
+          if (iA > -1 && iB > -1){
+            var tmp = UPGRADES[iA];
+            UPGRADES[iA] = UPGRADES[iB];
+            UPGRADES[iB] = tmp;
+          }
           row.setAttribute('data-index', sibIndex);
           sib.setAttribute('data-index', curIndex);
-          if (curIndex < sibIndex) upgradeListEl.insertBefore(row, sib.nextSibling);
-          else upgradeListEl.insertBefore(row, sib);
+          if (curIndex < sibIndex) container.insertBefore(row, sib.nextSibling);
+          else container.insertBefore(row, sib);
           row.style.transform = 'translateY(0px)';
           startY = ev.clientY;
           break;
@@ -1716,6 +1861,17 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
 
   // ---------- Upcoming list ----------
   var upcomingList = document.getElementById('upcomingList');
+  var TIME_PERIOD_ORDER = ['Dini hari','Pagi hari','Siang hari','Sore hari','Malam hari'];
+  function timeOfDayLabel(t){
+    // t is "HH:MM"; 00:00 counts as end of "Malam hari" (18.00–00.00), while
+    // 00.01–04.59 is "Dini hari".
+    if (t === '00:00') return 'Malam hari';
+    if (t >= '00:01' && t <= '04:59') return 'Dini hari';
+    if (t >= '05:00' && t <= '09:59') return 'Pagi hari';
+    if (t >= '10:00' && t <= '14:59') return 'Siang hari';
+    if (t >= '15:00' && t <= '17:59') return 'Sore hari';
+    return 'Malam hari'; // 18:00–23:59
+  }
   function renderUpcoming(){
     var groups = [];
     var d = new Date();
@@ -1739,15 +1895,26 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     groups.forEach(function(g){
       var label = dayLabel(g.dt);
       html += '<div class="up-group-label">'+label+'</div>';
+      var byPeriod = {};
       g.items.forEach(function(it){
-        var c = catInfo(it.reminder.category);
-        html += '<li class="up-item" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
-          '<span class="dot" style="background:'+c.hex+'"></span>' +
-          '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
-          '<div class="meta">'+it.time+' · '+REPEAT_LABEL[it.reminder.repeat]+'</div></div>' +
-          '<div class="acts">' +
-            '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button>' +
-          '</div></li>';
+        var p = timeOfDayLabel(it.time);
+        if (!byPeriod[p]) byPeriod[p] = [];
+        byPeriod[p].push(it);
+      });
+      TIME_PERIOD_ORDER.forEach(function(period){
+        var list = byPeriod[period];
+        if (!list || !list.length) return;
+        html += '<div class="up-subgroup-label">'+period+'</div>';
+        list.forEach(function(it){
+          var c = catInfo(it.reminder.category);
+          html += '<li class="up-item" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+            '<span class="dot" style="background:'+c.hex+'"></span>' +
+            '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
+            '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div></div>' +
+            '<div class="acts">' +
+              '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button>' +
+            '</div></li>';
+        });
       });
     });
     upcomingList.innerHTML = html;
@@ -1814,6 +1981,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   var catOptions = document.getElementById('catOptions');
   var fRepeat = document.getElementById('fRepeat');
   var hourlyRow = document.getElementById('hourlyRow');
+  var everyNDaysRow = document.getElementById('everyNDaysRow');
   var fFlexible = document.getElementById('fFlexible');
   var scheduledFields = document.getElementById('scheduledFields');
   var fDateEl = document.getElementById('fDate');
@@ -1843,6 +2011,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
 
   fRepeat.addEventListener('change', function(){
     hourlyRow.style.display = fRepeat.value === 'hourly' ? 'grid' : 'none';
+    everyNDaysRow.style.display = fRepeat.value === 'everyNDays' ? 'grid' : 'none';
   });
 
   function openAddForm(prefillDate){
@@ -1856,7 +2025,9 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     document.getElementById('fTime').value = '09:00';
     fRepeat.value = 'none';
     hourlyRow.style.display = 'none';
+    everyNDaysRow.style.display = 'none';
     document.getElementById('fHourly').value = 4;
+    document.getElementById('fEveryNDays').value = 3;
     fFlexible.checked = false;
     toggleFlexibleUI(false);
     formOverlay.hidden = false;
@@ -1877,7 +2048,9 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     document.getElementById('fTime').value = r.time || '09:00';
     fRepeat.value = r.repeat && r.repeat!=='none' ? r.repeat : 'none';
     hourlyRow.style.display = r.repeat==='hourly' ? 'grid' : 'none';
+    everyNDaysRow.style.display = r.repeat==='everyNDays' ? 'grid' : 'none';
     document.getElementById('fHourly').value = r.hourlyInterval || 4;
+    document.getElementById('fEveryNDays').value = r.everyNDaysInterval || 3;
     document.getElementById('fUntil').value = r.until || '';
     document.getElementById('fNotes').value = r.notes || '';
     fFlexible.checked = !!r.flexible;
@@ -1909,6 +2082,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         time: null,
         repeat: 'none',
         hourlyInterval: null,
+        everyNDaysInterval: null,
         until: null,
         notes: document.getElementById('fNotes').value.trim()
       };
@@ -1924,6 +2098,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         time: document.getElementById('fTime').value,
         repeat: fRepeat.value,
         hourlyInterval: fRepeat.value==='hourly' ? parseInt(document.getElementById('fHourly').value||4,10) : null,
+        everyNDaysInterval: fRepeat.value==='everyNDays' ? Math.max(2, parseInt(document.getElementById('fEveryNDays').value||3,10)) : null,
         until: document.getElementById('fUntil').value || null,
         notes: document.getElementById('fNotes').value.trim()
       };
@@ -1979,7 +2154,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         var c = catInfo(it.reminder.category);
         return '<div class="up-item"><span class="dot" style="background:'+c.hex+'"></span>' +
           '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
-          '<div class="meta">'+it.time+' · '+REPEAT_LABEL[it.reminder.repeat]+(it.reminder.notes?' · '+escapeHTML(it.reminder.notes):'')+'</div></div>' +
+          '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+(it.reminder.notes?' · '+escapeHTML(it.reminder.notes):'')+'</div></div>' +
           '<div class="acts"><button type="button" class="icon-btn edit-day" data-id="'+it.reminder.id+'" aria-label="Ubah">✎</button></div></div>';
       }).join('');
       Array.prototype.forEach.call(dayPanelList.querySelectorAll('.edit-day'), function(btn){
@@ -2096,7 +2271,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
 
   function fireNotification(r, time){
-    var body = time + ' · ' + REPEAT_LABEL[r.repeat] + (r.notes ? ' — ' + r.notes : '');
+    var body = time + ' · ' + repeatLabel(r) + (r.notes ? ' — ' + r.notes : '');
     if (navigator.serviceWorker && navigator.serviceWorker.ready){
       navigator.serviceWorker.ready.then(function(reg){
         reg.showNotification('EssentiaPath: ' + r.title, {
