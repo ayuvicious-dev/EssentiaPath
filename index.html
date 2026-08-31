@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EssentiaPath — Pengingat &amp; Kalender</title>
+<meta name="description" content="Pengingat berulang dengan tampilan kalender: per jam, harian, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan.">
+<meta name="theme-color" content="#3F6659">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2B22;
+    --ink-soft:#4A5850;
+    --moss:#3F6659;
+    --moss-deep:#2C4B41;
+    --amber:#C97A3D;
+    --amber-deep:#A9622C;
+    --paper:#F6F4EA;
+    --paper-raised:#FFFFFF;
+    --line:rgba(30,43,34,0.12);
+    --line-soft:rgba(30,43,34,0.07);
+    --shadow:0 1px 2px rgba(30,43,34,0.06), 0 8px 20px -12px rgba(30,43,34,0.18);
+    --cat-kerja:#3F6659;
+    --cat-pribadi:#C97A3D;
+    --cat-kesehatan:#7A4B6B;
+    --cat-keuangan:#2F5D82;
+    --cat-lainnya:#8A7F4E;
+    --radius:14px;
+    --font-display:'Fraunces', Georgia, serif;
+    --font-body:'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-bottom:2.5rem;
+  }
+  a{color:inherit;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2.5px solid var(--amber); outline-offset:2px; border-radius:4px;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  .shell{max-width:1180px; margin:0 auto; padding:0 1.25rem;}
+
+  /* ---------- Header / hero with trail motif ---------- */
+  .hero{
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(180deg, var(--moss-deep), var(--moss));
+    color:#F6F4EA;
+    padding-bottom:2.75rem;
+  }
+  .hero-trail{position:absolute; inset:0; width:100%; height:100%; opacity:0.55; pointer-events:none;}
+  .hero-inner{position:relative; z-index:1; padding-top:1.75rem;}
+  .hero-top{display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
+  .brand{display:flex; align-items:center; gap:0.65rem;}
+  .brand-mark{width:34px; height:34px; border-radius:9px; background:var(--amber); display:flex; align-items:center; justify-content:center; flex:none;}
+  .brand-mark svg{width:18px; height:18px;}
+  .brand-name{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.5rem; letter-spacing:0.01em;}
+  .brand-tag{font-size:0.85rem; color:rgba(246,244,234,0.72); margin-top:0.15rem;}
+
+  .account-chip{
+    display:flex; align-items:center; gap:0.6rem; background:rgba(246,244,234,0.1);
+    border:1px solid rgba(246,244,234,0.28); border-radius:999px; padding:0.35rem 0.45rem 0.35rem 0.85rem;
+  }
+  .account-email{font-size:0.78rem; color:rgba(246,244,234,0.88); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .account-logout{
+    border:none; background:rgba(246,244,234,0.18); color:#F6F4EA; font-size:0.74rem; font-weight:700;
+    padding:0.32rem 0.7rem; border-radius:999px; cursor:pointer;
+  }
+  .account-logout:hover{background:rgba(246,244,234,0.3);}
+
+  .toolbar{
+    display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    margin-top:1.75rem;
+  }
+  .month-nav{display:flex; align-items:center; gap:0.6rem;}
+  .month-nav button{
+    width:36px; height:36px; border-radius:50%; border:1px solid rgba(246,244,234,0.35);
+    background:rgba(246,244,234,0.08); color:#F6F4EA; cursor:pointer; font-size:1rem;
+    display:flex; align-items:center; justify-content:center; transition:background 0.15s ease;
+  }
+  .month-nav button:hover{background:rgba(246,244,234,0.2);}
+  .month-label{font-family:var(--font-display); font-size:1.3rem; font-weight:600; min-width:11ch; text-align:center;}
+  .today-btn{
+    border:1px solid rgba(246,244,234,0.35); background:transparent; color:#F6F4EA;
+    padding:0.4rem 0.85rem; border-radius:999px; font-size:0.82rem; cursor:pointer; font-weight:600;
+  }
+  .today-btn:hover{background:rgba(246,244,234,0.12);}
+  .add-btn{
+    background:var(--amber); color:#251505; border:none; padding:0.65rem 1.15rem; border-radius:999px;
+    font-weight:700; font-size:0.92rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.45rem;
+    box-shadow:0 6px 16px -6px rgba(201,122,61,0.7); transition:transform 0.12s ease, background 0.15s ease;
+  }
+  .add-btn:hover{background:var(--amber-deep); transform:translateY(-1px);}
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:1.5rem;
+    margin-top:-1.75rem; position:relative; z-index:2;
+  }
+  @media (max-width:860px){ .layout{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--paper-raised); border-radius:var(--radius); box-shadow:var(--shadow);
+    border:1px solid var(--line-soft);
+  }
+
+  /* ---------- Notice banners ---------- */
+  .notice{
+    display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;
+    background:#FBF6E9; border:1px solid rgba(201,122,61,0.35); color:var(--ink);
+    padding:0.7rem 1rem; border-radius:10px; font-size:0.87rem; margin:1.25rem 0 0;
+  }
+  .notice p{margin:0;}
+  .notice-actions{display:flex; gap:0.5rem;}
+  .notice button{
+    border:none; border-radius:8px; padding:0.4rem 0.75rem; font-size:0.82rem; font-weight:600; cursor:pointer;
+  }
+  .notice .primary{background:var(--moss); color:#fff;}
+  .notice .ghost{background:transparent; color:var(--ink-soft);}
+  .notice[hidden]{display:none;}
+
+  /* ---------- Calendar ---------- */
+  .calendar{padding:1.1rem;}
+  .weekday-row{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px;}
+  .weekday-row span{
+    text-align:center; font-size:0.72rem; font-weight:600; color:var(--ink-soft);
+  }
+  .day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .day-cell{
+    min-height:96px; border-radius:10px; background:#FBFAF5; border:1px solid var(--line-soft);
+    padding:0.4rem 0.4rem 0.35rem; cursor:pointer; text-align:left; display:flex; flex-direction:column;
+    gap:0.3rem; transition:box-shadow 0.12s ease, border-color 0.12s ease;
+  }
+  .day-cell:hover{border-color:var(--moss); box-shadow:0 0 0 1px var(--moss) inset;}
+  .day-cell.muted{opacity:0.38;}
+  .day-cell.today{border-color:var(--amber); background:#FFF7EE;}
+  .day-num-row{display:flex; align-items:center; justify-content:space-between;}
+  .day-num{font-size:0.82rem; font-weight:700; font-family:var(--font-mono);}
+  .pin{
+    width:16px; height:16px; border-radius:50%; background:var(--amber); position:relative; flex:none;
+  }
+  .pin::after{content:""; position:absolute; inset:4.5px; border-radius:50%; background:#251505;}
+  .day-items{display:flex; flex-direction:column; gap:2px; overflow:hidden;}
+  .chip{
+    display:flex; align-items:center; gap:0.3rem; font-size:0.68rem; padding:2px 5px; border-radius:6px;
+    background:var(--line-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .chip .dot{width:6px; height:6px; border-radius:50%; flex:none;}
+  .chip .t{font-family:var(--font-mono); color:var(--ink-soft); flex:none;}
+  .more-link{font-size:0.68rem; color:var(--moss-deep); font-weight:700; padding-left:2px;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{display:flex; flex-direction:column; gap:1rem;}
+  .sidebar-head{padding:1rem 1.1rem 0.4rem; display:flex; align-items:center; justify-content:space-between;}
+  .sidebar-head h2{font-family:var(--font-display); font-size:1.05rem; margin:0; font-weight:600;}
+  .filter-row{display:flex; flex-wrap:wrap; gap:0.4rem; padding:0 1.1rem 0.9rem;}
+  .filter-chip{
+    border:1px solid var(--line); background:#fff; border-radius:999px; padding:0.28rem 0.65rem;
+    font-size:0.72rem; cursor:pointer; display:flex; align-items:center; gap:0.35rem; color:var(--ink-soft);
+  }
+  .filter-chip.active{border-color:var(--moss); color:var(--ink); background:#EEF3F0; font-weight:600;}
+  .filter-chip .dot{width:7px; height:7px; border-radius:50%;}
+
+  .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:420px; overflow:auto;}
+  .up-group-label{
+    font-size:0.68rem; text-transform:none; color:var(--ink-soft); font-weight:700; padding:0.5rem 0.5rem 0.15rem;
+  }
+  .up-item{
+    display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:#FBFAF5;
+    border:1px solid var(--line-soft);
+  }
+  .up-item .dot{width:8px; height:8px; border-radius:50%; margin-top:5px; flex:none;}
+  .up-item .body{flex:1; min-width:0;}
+  .up-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
+  .up-item .meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
+  .up-item .acts{display:flex; gap:0.3rem; flex:none;}
+  .icon-btn{
+    width:24px; height:24px; border-radius:6px; border:none; background:transparent; color:var(--ink-soft);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:hover{background:var(--line-soft); color:var(--ink);}
+  .empty-state{padding:1.5rem 1.1rem; text-align:center; color:var(--ink-soft); font-size:0.85rem;}
+  .empty-state svg{width:40px; height:40px; margin-bottom:0.5rem; opacity:0.6;}
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(30,43,34,0.45); display:flex; align-items:flex-end;
+    justify-content:center; z-index:50; padding:0;
+  }
+  @media (min-width:640px){ .overlay{align-items:center; padding:1.5rem;} }
+  .overlay[hidden]{display:none;}
+  .modal{
+    background:var(--paper-raised); width:100%; max-width:480px; border-radius:18px 18px 0 0;
+    max-height:92vh; overflow:auto; padding:1.3rem 1.3rem 1.6rem; box-shadow:0 30px 60px -20px rgba(0,0,0,0.35);
+  }
+  @media (min-width:640px){ .modal{border-radius:16px;} }
+  .modal h2{font-family:var(--font-display); font-size:1.2rem; margin:0 0 1rem; font-weight:600;}
+  .field{margin-bottom:0.85rem;}
+  .field label{display:block; font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin-bottom:0.3rem;}
+  .field input, .field select, .field textarea{
+    width:100%; border:1px solid var(--line); border-radius:9px; padding:0.55rem 0.65rem; font-size:0.9rem;
+    font-family:inherit; background:#FBFAF5; color:var(--ink);
+  }
+  .field textarea{resize:vertical; min-height:60px;}
+  .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
+  .cat-options{display:flex; flex-wrap:wrap; gap:0.4rem;}
+  .cat-option{
+    border:1.5px solid var(--line); border-radius:999px; padding:0.32rem 0.7rem 0.32rem 0.55rem; font-size:0.78rem;
+    display:flex; align-items:center; gap:0.35rem; cursor:pointer; background:#fff;
+  }
+  .cat-option input{width:auto; margin:0;}
+  .cat-option .dot{width:9px; height:9px; border-radius:50%;}
+  .cat-option.selected{border-color:var(--moss); background:#EEF3F0; font-weight:700;}
+  .modal-actions{display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-top:1.1rem;}
+  .btn{border:none; border-radius:999px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:700; cursor:pointer;}
+  .btn-primary{background:var(--moss); color:#fff;}
+  .btn-primary:hover{background:var(--moss-deep);}
+  .btn-ghost{background:transparent; color:var(--ink-soft);}
+  .btn-danger{background:transparent; color:#8B3A2B;}
+  .hint{font-size:0.72rem; color:var(--ink-soft); margin-top:0.3rem;}
+
+  /* ---------- Auth (login/register) ---------- */
+  .auth-overlay{
+    background:linear-gradient(180deg, var(--moss-deep), var(--moss)); align-items:center; z-index:100;
+  }
+  .auth-card{
+    background:var(--paper-raised); width:100%; max-width:380px; border-radius:16px; padding:1.6rem 1.5rem 1.5rem;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.4);
+  }
+  .auth-brand{display:flex; align-items:center; gap:0.55rem; margin-bottom:1.1rem;}
+  .auth-brand .brand-mark{width:30px; height:30px; border-radius:8px;}
+  .auth-brand .brand-mark svg{width:16px; height:16px;}
+  .auth-brand-name{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.2rem; color:var(--ink);}
+  .auth-tabs{display:flex; gap:0.4rem; background:#F1EEE1; padding:4px; border-radius:999px; margin-bottom:1.1rem;}
+  .auth-tab{
+    flex:1; border:none; background:transparent; padding:0.45rem 0.5rem; border-radius:999px; font-size:0.82rem;
+    font-weight:700; color:var(--ink-soft); cursor:pointer;
+  }
+  .auth-tab.active{background:var(--paper-raised); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+  .auth-error{
+    display:none; background:#FBEAE5; border:1px solid rgba(139,58,43,0.3); color:#8B3A2B; font-size:0.8rem;
+    padding:0.5rem 0.65rem; border-radius:8px; margin-bottom:0.8rem;
+  }
+  .auth-error.show{display:block;}
+  .auth-error.success{background:#EAF3EC; border-color:rgba(63,102,89,0.35); color:var(--moss-deep);}
+  .auth-submit{width:100%; margin-top:0.3rem;}
+  .auth-links{display:flex; justify-content:space-between; align-items:center; margin-top:0.9rem; font-size:0.78rem;}
+  .auth-links button{background:none; border:none; color:var(--moss-deep); font-weight:700; cursor:pointer; padding:0; font-size:0.78rem;}
+  .auth-hint{font-size:0.72rem; color:var(--ink-soft); margin-top:0.6rem; text-align:center;}
+  .auth-loading{font-size:0.85rem; color:var(--ink-soft); text-align:center; padding:2rem 0;}
+
+  /* ---------- Day popover ---------- */
+  .day-panel .modal{max-width:420px;}
+  .day-panel-list{display:flex; flex-direction:column; gap:0.5rem; margin:0.9rem 0;}
+
+  .toast{
+    position:fixed; bottom:1.1rem; left:50%; transform:translateX(-50%); background:var(--ink); color:#F6F4EA;
+    padding:0.6rem 1rem; border-radius:999px; font-size:0.82rem; z-index:60; box-shadow:0 10px 26px -10px rgba(0,0,0,0.5);
+    opacity:0; pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+  footer{max-width:1180px; margin:2rem auto 0; padding:0 1.25rem; font-size:0.75rem; color:var(--ink-soft); text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- Auth gate: shown until the user is signed in -->
+<div class="overlay auth-overlay" id="authOverlay">
+  <div class="auth-card" id="authLoading">
+    <div class="auth-brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17" cy="7" r="3.4" fill="#F6F4EA"/>
+          <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#F6F4EA" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
+        </svg>
+      </span>
+      <span class="auth-brand-name">EssentiaPath</span>
+    </div>
+    <p class="auth-loading">Memeriksa status masuk…</p>
+  </div>
+
+  <div class="auth-card" id="authCard" hidden>
+    <div class="auth-brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17" cy="7" r="3.4" fill="#F6F4EA"/>
+          <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#F6F4EA" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
+        </svg>
+      </span>
+      <span class="auth-brand-name">EssentiaPath</span>
+    </div>
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab active" id="tabLogin">Masuk</button>
+      <button type="button" class="auth-tab" id="tabRegister">Daftar</button>
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <form id="authForm">
+      <div class="field">
+        <label for="authEmail">Email</label>
+        <input type="email" id="authEmail" required autocomplete="email" placeholder="nama@email.com">
+      </div>
+      <div class="field">
+        <label for="authPassword">Kata sandi</label>
+        <input type="password" id="authPassword" required autocomplete="current-password" placeholder="Minimal 6 karakter" minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary auth-submit" id="authSubmit">Masuk</button>
+    </form>
+    <div class="auth-links">
+      <button type="button" id="forgotPassword">Lupa kata sandi?</button>
+      <span id="authModeHint" style="color:var(--ink-soft);"></span>
+    </div>
+    <p class="auth-hint">Pengingat Anda tersimpan di akun ini dan tersinkron lewat Firebase, bisa diakses dari perangkat mana pun.</p>
+  </div>
+</div>
+
+<header class="hero">
+  <svg class="hero-trail" viewBox="0 0 1180 210" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M -20 150 C 150 60, 320 210, 500 120 S 820 20, 1000 90 S 1160 60, 1220 100"
+          fill="none" stroke="#F6F4EA" stroke-width="2.5" stroke-dasharray="1 12" stroke-linecap="round"/>
+  </svg>
+  <div class="shell hero-inner">
+    <div class="hero-top">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="17" cy="7" r="3.4" fill="#F6F4EA"/>
+            <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#F6F4EA" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
+          </svg>
+        </span>
+        <div>
+          <div class="brand-name">EssentiaPath</div>
+          <div class="brand-tag">Kalender pengingat — sekali atau berulang</div>
+        </div>
+      </div>
+      <div class="account-chip" id="accountChip" hidden>
+        <span class="account-email" id="accountEmail"></span>
+        <button type="button" class="account-logout" id="logoutBtn">Keluar</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="month-nav">
+        <button id="prevMonth" aria-label="Bulan sebelumnya">‹</button>
+        <div class="month-label" id="monthLabel">—</div>
+        <button id="nextMonth" aria-label="Bulan berikutnya">›</button>
+        <button class="today-btn" id="gotoToday">Hari ini</button>
+      </div>
+      <button class="add-btn" id="openAdd">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        Pengingat baru
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="shell">
+  <div class="notice" id="notifyNotice" hidden>
+    <p>Aktifkan notifikasi agar EssentiaPath bisa mengingatkan Anda saat aplikasi ini terbuka.</p>
+    <div class="notice-actions">
+      <button class="ghost" id="dismissNotify">Nanti saja</button>
+      <button class="primary" id="enableNotify">Aktifkan notifikasi</button>
+    </div>
+  </div>
+  <div class="notice" id="installNotice" hidden>
+    <p>Pasang EssentiaPath di perangkat Anda untuk akses lebih cepat, seperti aplikasi biasa.</p>
+    <div class="notice-actions">
+      <button class="ghost" id="dismissInstall">Nanti saja</button>
+      <button class="primary" id="installBtn">Pasang aplikasi</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <section class="panel calendar" aria-label="Kalender">
+      <div class="weekday-row">
+        <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+      </div>
+      <div class="day-grid" id="dayGrid"></div>
+    </section>
+
+    <aside class="sidebar">
+      <section class="panel" aria-label="Filter kategori">
+        <div class="sidebar-head"><h2>Kategori</h2></div>
+        <div class="filter-row" id="filterRow"></div>
+      </section>
+
+      <section class="panel" aria-label="Pengingat mendatang" style="flex:1;">
+        <div class="sidebar-head"><h2>Mendatang</h2></div>
+        <ul class="upcoming-list" id="upcomingList"></ul>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<footer>Pengingat Anda tersimpan di akun Firebase Anda dan hanya bisa diakses setelah masuk dengan email &amp; kata sandi.</footer>
+
+<!-- Add / edit reminder modal -->
+<div class="overlay" id="formOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <h2 id="formTitle">Pengingat baru</h2>
+    <form id="reminderForm">
+      <input type="hidden" id="reminderId">
+      <div class="field">
+        <label for="fTitle">Judul</label>
+        <input type="text" id="fTitle" required placeholder="Contoh: Bayar tagihan listrik" maxlength="80">
+      </div>
+      <div class="field">
+        <label>Kategori</label>
+        <div class="cat-options" id="catOptions"></div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="fDate">Tanggal mulai</label>
+          <input type="date" id="fDate" required>
+        </div>
+        <div class="field">
+          <label for="fTime">Waktu</label>
+          <input type="time" id="fTime" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fRepeat">Ulangi</label>
+        <select id="fRepeat">
+          <option value="none">Tidak berulang</option>
+          <option value="hourly">Tiap beberapa jam</option>
+          <option value="daily">Harian</option>
+          <option value="weekday">Hari kerja (Sen–Jum)</option>
+          <option value="weekend">Akhir pekan (Sab–Min)</option>
+          <option value="biweekly">Dua mingguan</option>
+          <option value="monthly">Bulanan</option>
+          <option value="quarterly">Triwulanan (tiap 3 bulan)</option>
+          <option value="annually">Tahunan</option>
+        </select>
+      </div>
+      <div class="row-2" id="hourlyRow" style="display:none;">
+        <div class="field">
+          <label for="fHourly">Setiap berapa jam</label>
+          <input type="number" id="fHourly" min="1" max="23" value="4">
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <p class="hint" style="margin-top:0.6rem;">Mulai dari waktu di atas, diulang tiap N jam setiap harinya.</p>
+        </div>
+      </div>
+      <div class="field" id="untilRow">
+        <label for="fUntil">Berakhir pada (opsional)</label>
+        <input type="date" id="fUntil">
+        <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
+      </div>
+      <div class="field">
+        <label for="fNotes">Catatan (opsional)</label>
+        <textarea id="fNotes" maxlength="240" placeholder="Detail tambahan…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="deleteBtn" style="display:none;">Hapus</button>
+        <div style="flex:1;"></div>
+        <button type="button" class="btn btn-ghost" id="cancelForm">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Day detail popover -->
+<div class="overlay day-panel" id="dayOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dayPanelTitle">
+    <h2 id="dayPanelTitle">Tanggal</h2>
+    <div class="day-panel-list" id="dayPanelList"></div>
+    <div class="modal-actions">
+      <div style="flex:1;"></div>
+      <button type="button" class="btn btn-ghost" id="closeDayPanel">Tutup</button>
+      <button type="button" class="btn btn-primary" id="addOnDay">+ Tambah di tanggal ini</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signOut, sendPasswordResetEmail, setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import {
+  getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, enableIndexedDbPersistence
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// Your web app's Firebase configuration (from Firebase console → Project settings)
+var firebaseConfig = {
+  apiKey: "AIzaSyDDOvC3Rq1RHqZJ3E0Wv3SSXRMLfQYPy7c",
+  authDomain: "essentiapath.firebaseapp.com",
+  projectId: "essentiapath",
+  storageBucket: "essentiapath.firebasestorage.app",
+  messagingSenderId: "758429240605",
+  appId: "1:758429240605:web:9bce00c7369ec306cfe5f4"
+};
+var firebaseApp = initializeApp(firebaseConfig);
+var auth = getAuth(firebaseApp);
+var db = getFirestore(firebaseApp);
+setPersistence(auth, browserLocalPersistence).catch(function(){});
+try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsupported browser — app still works, just without offline cache */ }
+
+(function(){
+  "use strict";
+
+  var CATS = [
+    { id:"kerja",     label:"Kerja",     color:"var(--cat-kerja)",     hex:"#3F6659" },
+    { id:"pribadi",   label:"Pribadi",   color:"var(--cat-pribadi)",   hex:"#C97A3D" },
+    { id:"kesehatan", label:"Kesehatan", color:"var(--cat-kesehatan)", hex:"#7A4B6B" },
+    { id:"keuangan",  label:"Keuangan",  color:"var(--cat-keuangan)",  hex:"#2F5D82" },
+    { id:"lainnya",   label:"Lainnya",   color:"var(--cat-lainnya)",   hex:"#8A7F4E" }
+  ];
+  var REPEAT_LABEL = {
+    none:"Sekali", hourly:"Tiap jam", daily:"Harian", weekday:"Hari kerja", weekend:"Akhir pekan",
+    biweekly:"Dua mingguan", monthly:"Bulanan", quarterly:"Triwulanan", annually:"Tahunan"
+  };
+  var MONTH_NAMES = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+  var NOTIFIED_KEY = "essentiapath.notified.v1";
+  var ACTIVE_FILTERS_KEY = "essentiapath.filters.v1";
+
+  var currentUser = null;
+  var unsubscribeReminders = null;
+
+  var state = {
+    reminders: [],
+    viewDate: new Date(),
+    activeFilters: loadFilters(),
+    dayPanelDate: null
+  };
+
+  // ---------- Firestore-backed reminder storage (per signed-in user) ----------
+  function remindersCollectionRef(){
+    return collection(db, 'users', currentUser.uid, 'reminders');
+  }
+  function reminderDocRef(id){
+    return doc(db, 'users', currentUser.uid, 'reminders', id);
+  }
+  function subscribeReminders(){
+    if (unsubscribeReminders) unsubscribeReminders();
+    unsubscribeReminders = onSnapshot(remindersCollectionRef(), function(snapshot){
+      state.reminders = snapshot.docs.map(function(d){ return d.data(); });
+      renderAll();
+      checkDueReminders();
+    }, function(err){
+      console.error('Firestore sync error', err);
+      showToast('Gagal memuat pengingat dari server');
+    });
+  }
+  function saveReminderToCloud(data){
+    return setDoc(reminderDocRef(data.id), data);
+  }
+  function deleteReminderFromCloud(id){
+    return deleteDoc(reminderDocRef(id));
+  }
+
+  function loadFilters(){
+    try {
+      var f = JSON.parse(localStorage.getItem(ACTIVE_FILTERS_KEY));
+      if (f && f.length) return f;
+    } catch(e){}
+    return CATS.map(function(c){ return c.id; });
+  }
+  function saveFilters(){
+    localStorage.setItem(ACTIVE_FILTERS_KEY, JSON.stringify(state.activeFilters));
+  }
+  function catInfo(id){
+    for (var i=0;i<CATS.length;i++) if (CATS[i].id===id) return CATS[i];
+    return CATS[CATS.length-1];
+  }
+  function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function toISODate(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function parseISODate(s){ var p=s.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+
+  // ---------- Recurrence engine ----------
+  function occurrencesOnDate(r, dateStr){
+    var d = parseISODate(dateStr);
+    var start = parseISODate(r.date);
+    if (d < start) return [];
+    if (r.until){
+      var until = parseISODate(r.until);
+      if (d > until) return [];
+    }
+    switch(r.repeat){
+      case 'none':
+        return dateStr === r.date ? [r.time] : [];
+      case 'daily':
+        return [r.time];
+      case 'weekday': {
+        var wd = d.getDay();
+        return (wd>=1 && wd<=5) ? [r.time] : [];
+      }
+      case 'weekend': {
+        var we = d.getDay();
+        return (we===0 || we===6) ? [r.time] : [];
+      }
+      case 'biweekly': {
+        var diffDays = Math.round((d - start) / 86400000);
+        return (diffDays>=0 && diffDays % 14 === 0) ? [r.time] : [];
+      }
+      case 'monthly': {
+        var lastDay = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+        var target = Math.min(start.getDate(), lastDay);
+        return (d.getDate()===target) ? [r.time] : [];
+      }
+      case 'quarterly': {
+        var monthsDiff = (d.getFullYear()-start.getFullYear())*12 + (d.getMonth()-start.getMonth());
+        var lastDayQ = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+        var targetQ = Math.min(start.getDate(), lastDayQ);
+        return (monthsDiff>=0 && monthsDiff % 3 === 0 && d.getDate()===targetQ) ? [r.time] : [];
+      }
+      case 'annually': {
+        var lastDayA = new Date(d.getFullYear(), start.getMonth()+1, 0).getDate();
+        var targetA = Math.min(start.getDate(), lastDayA);
+        return (d.getMonth()===start.getMonth() && d.getDate()===targetA) ? [r.time] : [];
+      }
+      case 'hourly': {
+        var interval = Math.max(1, parseInt(r.hourlyInterval || 1, 10));
+        var parts = r.time.split(':').map(Number);
+        var startDT = new Date(start.getFullYear(), start.getMonth(), start.getDate(), parts[0], parts[1], 0, 0);
+        var dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0,0,0,0);
+        var dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23,59,59,999);
+        var msInterval = interval * 3600000;
+        var t = new Date(startDT);
+        if (t < dayStart){
+          var diff = dayStart - t;
+          var steps = Math.floor(diff / msInterval);
+          t = new Date(t.getTime() + steps*msInterval);
+          while (t < dayStart) t = new Date(t.getTime() + msInterval);
+        }
+        var times = [];
+        var guard = 0;
+        while (t <= dayEnd && guard < 200){
+          times.push(pad2(t.getHours())+':'+pad2(t.getMinutes()));
+          t = new Date(t.getTime() + msInterval);
+          guard++;
+        }
+        return times;
+      }
+    }
+    return [];
+  }
+
+  function itemsForDate(dateStr){
+    var out = [];
+    state.reminders.forEach(function(r){
+      if (state.activeFilters.indexOf(r.category) === -1) return;
+      var times = occurrencesOnDate(r, dateStr);
+      times.forEach(function(t){ out.push({ reminder:r, time:t, date:dateStr }); });
+    });
+    out.sort(function(a,b){ return a.time.localeCompare(b.time); });
+    return out;
+  }
+
+  // ---------- Calendar rendering ----------
+  var monthLabel = document.getElementById('monthLabel');
+  var dayGrid = document.getElementById('dayGrid');
+
+  function renderCalendar(){
+    var y = state.viewDate.getFullYear(), m = state.viewDate.getMonth();
+    monthLabel.textContent = MONTH_NAMES[m] + ' ' + y;
+
+    var firstOfMonth = new Date(y, m, 1);
+    var startOffset = (firstOfMonth.getDay() + 6) % 7; // Monday = 0
+    var gridStart = new Date(y, m, 1 - startOffset);
+
+    var todayStr = toISODate(new Date());
+    var html = '';
+    for (var i=0; i<42; i++){
+      var cellDate = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate()+i);
+      var dateStr = toISODate(cellDate);
+      var inMonth = cellDate.getMonth() === m;
+      var isToday = dateStr === todayStr;
+      var items = itemsForDate(dateStr);
+      var cls = 'day-cell' + (inMonth?'':' muted') + (isToday?' today':'');
+
+      html += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">';
+      html += '<div class="day-num-row"><span class="day-num">'+cellDate.getDate()+'</span>';
+      if (isToday) html += '<span class="pin" aria-hidden="true"></span>';
+      html += '</div>';
+      html += '<div class="day-items">';
+      var shown = items.slice(0,3);
+      shown.forEach(function(it){
+        var c = catInfo(it.reminder.category);
+        html += '<span class="chip"><span class="dot" style="background:'+c.hex+'"></span><span class="t">'+it.time+'</span>'+escapeHTML(it.reminder.title)+'</span>';
+      });
+      if (items.length > 3){
+        html += '<span class="more-link">+'+(items.length-3)+' lainnya</span>';
+      }
+      html += '</div></button>';
+    }
+    dayGrid.innerHTML = html;
+
+    Array.prototype.forEach.call(dayGrid.querySelectorAll('.day-cell'), function(cell){
+      cell.addEventListener('click', function(){ openDayPanel(cell.getAttribute('data-date')); });
+    });
+  }
+
+  function escapeHTML(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ---------- Filters ----------
+  var filterRow = document.getElementById('filterRow');
+  function renderFilters(){
+    filterRow.innerHTML = CATS.map(function(c){
+      var active = state.activeFilters.indexOf(c.id) !== -1;
+      return '<button type="button" class="filter-chip'+(active?' active':'')+'" data-cat="'+c.id+'">'+
+             '<span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(filterRow.querySelectorAll('.filter-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-cat');
+        var idx = state.activeFilters.indexOf(id);
+        if (idx===-1) state.activeFilters.push(id); else state.activeFilters.splice(idx,1);
+        if (state.activeFilters.length===0) state.activeFilters = [id]; // keep at least one
+        saveFilters();
+        renderFilters();
+        renderCalendar();
+        renderUpcoming();
+      });
+    });
+  }
+
+  // ---------- Upcoming list ----------
+  var upcomingList = document.getElementById('upcomingList');
+  function renderUpcoming(){
+    var groups = [];
+    var d = new Date();
+    for (var i=0; i<14; i++){
+      var dt = new Date(d.getFullYear(), d.getMonth(), d.getDate()+i);
+      var dateStr = toISODate(dt);
+      var items = itemsForDate(dateStr);
+      if (items.length) groups.push({ date:dateStr, dt:dt, items:items });
+    }
+    if (state.reminders.length === 0){
+      upcomingList.innerHTML = '<div class="empty-state">' +
+        '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#3F6659" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/><circle cx="17" cy="5" r="2.5" fill="#C97A3D"/></svg>' +
+        '<div>Belum ada pengingat. Mulai jalur Anda dengan menambah yang pertama.</div></div>';
+      return;
+    }
+    if (groups.length === 0){
+      upcomingList.innerHTML = '<div class="empty-state">Tidak ada pengingat dalam 14 hari ke depan untuk kategori yang dipilih.</div>';
+      return;
+    }
+    var html = '';
+    groups.forEach(function(g){
+      var label = dayLabel(g.dt);
+      html += '<div class="up-group-label">'+label+'</div>';
+      g.items.forEach(function(it){
+        var c = catInfo(it.reminder.category);
+        html += '<li class="up-item" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+          '<span class="dot" style="background:'+c.hex+'"></span>' +
+          '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
+          '<div class="meta">'+it.time+' · '+REPEAT_LABEL[it.reminder.repeat]+'</div></div>' +
+          '<div class="acts">' +
+            '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button>' +
+          '</div></li>';
+      });
+    });
+    upcomingList.innerHTML = html;
+    Array.prototype.forEach.call(upcomingList.querySelectorAll('.edit-up'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openEditForm(btn.getAttribute('data-id'));
+      });
+    });
+  }
+
+  function dayLabel(dt){
+    var today = new Date();
+    var t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    var diff = Math.round((new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()) - t0) / 86400000);
+    if (diff===0) return 'Hari ini';
+    if (diff===1) return 'Besok';
+    var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    return days[dt.getDay()] + ', ' + dt.getDate() + ' ' + MONTH_NAMES[dt.getMonth()];
+  }
+
+  // ---------- Add/Edit form ----------
+  var formOverlay = document.getElementById('formOverlay');
+  var reminderForm = document.getElementById('reminderForm');
+  var catOptions = document.getElementById('catOptions');
+  var fRepeat = document.getElementById('fRepeat');
+  var hourlyRow = document.getElementById('hourlyRow');
+  var selectedCat = CATS[0].id;
+
+  function renderCatOptions(){
+    catOptions.innerHTML = CATS.map(function(c){
+      return '<label class="cat-option'+(c.id===selectedCat?' selected':'')+'" data-cat="'+c.id+'">' +
+        '<input type="radio" name="catRadio" value="'+c.id+'" '+(c.id===selectedCat?'checked':'')+' style="display:none;">' +
+        '<span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</label>';
+    }).join('');
+    Array.prototype.forEach.call(catOptions.querySelectorAll('.cat-option'), function(lbl){
+      lbl.addEventListener('click', function(){
+        selectedCat = lbl.getAttribute('data-cat');
+        renderCatOptions();
+      });
+    });
+  }
+
+  fRepeat.addEventListener('change', function(){
+    hourlyRow.style.display = fRepeat.value === 'hourly' ? 'grid' : 'none';
+  });
+
+  function openAddForm(prefillDate){
+    document.getElementById('formTitle').textContent = 'Pengingat baru';
+    document.getElementById('reminderId').value = '';
+    document.getElementById('deleteBtn').style.display = 'none';
+    reminderForm.reset();
+    selectedCat = CATS[0].id;
+    renderCatOptions();
+    document.getElementById('fDate').value = prefillDate || toISODate(new Date());
+    document.getElementById('fTime').value = '09:00';
+    fRepeat.value = 'none';
+    hourlyRow.style.display = 'none';
+    document.getElementById('fHourly').value = 4;
+    formOverlay.hidden = false;
+    setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
+  }
+
+  function openEditForm(id){
+    var r = state.reminders.find(function(x){ return x.id===id; });
+    if (!r) return;
+    closeDayPanel();
+    document.getElementById('formTitle').textContent = 'Ubah pengingat';
+    document.getElementById('reminderId').value = r.id;
+    document.getElementById('deleteBtn').style.display = 'inline-block';
+    document.getElementById('fTitle').value = r.title;
+    selectedCat = r.category;
+    renderCatOptions();
+    document.getElementById('fDate').value = r.date;
+    document.getElementById('fTime').value = r.time;
+    fRepeat.value = r.repeat;
+    hourlyRow.style.display = r.repeat==='hourly' ? 'grid' : 'none';
+    document.getElementById('fHourly').value = r.hourlyInterval || 4;
+    document.getElementById('fUntil').value = r.until || '';
+    document.getElementById('fNotes').value = r.notes || '';
+    formOverlay.hidden = false;
+    setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
+  }
+
+  function closeForm(){ formOverlay.hidden = true; }
+
+  document.getElementById('openAdd').addEventListener('click', function(){ openAddForm(); });
+  document.getElementById('cancelForm').addEventListener('click', closeForm);
+  formOverlay.addEventListener('click', function(e){ if (e.target===formOverlay) closeForm(); });
+
+  reminderForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var id = document.getElementById('reminderId').value;
+    var data = {
+      id: id || uid(),
+      title: document.getElementById('fTitle').value.trim(),
+      category: selectedCat,
+      date: document.getElementById('fDate').value,
+      time: document.getElementById('fTime').value,
+      repeat: fRepeat.value,
+      hourlyInterval: fRepeat.value==='hourly' ? parseInt(document.getElementById('fHourly').value||4,10) : null,
+      until: document.getElementById('fUntil').value || null,
+      notes: document.getElementById('fNotes').value.trim()
+    };
+    if (!data.title || !data.date || !data.time) return;
+    if (!currentUser) return;
+
+    closeForm();
+    saveReminderToCloud(data).then(function(){
+      showToast(id ? 'Pengingat diperbarui' : 'Pengingat disimpan');
+    }).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan pengingat. Coba lagi.');
+    });
+  });
+
+  document.getElementById('deleteBtn').addEventListener('click', function(){
+    var id = document.getElementById('reminderId').value;
+    if (!id || !currentUser) return;
+    if (!confirm('Hapus pengingat ini?')) return;
+    closeForm();
+    deleteReminderFromCloud(id).then(function(){
+      showToast('Pengingat dihapus');
+    }).catch(function(err){
+      console.error(err);
+      showToast('Gagal menghapus pengingat. Coba lagi.');
+    });
+  });
+
+  // ---------- Day panel ----------
+  var dayOverlay = document.getElementById('dayOverlay');
+  var dayPanelList = document.getElementById('dayPanelList');
+
+  function openDayPanel(dateStr){
+    state.dayPanelDate = dateStr;
+    var dt = parseISODate(dateStr);
+    var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    document.getElementById('dayPanelTitle').textContent = days[dt.getDay()]+', '+dt.getDate()+' '+MONTH_NAMES[dt.getMonth()]+' '+dt.getFullYear();
+    var items = itemsForDate(dateStr);
+    if (!items.length){
+      dayPanelList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini.</div>';
+    } else {
+      dayPanelList.innerHTML = items.map(function(it){
+        var c = catInfo(it.reminder.category);
+        return '<div class="up-item"><span class="dot" style="background:'+c.hex+'"></span>' +
+          '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
+          '<div class="meta">'+it.time+' · '+REPEAT_LABEL[it.reminder.repeat]+(it.reminder.notes?' · '+escapeHTML(it.reminder.notes):'')+'</div></div>' +
+          '<div class="acts"><button type="button" class="icon-btn edit-day" data-id="'+it.reminder.id+'" aria-label="Ubah">✎</button></div></div>';
+      }).join('');
+      Array.prototype.forEach.call(dayPanelList.querySelectorAll('.edit-day'), function(btn){
+        btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+      });
+    }
+    dayOverlay.hidden = false;
+  }
+  function closeDayPanel(){ dayOverlay.hidden = true; }
+  document.getElementById('closeDayPanel').addEventListener('click', closeDayPanel);
+  dayOverlay.addEventListener('click', function(e){ if (e.target===dayOverlay) closeDayPanel(); });
+  document.getElementById('addOnDay').addEventListener('click', function(){
+    var d = state.dayPanelDate;
+    closeDayPanel();
+    openAddForm(d);
+  });
+
+  // ---------- Month navigation ----------
+  document.getElementById('prevMonth').addEventListener('click', function(){
+    state.viewDate = new Date(state.viewDate.getFullYear(), state.viewDate.getMonth()-1, 1);
+    renderCalendar();
+  });
+  document.getElementById('nextMonth').addEventListener('click', function(){
+    state.viewDate = new Date(state.viewDate.getFullYear(), state.viewDate.getMonth()+1, 1);
+    renderCalendar();
+  });
+  document.getElementById('gotoToday').addEventListener('click', function(){
+    state.viewDate = new Date();
+    renderCalendar();
+  });
+
+  // ---------- Toast ----------
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+  }
+
+  // ---------- Notifications ----------
+  var notifyNotice = document.getElementById('notifyNotice');
+  function refreshNotifyBanner(){
+    var dismissed = sessionStorage.getItem('essentiapath.notifyDismissed');
+    if ('Notification' in window && Notification.permission === 'default' && !dismissed){
+      notifyNotice.hidden = false;
+    } else {
+      notifyNotice.hidden = true;
+    }
+  }
+  document.getElementById('enableNotify').addEventListener('click', function(){
+    if (!('Notification' in window)) return;
+    Notification.requestPermission().then(function(){ refreshNotifyBanner(); });
+  });
+  document.getElementById('dismissNotify').addEventListener('click', function(){
+    sessionStorage.setItem('essentiapath.notifyDismissed','1');
+    refreshNotifyBanner();
+  });
+
+  function loadNotified(){
+    try { return JSON.parse(localStorage.getItem(NOTIFIED_KEY)) || {}; } catch(e){ return {}; }
+  }
+  function saveNotified(obj){ localStorage.setItem(NOTIFIED_KEY, JSON.stringify(obj)); }
+
+  function checkDueReminders(){
+    if (!currentUser) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    var now = new Date();
+    var dateStr = toISODate(now);
+    var hhmm = pad2(now.getHours())+':'+pad2(now.getMinutes());
+    var notified = loadNotified();
+    // prune old entries (keep only today)
+    Object.keys(notified).forEach(function(k){ if (notified[k].date !== dateStr) delete notified[k]; });
+
+    state.reminders.forEach(function(r){
+      var times = occurrencesOnDate(r, dateStr);
+      if (times.indexOf(hhmm) === -1) return;
+      var key = r.id + '_' + dateStr + '_' + hhmm;
+      if (notified[key]) return;
+      notified[key] = { date: dateStr };
+      fireNotification(r, hhmm);
+    });
+    saveNotified(notified);
+  }
+
+  function fireNotification(r, time){
+    var body = time + ' · ' + REPEAT_LABEL[r.repeat] + (r.notes ? ' — ' + r.notes : '');
+    if (navigator.serviceWorker && navigator.serviceWorker.ready){
+      navigator.serviceWorker.ready.then(function(reg){
+        reg.showNotification('EssentiaPath: ' + r.title, {
+          body: body,
+          icon: './icons/icon-192.png',
+          badge: './icons/icon-192.png',
+          tag: r.id + '_' + time
+        });
+      }).catch(function(){
+        try { new Notification('EssentiaPath: ' + r.title, { body: body, icon: './icons/icon-192.png' }); } catch(e){}
+      });
+    } else {
+      try { new Notification('EssentiaPath: ' + r.title, { body: body, icon: './icons/icon-192.png' }); } catch(e){}
+    }
+  }
+
+  setInterval(checkDueReminders, 20000);
+
+  // ---------- PWA install prompt ----------
+  var deferredPrompt = null;
+  var installNotice = document.getElementById('installNotice');
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!sessionStorage.getItem('essentiapath.installDismissed')) installNotice.hidden = false;
+  });
+  document.getElementById('installBtn').addEventListener('click', function(){
+    installNotice.hidden = true;
+    if (deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; }
+  });
+  document.getElementById('dismissInstall').addEventListener('click', function(){
+    sessionStorage.setItem('essentiapath.installDismissed','1');
+    installNotice.hidden = true;
+  });
+
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./service-worker.js').catch(function(){});
+    });
+  }
+
+  // ---------- Auth (Firebase email/password) ----------
+  var authOverlay = document.getElementById('authOverlay');
+  var authLoadingEl = document.getElementById('authLoading');
+  var authCard = document.getElementById('authCard');
+  var authForm = document.getElementById('authForm');
+  var authError = document.getElementById('authError');
+  var authSubmit = document.getElementById('authSubmit');
+  var authModeHint = document.getElementById('authModeHint');
+  var tabLogin = document.getElementById('tabLogin');
+  var tabRegister = document.getElementById('tabRegister');
+  var accountChip = document.getElementById('accountChip');
+  var accountEmail = document.getElementById('accountEmail');
+  var authMode = 'login';
+
+  function setAuthMode(mode){
+    authMode = mode;
+    tabLogin.classList.toggle('active', mode==='login');
+    tabRegister.classList.toggle('active', mode==='register');
+    authSubmit.textContent = mode==='login' ? 'Masuk' : 'Daftar';
+    document.getElementById('authPassword').setAttribute('autocomplete', mode==='login' ? 'current-password' : 'new-password');
+    authModeHint.textContent = mode==='login' ? '' : 'Kata sandi minimal 6 karakter.';
+    hideAuthError();
+  }
+  tabLogin.addEventListener('click', function(){ setAuthMode('login'); });
+  tabRegister.addEventListener('click', function(){ setAuthMode('register'); });
+
+  function showAuthError(msg, isSuccess){
+    authError.textContent = msg;
+    authError.classList.add('show');
+    authError.classList.toggle('success', !!isSuccess);
+  }
+  function hideAuthError(){
+    authError.classList.remove('show');
+    authError.classList.remove('success');
+  }
+
+  function translateAuthError(err){
+    var code = (err && err.code) || '';
+    var map = {
+      'auth/invalid-email': 'Format email tidak valid.',
+      'auth/user-not-found': 'Akun dengan email ini tidak ditemukan.',
+      'auth/wrong-password': 'Kata sandi salah.',
+      'auth/invalid-credential': 'Email atau kata sandi salah.',
+      'auth/email-already-in-use': 'Email ini sudah terdaftar. Coba menu "Masuk".',
+      'auth/weak-password': 'Kata sandi minimal 6 karakter.',
+      'auth/too-many-requests': 'Terlalu banyak percobaan. Coba lagi beberapa saat lagi.',
+      'auth/network-request-failed': 'Gagal terhubung ke server. Periksa koneksi internet Anda.'
+    };
+    return map[code] || 'Terjadi kesalahan. Coba lagi.';
+  }
+
+  authForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    hideAuthError();
+    var email = document.getElementById('authEmail').value.trim();
+    var password = document.getElementById('authPassword').value;
+    var original = authSubmit.textContent;
+    authSubmit.disabled = true;
+    authSubmit.textContent = 'Memproses…';
+    var action = authMode === 'login'
+      ? signInWithEmailAndPassword(auth, email, password)
+      : createUserWithEmailAndPassword(auth, email, password);
+    action.catch(function(err){
+      showAuthError(translateAuthError(err));
+    }).then(function(){
+      authSubmit.disabled = false;
+      authSubmit.textContent = original;
+    });
+  });
+
+  document.getElementById('forgotPassword').addEventListener('click', function(){
+    hideAuthError();
+    var email = document.getElementById('authEmail').value.trim();
+    if (!email){ showAuthError('Masukkan email Anda dahulu, lalu klik "Lupa kata sandi?" lagi.'); return; }
+    sendPasswordResetEmail(auth, email).then(function(){
+      showAuthError('Tautan reset kata sandi sudah dikirim ke ' + email + '.', true);
+    }).catch(function(err){
+      showAuthError(translateAuthError(err));
+    });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    signOut(auth);
+  });
+
+  onAuthStateChanged(auth, function(user){
+    currentUser = user;
+    authLoadingEl.hidden = true;
+    if (user){
+      authOverlay.hidden = true;
+      accountChip.hidden = false;
+      accountEmail.textContent = user.email || '';
+      subscribeReminders();
+      refreshNotifyBanner();
+    } else {
+      if (unsubscribeReminders){ unsubscribeReminders(); unsubscribeReminders = null; }
+      state.reminders = [];
+      accountChip.hidden = true;
+      authOverlay.hidden = false;
+      authCard.hidden = false;
+      authForm.reset();
+      setAuthMode('login');
+      renderAll();
+    }
+  });
+
+  // ---------- Init ----------
+  function renderAll(){
+    renderCalendar();
+    renderFilters();
+    renderUpcoming();
+  }
+  renderAll();
+  refreshNotifyBanner();
+  checkDueReminders();
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){
+      if (!formOverlay.hidden) closeForm();
+      else if (!dayOverlay.hidden) closeDayPanel();
+    }
+  });
+})();
+</script>
+</body>
+</html>
