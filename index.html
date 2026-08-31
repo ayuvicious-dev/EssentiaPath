@@ -263,9 +263,22 @@
   .sidebar-head{padding:1rem 1.1rem 0.4rem; display:flex; align-items:center; justify-content:space-between;}
   .sidebar-head h2{font-family:var(--font-display); font-size:1.05rem; margin:0; font-weight:600;}
   .up-date-control{display:flex; align-items:center; gap:0.3rem;}
+  .up-date-wrap{position:relative; display:inline-flex; align-items:center;}
   .up-date-control input[type="date"]{
     border:1px solid var(--line); border-radius:8px; padding:0.28rem 0.4rem; font-size:0.72rem;
-    font-family:inherit; background:var(--surface); color:var(--ink); width:auto;
+    font-family:inherit; background:var(--surface); color:transparent; width:112px;
+  }
+  .up-date-control input[type="date"]::-webkit-datetime-edit,
+  .up-date-control input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  .up-date-control input[type="date"]::-webkit-datetime-edit-text,
+  .up-date-control input[type="date"]::-webkit-datetime-edit-month-field,
+  .up-date-control input[type="date"]::-webkit-datetime-edit-day-field,
+  .up-date-control input[type="date"]::-webkit-datetime-edit-year-field{
+    color:transparent;
+  }
+  .up-date-display{
+    position:absolute; left:0.42rem; top:50%; transform:translateY(-50%);
+    font-size:0.72rem; font-family:inherit; color:var(--ink); pointer-events:none; white-space:nowrap;
   }
   .up-date-today-btn svg{width:14px; height:14px;}
   .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:420px; overflow-y:auto;}
@@ -774,7 +787,10 @@
         <div class="sidebar-head">
           <h2>Mendatang</h2>
           <div class="up-date-control">
-            <input type="date" id="upcomingStartInput" aria-label="Mulai daftar dari tanggal">
+            <div class="up-date-wrap">
+              <input type="date" id="upcomingStartInput" aria-label="Mulai daftar dari tanggal">
+              <span class="up-date-display" id="upcomingDateDisplay" aria-hidden="true"></span>
+            </div>
             <button type="button" class="icon-btn up-date-today-btn" id="upcomingResetToday" aria-label="Kembali ke hari ini" title="Kembali ke hari ini" hidden>
               <svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 4v5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
@@ -2418,12 +2434,21 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   // ---------- Upcoming list ----------
   var upcomingList = document.getElementById('upcomingList');
   var upcomingStartInput = document.getElementById('upcomingStartInput');
+  var upcomingDateDisplay = document.getElementById('upcomingDateDisplay');
   var upcomingResetBtn = document.getElementById('upcomingResetToday');
-  // Tanggal mulai daftar "Mendatang" — default otomatis ke hari ini, tapi
-  // bisa digeser lewat input tanggal di header panel untuk melihat 14 hari
-  // ke depan mulai dari tanggal lain.
+  // Tanggal daftar "Mendatang" — default otomatis ke hari ini, tapi bisa
+  // diganti lewat input tanggal di header panel untuk melihat pengingat
+  // pada tanggal lain (hanya tanggal itu saja yang ditampilkan).
   var upcomingStartDate = toISODate(new Date());
+  function formatDMY(iso){
+    var p = iso.split('-');
+    return p[2]+'/'+p[1]+'/'+p[0];
+  }
+  function updateUpcomingDateDisplay(){
+    if (upcomingDateDisplay) upcomingDateDisplay.textContent = formatDMY(upcomingStartDate);
+  }
   if (upcomingStartInput) upcomingStartInput.value = upcomingStartDate;
+  updateUpcomingDateDisplay();
   function isUpcomingStartToday(){ return upcomingStartDate === toISODate(new Date()); }
   function updateUpcomingResetVisibility(){
     if (upcomingResetBtn) upcomingResetBtn.hidden = isUpcomingStartToday();
@@ -2432,6 +2457,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   if (upcomingStartInput){
     upcomingStartInput.addEventListener('change', function(){
       upcomingStartDate = upcomingStartInput.value || toISODate(new Date());
+      updateUpcomingDateDisplay();
       updateUpcomingResetVisibility();
       renderUpcoming();
     });
@@ -2440,6 +2466,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     upcomingResetBtn.addEventListener('click', function(){
       upcomingStartDate = toISODate(new Date());
       upcomingStartInput.value = upcomingStartDate;
+      updateUpcomingDateDisplay();
       updateUpcomingResetVisibility();
       renderUpcoming();
     });
@@ -2458,12 +2485,9 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   function renderUpcoming(){
     var groups = [];
     var d = parseISODate(upcomingStartDate);
-    for (var i=0; i<14; i++){
-      var dt = new Date(d.getFullYear(), d.getMonth(), d.getDate()+i);
-      var dateStr = toISODate(dt);
-      var items = itemsForDate(dateStr);
-      if (items.length) groups.push({ date:dateStr, dt:dt, items:items });
-    }
+    var dateStr = toISODate(d);
+    var items = itemsForDate(dateStr);
+    if (items.length) groups.push({ date:dateStr, dt:d, items:items });
     if (state.reminders.length === 0){
       upcomingList.innerHTML = '<div class="empty-state">' +
         '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#547E6C" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/><circle cx="17" cy="5" r="2.5" fill="#E3A97C"/></svg>' +
@@ -2471,7 +2495,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       return;
     }
     if (groups.length === 0){
-      upcomingList.innerHTML = '<div class="empty-state">Tidak ada pengingat dalam 14 hari ke depan untuk kategori yang dipilih.</div>';
+      upcomingList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini untuk kategori yang dipilih.</div>';
       return;
     }
     // Item "saat ini" (kalau ada) dipakai untuk menandai satu kemunculan hari
