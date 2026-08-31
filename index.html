@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>EssentiaPath — Pengingat &amp; Kalender</title>
 <meta name="description" content="Pengingat berulang dengan tampilan kalender: per jam, harian, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan.">
-<meta name="theme-color" content="#3F6659">
+<meta name="theme-color" content="#D9E6D0">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
@@ -14,23 +14,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#1E2B22;
-    --ink-soft:#4A5850;
-    --moss:#3F6659;
-    --moss-deep:#2C4B41;
-    --amber:#C97A3D;
-    --amber-deep:#A9622C;
-    --paper:#F6F4EA;
+    --ink:#4A4038;
+    --ink-soft:#8F8374;
+    --moss:#547E6C;
+    --moss-deep:#3D5F50;
+    --hero-top:#D9E6D0;
+    --hero-bottom:#EEF3E6;
+    --amber:#E3A97C;
+    --amber-deep:#CE8F5C;
+    --paper:#FBF7EF;
     --paper-raised:#FFFFFF;
-    --line:rgba(30,43,34,0.12);
-    --line-soft:rgba(30,43,34,0.07);
-    --shadow:0 1px 2px rgba(30,43,34,0.06), 0 8px 20px -12px rgba(30,43,34,0.18);
-    --cat-kerja:#3F6659;
-    --cat-pribadi:#C97A3D;
-    --cat-kesehatan:#7A4B6B;
-    --cat-keuangan:#2F5D82;
-    --cat-lainnya:#8A7F4E;
-    --radius:14px;
+    --line:rgba(74,64,56,0.13);
+    --line-soft:rgba(74,64,56,0.07);
+    --shadow:0 1px 2px rgba(74,64,56,0.05), 0 10px 24px -14px rgba(74,64,56,0.14);
+    --cat-kerja:#93AF9E;
+    --cat-pribadi:#E3A97C;
+    --cat-kesehatan:#C6A6C4;
+    --cat-keuangan:#A3BED1;
+    --cat-lainnya:#CDBF92;
+    --radius:18px;
     --font-display:'Fraunces', Georgia, serif;
     --font-body:'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -58,29 +60,29 @@
   .hero{
     position:relative;
     overflow:hidden;
-    background:linear-gradient(180deg, var(--moss-deep), var(--moss));
-    color:#F6F4EA;
+    background:linear-gradient(180deg, var(--hero-top), var(--hero-bottom));
+    color:var(--ink);
     padding-bottom:2.75rem;
   }
-  .hero-trail{position:absolute; inset:0; width:100%; height:100%; opacity:0.55; pointer-events:none;}
+  .hero-trail{position:absolute; inset:0; width:100%; height:100%; opacity:0.6; pointer-events:none;}
   .hero-inner{position:relative; z-index:1; padding-top:1.75rem;}
   .hero-top{display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
   .brand{display:flex; align-items:center; gap:0.65rem;}
   .brand-mark{width:34px; height:34px; border-radius:9px; background:var(--amber); display:flex; align-items:center; justify-content:center; flex:none;}
   .brand-mark svg{width:18px; height:18px;}
-  .brand-name{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.5rem; letter-spacing:0.01em;}
-  .brand-tag{font-size:0.85rem; color:rgba(246,244,234,0.72); margin-top:0.15rem;}
+  .brand-name{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.5rem; letter-spacing:0.01em; color:var(--ink);}
+  .brand-tag{font-size:0.85rem; color:var(--ink-soft); margin-top:0.15rem;}
 
   .account-chip{
-    display:flex; align-items:center; gap:0.6rem; background:rgba(246,244,234,0.1);
-    border:1px solid rgba(246,244,234,0.28); border-radius:999px; padding:0.35rem 0.45rem 0.35rem 0.85rem;
+    display:flex; align-items:center; gap:0.6rem; background:rgba(74,64,56,0.06);
+    border:1px solid rgba(74,64,56,0.16); border-radius:999px; padding:0.35rem 0.45rem 0.35rem 0.85rem;
   }
-  .account-email{font-size:0.78rem; color:rgba(246,244,234,0.88); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .account-email{font-size:0.78rem; color:var(--ink-soft); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .account-logout{
-    border:none; background:rgba(246,244,234,0.18); color:#F6F4EA; font-size:0.74rem; font-weight:700;
+    border:none; background:rgba(74,64,56,0.1); color:var(--ink); font-size:0.74rem; font-weight:700;
     padding:0.32rem 0.7rem; border-radius:999px; cursor:pointer;
   }
-  .account-logout:hover{background:rgba(246,244,234,0.3);}
+  .account-logout:hover{background:rgba(74,64,56,0.18);}
 
   .toolbar{
     display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
@@ -88,21 +90,22 @@
   }
   .month-nav{display:flex; align-items:center; gap:0.6rem;}
   .month-nav button{
-    width:36px; height:36px; border-radius:50%; border:1px solid rgba(246,244,234,0.35);
-    background:rgba(246,244,234,0.08); color:#F6F4EA; cursor:pointer; font-size:1rem;
+    width:36px; height:36px; border-radius:50%; border:1px solid rgba(74,64,56,0.18);
+    background:rgba(74,64,56,0.05); color:var(--ink); cursor:pointer; font-size:1rem;
     display:flex; align-items:center; justify-content:center; transition:background 0.15s ease;
   }
-  .month-nav button:hover{background:rgba(246,244,234,0.2);}
+  .month-nav button:hover{background:rgba(74,64,56,0.12);}
   .month-label{font-family:var(--font-display); font-size:1.3rem; font-weight:600; min-width:11ch; text-align:center;}
   .today-btn{
-    border:1px solid rgba(246,244,234,0.35); background:transparent; color:#F6F4EA;
+    border:1px solid rgba(74,64,56,0.2); background:transparent; color:var(--ink);
     padding:0.4rem 0.85rem; border-radius:999px; font-size:0.82rem; cursor:pointer; font-weight:600;
+    white-space:nowrap;
   }
-  .today-btn:hover{background:rgba(246,244,234,0.12);}
+  .today-btn:hover{background:rgba(74,64,56,0.08);}
   .add-btn{
-    background:var(--amber); color:#251505; border:none; padding:0.65rem 1.15rem; border-radius:999px;
+    background:var(--amber); color:#3E2A18; border:none; padding:0.65rem 1.15rem; border-radius:999px;
     font-weight:700; font-size:0.92rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.45rem;
-    box-shadow:0 6px 16px -6px rgba(201,122,61,0.7); transition:transform 0.12s ease, background 0.15s ease;
+    box-shadow:0 6px 16px -6px rgba(227,169,124,0.6); transition:transform 0.12s ease, background 0.15s ease;
   }
   .add-btn:hover{background:var(--amber-deep); transform:translateY(-1px);}
 
@@ -121,8 +124,9 @@
   /* ---------- Notice banners ---------- */
   .notice{
     display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;
-    background:#FBF6E9; border:1px solid rgba(201,122,61,0.35); color:var(--ink);
-    padding:0.7rem 1rem; border-radius:10px; font-size:0.87rem; margin:1.25rem 0 0;
+    background:#FBF3E7; border:1px solid rgba(227,169,124,0.4); color:var(--ink);
+    padding:0.7rem 1rem; border-radius:12px; font-size:0.87rem; margin:1.25rem 0 0;
+    position:relative; z-index:2;
   }
   .notice p{margin:0;}
   .notice-actions{display:flex; gap:0.5rem;}
@@ -132,6 +136,16 @@
   .notice .primary{background:var(--moss); color:#fff;}
   .notice .ghost{background:transparent; color:var(--ink-soft);}
   .notice[hidden]{display:none;}
+
+  /* Only the topmost VISIBLE element (banner or calendar) should rise up
+     over the header — otherwise the calendar always overlaps whichever
+     banner happens to be showing. These rules check the actual `hidden`
+     state instead of just DOM order. */
+  #notifyNotice:not([hidden]){margin-top:-1.75rem;}
+  #notifyNotice:not([hidden]) ~ #installNotice{margin-top:1.25rem;}
+  #notifyNotice:not([hidden]) ~ .layout{margin-top:1.25rem;}
+  #notifyNotice[hidden] ~ #installNotice:not([hidden]){margin-top:-1.75rem;}
+  #notifyNotice[hidden] ~ #installNotice:not([hidden]) ~ .layout{margin-top:1.25rem;}
 
   /* ---------- Calendar ---------- */
   .calendar{padding:1.1rem;}
@@ -153,7 +167,7 @@
   .pin{
     width:16px; height:16px; border-radius:50%; background:var(--amber); position:relative; flex:none;
   }
-  .pin::after{content:""; position:absolute; inset:4.5px; border-radius:50%; background:#251505;}
+  .pin::after{content:""; position:absolute; inset:4.5px; border-radius:50%; background:#3E2A18;}
   .day-items{display:flex; flex-direction:column; gap:2px; overflow:hidden;}
   .chip{
     display:flex; align-items:center; gap:0.3rem; font-size:0.68rem; padding:2px 5px; border-radius:6px;
@@ -198,7 +212,7 @@
 
   /* ---------- Modal ---------- */
   .overlay{
-    position:fixed; inset:0; background:rgba(30,43,34,0.45); display:flex; align-items:flex-end;
+    position:fixed; inset:0; background:rgba(74,64,56,0.4); display:flex; align-items:flex-end;
     justify-content:center; z-index:50; padding:0;
   }
   @media (min-width:640px){ .overlay{align-items:center; padding:1.5rem;} }
@@ -235,7 +249,7 @@
 
   /* ---------- Auth (login/register) ---------- */
   .auth-overlay{
-    background:linear-gradient(180deg, var(--moss-deep), var(--moss)); align-items:center; z-index:100;
+    background:linear-gradient(180deg, var(--hero-top), var(--hero-bottom)); align-items:center; z-index:100;
   }
   .auth-card{
     background:var(--paper-raised); width:100%; max-width:380px; border-radius:16px; padding:1.6rem 1.5rem 1.5rem;
@@ -268,8 +282,8 @@
   .day-panel-list{display:flex; flex-direction:column; gap:0.5rem; margin:0.9rem 0;}
 
   .toast{
-    position:fixed; bottom:1.1rem; left:50%; transform:translateX(-50%); background:var(--ink); color:#F6F4EA;
-    padding:0.6rem 1rem; border-radius:999px; font-size:0.82rem; z-index:60; box-shadow:0 10px 26px -10px rgba(0,0,0,0.5);
+    position:fixed; bottom:1.1rem; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper);
+    padding:0.6rem 1rem; border-radius:999px; font-size:0.82rem; z-index:60; box-shadow:0 10px 26px -10px rgba(74,64,56,0.4);
     opacity:0; pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
@@ -285,8 +299,8 @@
     <div class="auth-brand">
       <span class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="17" cy="7" r="3.4" fill="#F6F4EA"/>
-          <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#F6F4EA" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
+          <circle cx="17" cy="7" r="3.4" fill="#3E2A18"/>
+          <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#3E2A18" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
         </svg>
       </span>
       <span class="auth-brand-name">EssentiaPath</span>
@@ -298,8 +312,8 @@
     <div class="auth-brand">
       <span class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="17" cy="7" r="3.4" fill="#F6F4EA"/>
-          <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#F6F4EA" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
+          <circle cx="17" cy="7" r="3.4" fill="#3E2A18"/>
+          <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#3E2A18" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
         </svg>
       </span>
       <span class="auth-brand-name">EssentiaPath</span>
@@ -331,15 +345,15 @@
 <header class="hero">
   <svg class="hero-trail" viewBox="0 0 1180 210" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <path d="M -20 150 C 150 60, 320 210, 500 120 S 820 20, 1000 90 S 1160 60, 1220 100"
-          fill="none" stroke="#F6F4EA" stroke-width="2.5" stroke-dasharray="1 12" stroke-linecap="round"/>
+          fill="none" stroke="#7C9484" stroke-width="2.5" stroke-dasharray="1 12" stroke-linecap="round"/>
   </svg>
   <div class="shell hero-inner">
     <div class="hero-top">
       <div class="brand">
         <span class="brand-mark">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="17" cy="7" r="3.4" fill="#F6F4EA"/>
-            <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#F6F4EA" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
+            <circle cx="17" cy="7" r="3.4" fill="#3E2A18"/>
+            <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#3E2A18" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
           </svg>
         </span>
         <div>
@@ -519,11 +533,11 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   "use strict";
 
   var CATS = [
-    { id:"kerja",     label:"Kerja",     color:"var(--cat-kerja)",     hex:"#3F6659" },
-    { id:"pribadi",   label:"Pribadi",   color:"var(--cat-pribadi)",   hex:"#C97A3D" },
-    { id:"kesehatan", label:"Kesehatan", color:"var(--cat-kesehatan)", hex:"#7A4B6B" },
-    { id:"keuangan",  label:"Keuangan",  color:"var(--cat-keuangan)",  hex:"#2F5D82" },
-    { id:"lainnya",   label:"Lainnya",   color:"var(--cat-lainnya)",   hex:"#8A7F4E" }
+    { id:"kerja",     label:"Kerja",     color:"var(--cat-kerja)",     hex:"#93AF9E" },
+    { id:"pribadi",   label:"Pribadi",   color:"var(--cat-pribadi)",   hex:"#E3A97C" },
+    { id:"kesehatan", label:"Kesehatan", color:"var(--cat-kesehatan)", hex:"#C6A6C4" },
+    { id:"keuangan",  label:"Keuangan",  color:"var(--cat-keuangan)",  hex:"#A3BED1" },
+    { id:"lainnya",   label:"Lainnya",   color:"var(--cat-lainnya)",   hex:"#CDBF92" }
   ];
   var REPEAT_LABEL = {
     none:"Sekali", hourly:"Tiap jam", daily:"Harian", weekday:"Hari kerja", weekend:"Akhir pekan",
@@ -752,7 +766,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     }
     if (state.reminders.length === 0){
       upcomingList.innerHTML = '<div class="empty-state">' +
-        '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#3F6659" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/><circle cx="17" cy="5" r="2.5" fill="#C97A3D"/></svg>' +
+        '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#547E6C" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/><circle cx="17" cy="5" r="2.5" fill="#E3A97C"/></svg>' +
         '<div>Belum ada pengingat. Mulai jalur Anda dengan menambah yang pertama.</div></div>';
       return;
     }
