@@ -262,9 +262,16 @@
   .sidebar{display:flex; flex-direction:column; gap:1rem;}
   .sidebar-head{padding:1rem 1.1rem 0.4rem; display:flex; align-items:center; justify-content:space-between;}
   .sidebar-head h2{font-family:var(--font-display); font-size:1.05rem; margin:0; font-weight:600;}
-  .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:420px; overflow:auto;}
+  .up-date-control{display:flex; align-items:center; gap:0.3rem;}
+  .up-date-control input[type="date"]{
+    border:1px solid var(--line); border-radius:8px; padding:0.28rem 0.4rem; font-size:0.72rem;
+    font-family:inherit; background:var(--surface); color:var(--ink); width:auto;
+  }
+  .up-date-today-btn svg{width:14px; height:14px;}
+  .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:420px; overflow-y:auto;}
   .up-group-label{
     font-size:0.68rem; text-transform:none; color:var(--ink-soft); font-weight:700; padding:0.5rem 0.5rem 0.15rem;
+    position:sticky; top:0; background:var(--paper-raised); z-index:1;
   }
   .up-subgroup-label{
     font-size:0.62rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); opacity:0.75;
@@ -764,7 +771,15 @@
       </section>
 
       <section class="panel" aria-label="Pengingat mendatang" style="flex:1;">
-        <div class="sidebar-head"><h2>Mendatang</h2></div>
+        <div class="sidebar-head">
+          <h2>Mendatang</h2>
+          <div class="up-date-control">
+            <input type="date" id="upcomingStartInput" aria-label="Mulai daftar dari tanggal">
+            <button type="button" class="icon-btn up-date-today-btn" id="upcomingResetToday" aria-label="Kembali ke hari ini" title="Kembali ke hari ini" hidden>
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 4v5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
         <ul class="upcoming-list" id="upcomingList"></ul>
       </section>
 
@@ -2402,6 +2417,33 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
 
   // ---------- Upcoming list ----------
   var upcomingList = document.getElementById('upcomingList');
+  var upcomingStartInput = document.getElementById('upcomingStartInput');
+  var upcomingResetBtn = document.getElementById('upcomingResetToday');
+  // Tanggal mulai daftar "Mendatang" — default otomatis ke hari ini, tapi
+  // bisa digeser lewat input tanggal di header panel untuk melihat 14 hari
+  // ke depan mulai dari tanggal lain.
+  var upcomingStartDate = toISODate(new Date());
+  if (upcomingStartInput) upcomingStartInput.value = upcomingStartDate;
+  function isUpcomingStartToday(){ return upcomingStartDate === toISODate(new Date()); }
+  function updateUpcomingResetVisibility(){
+    if (upcomingResetBtn) upcomingResetBtn.hidden = isUpcomingStartToday();
+  }
+  updateUpcomingResetVisibility();
+  if (upcomingStartInput){
+    upcomingStartInput.addEventListener('change', function(){
+      upcomingStartDate = upcomingStartInput.value || toISODate(new Date());
+      updateUpcomingResetVisibility();
+      renderUpcoming();
+    });
+  }
+  if (upcomingResetBtn){
+    upcomingResetBtn.addEventListener('click', function(){
+      upcomingStartDate = toISODate(new Date());
+      upcomingStartInput.value = upcomingStartDate;
+      updateUpcomingResetVisibility();
+      renderUpcoming();
+    });
+  }
   var TIME_PERIOD_ORDER = ['Dini hari','Pagi hari','Siang hari','Sore hari','Malam hari'];
   function timeOfDayLabel(t){
     // t is "HH:MM"; 00:00 counts as end of "Malam hari" (18.00–00.00), while
@@ -2415,7 +2457,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
   function renderUpcoming(){
     var groups = [];
-    var d = new Date();
+    var d = parseISODate(upcomingStartDate);
     for (var i=0; i<14; i++){
       var dt = new Date(d.getFullYear(), d.getMonth(), d.getDate()+i);
       var dateStr = toISODate(dt);
