@@ -377,6 +377,10 @@
     padding:0.85rem 0.9rem; text-align:left; color:var(--ink-soft); font-size:0.84rem;
     background:var(--surface); border:1px dashed var(--line); border-radius:13px; margin:0 0.9rem 1rem;
   }
+  .current-overdue-wrap{padding:0 0.9rem 1rem;}
+  .current-overdue-list{margin-top:0.55rem; padding:0;}
+  .current-overdue-list:empty{display:none;}
+  .current-overdue-list .flex-item .meta{font-family:var(--font-mono);}
 
   /* ---------- Search ---------- */
   .search-box{display:flex; align-items:center; gap:0.4rem; padding:0.42rem 0.65rem; border:1px solid var(--line); border-radius:10px; background:var(--paper-raised);}
@@ -433,6 +437,35 @@
   .flex-item .meta .dot{width:6px; height:6px; border-radius:50%; flex:none;}
   .flex-item .acts{display:flex; gap:0.3rem; flex:none;}
   .flex-item.missed-item{background:var(--notice-bg); border-color:var(--notice-border);}
+  .flex-item.priority-item{box-shadow:inset 3px 0 0 var(--amber-deep);}
+
+  /* ---------- Fleksibel: kolom Prioritas / Standar ---------- */
+  .flex-list-missed{padding-bottom:0;}
+  .flex-list-missed:empty{display:none;}
+  .flex-columns{display:flex; flex-direction:column; gap:1.1rem; padding:0.15rem 0.6rem 0.9rem;}
+  .flex-column{display:flex; flex-direction:column; min-width:0;}
+  .flex-column .flex-list{padding:0 0 0.3rem;}
+  .flex-column .upgrade-pagination{padding:0 0 0.2rem;}
+  .flex-column-head{
+    display:flex; align-items:center; gap:0.35rem; font-size:0.68rem; font-weight:700;
+    letter-spacing:0.03em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 0.4rem;
+  }
+  .flex-column-head .dot{width:7px; height:7px; border-radius:50%; flex:none; background:var(--ink-soft);}
+  .flex-column-head.priority{color:var(--amber-deep);}
+  .flex-column-head.priority .dot{background:var(--amber-deep);}
+
+  .flex-done-toggle-wrap{padding:0 0.6rem 0.9rem;}
+  .flex-done-toggle{
+    display:flex; align-items:center; justify-content:center; gap:0.4rem; width:100%;
+    border:1px dashed var(--line); background:transparent; color:var(--ink-soft);
+    padding:0.55rem 0.6rem; border-radius:10px; font-size:0.78rem; font-weight:600;
+    cursor:pointer; font-family:inherit;
+  }
+  .flex-done-toggle:hover{color:var(--ink); border-color:rgba(var(--tint-rgb),0.28);}
+  .flex-done-toggle .chev{width:14px; height:14px; flex:none; transition:transform 0.15s ease;}
+  .flex-done-toggle[aria-expanded="true"] .chev{transform:rotate(180deg);}
+  .flex-list-done{margin-top:0.55rem; padding:0;}
+  .flex-list-done:empty{display:none;}
 
   .checkbox-field{
     display:flex; align-items:flex-start; gap:0.55rem; background:var(--surface); border:1px solid var(--line);
@@ -527,7 +560,6 @@
   .upg-acts{display:flex; gap:0.2rem; flex:none;}
   .upgrade-empty{font-size:0.82rem; color:var(--ink-soft); padding:0.4rem 0.1rem 0.8rem;}
   .upgrade-pagination{display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-top:0.2rem;}
-  #flexPagination{padding:0 0.6rem 0.9rem;}
   .upgrade-pagination button{border:1px solid rgba(var(--tint-rgb),0.2); background:transparent; color:var(--ink); padding:0.35rem 0.8rem; border-radius:999px; font-size:0.78rem; font-weight:700; cursor:pointer;}
   .upgrade-pagination button:disabled{opacity:0.35; cursor:default;}
   .upgrade-pagination .page-info{font-size:0.76rem; color:var(--ink-soft); font-family:var(--font-mono);}
@@ -796,6 +828,13 @@
       <section class="panel current-panel" aria-label="Kegiatan saat ini">
         <div class="sidebar-head"><h2>Saat Ini</h2><span class="current-clock" id="currentClock"></span></div>
         <div class="current-body" id="currentActivity"></div>
+        <div class="current-overdue-wrap" id="currentOverdueWrap" hidden>
+          <button type="button" class="flex-done-toggle" id="currentOverdueToggle" aria-expanded="false">
+            <span id="currentOverdueToggleLabel">Tampilkan yang lewat</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <ul class="flex-list current-overdue-list" id="currentOverdueList" hidden></ul>
+        </div>
       </section>
 
       <section class="panel" aria-label="Pengingat mendatang" style="flex:1;">
@@ -842,11 +881,33 @@
           <input type="text" id="flexSearchInput" placeholder="Cari pengingat fleksibel…" autocomplete="off">
           <button type="button" class="search-clear" id="flexSearchClear" aria-label="Hapus pencarian">✕</button>
         </div>
-        <ul class="flex-list" id="flexibleList"></ul>
-        <div class="upgrade-pagination" id="flexPagination" hidden>
-          <button type="button" id="flexPrev">‹ Sebelumnya</button>
-          <span class="page-info" id="flexPageInfo"></span>
-          <button type="button" id="flexNext">Selanjutnya ›</button>
+        <ul class="flex-list flex-list-missed" id="flexibleListMissed"></ul>
+        <div class="flex-columns">
+          <div class="flex-column">
+            <div class="flex-column-head priority"><span class="dot"></span>Prioritas</div>
+            <ul class="flex-list" id="flexibleListPriority"></ul>
+            <div class="upgrade-pagination" id="flexPaginationPriority" hidden>
+              <button type="button" id="flexPrevPriority">‹</button>
+              <span class="page-info" id="flexPageInfoPriority"></span>
+              <button type="button" id="flexNextPriority">›</button>
+            </div>
+          </div>
+          <div class="flex-column">
+            <div class="flex-column-head"><span class="dot"></span>Standar</div>
+            <ul class="flex-list" id="flexibleListStandard"></ul>
+            <div class="upgrade-pagination" id="flexPaginationStandard" hidden>
+              <button type="button" id="flexPrevStandard">‹</button>
+              <span class="page-info" id="flexPageInfoStandard"></span>
+              <button type="button" id="flexNextStandard">›</button>
+            </div>
+          </div>
+        </div>
+        <div class="flex-done-toggle-wrap" id="flexDoneToggleWrap" hidden>
+          <button type="button" class="flex-done-toggle" id="flexDoneToggle" aria-expanded="false">
+            <span id="flexDoneToggleLabel">Tampilkan yang selesai</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <ul class="flex-list flex-list-done" id="flexibleListDone" hidden></ul>
         </div>
       </section>
     </aside>
@@ -978,6 +1039,13 @@
         <div>
           <label for="fFlexible">Tanpa tanggal — kerjakan kapan saja (fleksibel)</label>
           <p class="hint">Tidak muncul di kalender. Muncul di daftar "Fleksibel" dan bisa dicentang saat selesai.</p>
+        </div>
+      </div>
+      <div class="checkbox-field" id="fPriorityField" hidden>
+        <input type="checkbox" id="fPriority">
+        <div>
+          <label for="fPriority">Tandai sebagai prioritas</label>
+          <p class="hint">Tampil di kolom "Prioritas" pada daftar Fleksibel, terpisah dari yang standar.</p>
         </div>
       </div>
       <div id="scheduledFields">
@@ -2428,6 +2496,15 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   // batasnya secara alami).
   var currentClockEl = document.getElementById('currentClock');
   var currentActivityEl = document.getElementById('currentActivity');
+  var currentOverdueWrap = document.getElementById('currentOverdueWrap');
+  var currentOverdueToggle = document.getElementById('currentOverdueToggle');
+  var currentOverdueToggleLabel = document.getElementById('currentOverdueToggleLabel');
+  var currentOverdueList = document.getElementById('currentOverdueList');
+  var currentShowOverdue = false;
+  currentOverdueToggle.addEventListener('click', function(){
+    currentShowOverdue = !currentShowOverdue;
+    renderCurrentActivity();
+  });
   function nowHM(){ var n = new Date(); return pad2(n.getHours())+':'+pad2(n.getMinutes()); }
   function getCurrentOccurrence(){
     var todayISO = toISODate(new Date());
@@ -2440,11 +2517,80 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     }
     return { current: current, next: next, hasToday: items.length>0 };
   }
+  function getTodayOverdueItems(current){
+    var todayISO = toISODate(new Date());
+    var items = itemsForDate(todayISO); // sudah terurut naik berdasarkan jam
+    var nowTime = nowHM();
+    var out = [];
+    items.forEach(function(it){
+      if (it.time > nowTime) return; // belum waktunya
+      if (current && it.reminder.id === current.reminder.id && it.time === current.time && it.date === current.date) return; // ini yang sedang "berlangsung", sudah tampil di atas
+      var key = completionKey(it.reminder.id, it.date, it.time);
+      var checklistItemsO = checklistLines(it.reminder.notes);
+      var hasChecklistO = checklistItemsO.length > 0;
+      var doneO = hasChecklistO ? checklistAllChecked(checklistItemsO) : !!state.completions[key];
+      if (doneO) return;
+      out.push(it);
+    });
+    return out;
+  }
+  function currentOverdueItemHtml(it){
+    var c = catInfo(it.reminder.category);
+    var checklistItemsO = checklistLines(it.reminder.notes);
+    var hasChecklistO = checklistItemsO.length > 0;
+    return '<li class="flex-item" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
+      '<button type="button" class="flex-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistO?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
+        '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '</button>' +
+      '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+      '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · '+it.time+'</div>' +
+      renderChecklistHTML(it.reminder.notes) +
+      renderNotesListHTML(it.reminder.notes) +
+      '</div>' +
+      '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
+  }
+  function renderCurrentOverdue(current){
+    var overdue = getTodayOverdueItems(current);
+    if (!overdue.length){
+      currentOverdueWrap.hidden = true;
+      currentShowOverdue = false;
+      currentOverdueList.hidden = true;
+      currentOverdueList.innerHTML = '';
+      return;
+    }
+    currentOverdueWrap.hidden = false;
+    currentOverdueToggle.setAttribute('aria-expanded', currentShowOverdue ? 'true' : 'false');
+    currentOverdueToggleLabel.textContent = currentShowOverdue
+      ? 'Sembunyikan yang lewat'
+      : 'Tampilkan yang lewat (' + overdue.length + ')';
+    currentOverdueList.hidden = !currentShowOverdue;
+    if (!currentShowOverdue){
+      currentOverdueList.innerHTML = '';
+      return;
+    }
+    currentOverdueList.innerHTML = overdue.map(currentOverdueItemHtml).join('');
+    Array.prototype.forEach.call(currentOverdueList.querySelectorAll('.flex-check'), function(btn){
+      btn.addEventListener('click', function(){
+        if (btn.getAttribute('data-has-checklist') === '1'){
+          onChecklistToggleAll(btn.getAttribute('data-id'), { type:'current', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
+        } else {
+          toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+        }
+      });
+    });
+    Array.prototype.forEach.call(currentOverdueList.querySelectorAll('.edit-flex'), function(btn){
+      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+    });
+    bindChecklistClicks(currentOverdueList, function(host){
+      return { type:'current', date: host.getAttribute('data-date'), time: host.querySelector('.flex-check').getAttribute('data-time') };
+    });
+  }
   function renderCurrentActivity(){
     if (currentClockEl) currentClockEl.textContent = nowHM();
     if (!currentActivityEl) return;
     if (!currentUser){
       currentActivityEl.innerHTML = '';
+      currentOverdueWrap.hidden = true;
       return;
     }
     var res = getCurrentOccurrence();
@@ -2453,6 +2599,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         ? 'Belum ada agenda yang berjalan. Berikutnya pukul '+res.next.time+': '+escapeHTML(res.next.reminder.title)+'.'
         : (res.hasToday ? 'Semua agenda hari ini sudah lewat.' : 'Tidak ada agenda untuk hari ini.');
       currentActivityEl.innerHTML = '<div class="current-empty">'+msg+'</div>';
+      renderCurrentOverdue(res.current);
       return;
     }
     var it = res.current;
@@ -2487,6 +2634,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     bindChecklistClicks(currentActivityEl, function(host){
       return { type:'current', date: host.getAttribute('data-date'), time: it.time };
     });
+    renderCurrentOverdue(res.current);
   }
   setInterval(renderCurrentActivity, 15000);
 
@@ -2630,26 +2778,53 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
 
   // ---------- Flexible (no-date) reminders ----------
-  var flexibleList = document.getElementById('flexibleList');
-  var flexPaginationEl = document.getElementById('flexPagination');
-  var flexPageInfoEl = document.getElementById('flexPageInfo');
-  var flexPage = 0;
+  var flexibleListMissed = document.getElementById('flexibleListMissed');
+  var flexCols = {
+    priority: {
+      list: document.getElementById('flexibleListPriority'),
+      pagination: document.getElementById('flexPaginationPriority'),
+      pageInfo: document.getElementById('flexPageInfoPriority'),
+      prevBtn: document.getElementById('flexPrevPriority'),
+      nextBtn: document.getElementById('flexNextPriority'),
+      page: 0,
+      emptyMsg: 'Belum ada pengingat prioritas.'
+    },
+    standard: {
+      list: document.getElementById('flexibleListStandard'),
+      pagination: document.getElementById('flexPaginationStandard'),
+      pageInfo: document.getElementById('flexPageInfoStandard'),
+      prevBtn: document.getElementById('flexPrevStandard'),
+      nextBtn: document.getElementById('flexNextStandard'),
+      page: 0,
+      emptyMsg: 'Belum ada pengingat standar.'
+    }
+  };
   var FLEX_PAGE_SIZE = 5;
+  var flexShowDone = false;
+  var flexDoneToggleWrap = document.getElementById('flexDoneToggleWrap');
+  var flexDoneToggleBtn = document.getElementById('flexDoneToggle');
+  var flexDoneToggleLabel = document.getElementById('flexDoneToggleLabel');
+  var flexibleListDone = document.getElementById('flexibleListDone');
+  flexDoneToggleBtn.addEventListener('click', function(){
+    flexShowDone = !flexShowDone;
+    renderFlexible();
+  });
   var flexSearchQuery = '';
   var flexSearchInput = document.getElementById('flexSearchInput');
   var flexSearchBox = document.getElementById('flexSearchBox');
   var flexSearchClear = document.getElementById('flexSearchClear');
+  function resetFlexPages(){ flexCols.priority.page = 0; flexCols.standard.page = 0; }
   flexSearchInput.addEventListener('input', function(){
     flexSearchQuery = flexSearchInput.value.trim().toLowerCase();
     flexSearchBox.classList.toggle('has-value', flexSearchQuery.length > 0);
-    flexPage = 0;
+    resetFlexPages();
     renderFlexible();
   });
   flexSearchClear.addEventListener('click', function(){
     flexSearchInput.value = '';
     flexSearchQuery = '';
     flexSearchBox.classList.remove('has-value');
-    flexPage = 0;
+    resetFlexPages();
     renderFlexible();
     flexSearchInput.focus();
   });
@@ -2681,7 +2856,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     flexSortBtn.addEventListener('click', function(){
       flexSortOrder = flexSortOrder === 'desc' ? 'asc' : 'desc';
       saveFlexSort();
-      flexPage = 0;
+      resetFlexPages();
       renderFlexible();
     });
   }
@@ -2710,13 +2885,13 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     });
     document.getElementById('flexFilterAll').addEventListener('click', function(){
       state.flexFilters = CATS.map(function(c){ return c.id; });
-      flexPage = 0;
+      resetFlexPages();
       saveFlexFilters();
       renderFlexible();
     });
     document.getElementById('flexFilterNone').addEventListener('click', function(){
       state.flexFilters = [];
-      flexPage = 0;
+      resetFlexPages();
       saveFlexFilters();
       renderFlexible();
     });
@@ -2738,11 +2913,75 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         var idx = state.flexFilters.indexOf(id);
         if (idx===-1) state.flexFilters.push(id); else state.flexFilters.splice(idx,1);
         if (state.flexFilters.length===0) state.flexFilters = [id]; // minimal satu kategori tetap tampil
-        flexPage = 0;
+        resetFlexPages();
         saveFlexFilters();
         renderFlexible();
       });
     });
+  }
+
+  function flexItemIsDone(r){
+    var checklistItemsR = checklistLines(r.notes);
+    var hasChecklistR = checklistItemsR.length > 0;
+    return hasChecklistR ? checklistAllChecked(checklistItemsR) : !!r.done;
+  }
+
+  function flexItemHtml(r){
+    var c = catInfo(r.category);
+    var checklistItemsR = checklistLines(r.notes);
+    var hasChecklistR = checklistItemsR.length > 0;
+    var doneR = flexItemIsDone(r);
+    var freeText = notesFreeTextPreview(r.notes);
+    return '<li class="flex-item'+(doneR?' done':'')+(r.priority?' priority-item':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
+      '<button type="button" class="flex-check" data-id="'+r.id+'" data-has-checklist="'+(hasChecklistR?'1':'0')+'" aria-label="Tandai selesai">' +
+        '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '</button>' +
+      '<div class="body"><div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
+      '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+(freeText?' · '+escapeHTML(freeText):'')+'</div>' +
+      renderChecklistHTML(r.notes) +
+      renderNotesListHTML(r.notes) +
+      '</div>' +
+      '<div class="acts">' +
+        '<button type="button" class="icon-btn toggle-priority" aria-label="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" title="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" data-id="'+r.id+'">'+(r.priority?'★':'☆')+'</button>' +
+        '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button>' +
+      '</div></li>';
+  }
+
+  function bindFlexItemEvents(listEl){
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-check'), function(btn){
+      btn.addEventListener('click', function(){
+        if (btn.getAttribute('data-has-checklist') === '1'){
+          onChecklistToggleAll(btn.getAttribute('data-id'), { type:'flex' });
+        } else {
+          toggleFlexDone(btn.getAttribute('data-id'));
+        }
+      });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-priority'), function(btn){
+      btn.addEventListener('click', function(){ toggleFlexPriority(btn.getAttribute('data-id')); });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.edit-flex'), function(btn){
+      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+    });
+    bindChecklistClicks(listEl, function(){ return { type:'flex' }; });
+  }
+
+  function renderFlexColumn(col, itemsHtml){
+    var totalPages = Math.max(1, Math.ceil(itemsHtml.length / FLEX_PAGE_SIZE));
+    if (col.page >= totalPages) col.page = totalPages - 1;
+    if (col.page < 0) col.page = 0;
+    if (!itemsHtml.length){
+      col.list.innerHTML = '<div class="empty-state">'+col.emptyMsg+'</div>';
+      col.pagination.hidden = true;
+      return;
+    }
+    var start = col.page * FLEX_PAGE_SIZE;
+    col.list.innerHTML = itemsHtml.slice(start, start + FLEX_PAGE_SIZE).join('');
+    col.pagination.hidden = itemsHtml.length <= FLEX_PAGE_SIZE;
+    col.pageInfo.textContent = (col.page + 1) + '/' + totalPages;
+    col.prevBtn.disabled = col.page <= 0;
+    col.nextBtn.disabled = col.page >= totalPages - 1;
+    bindFlexItemEvents(col.list);
   }
 
   function renderFlexible(){
@@ -2752,113 +2991,119 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       if (!r.flexible) return false;
       if (state.flexFilters.indexOf(r.category) === -1) return false;
       if (flexSearchQuery && r.title.toLowerCase().indexOf(flexSearchQuery) === -1) return false;
+      if (flexItemIsDone(r)) return false; // sudah dicentang selesai -> otomatis disembunyikan
       return true;
     });
     var missed = getMissedItems().filter(function(it){
       return !flexSearchQuery || it.reminder.title.toLowerCase().indexOf(flexSearchQuery) !== -1;
     });
-    if (!items.length && !missed.length){
-      var hasAnyFlexible = state.reminders.some(function(r){ return r.flexible; });
-      flexibleList.innerHTML = flexSearchQuery
-        ? '<div class="empty-state">Tidak ada pengingat fleksibel yang cocok dengan "'+escapeHTML(flexSearchInput.value.trim())+'".</div>'
-        : (state.flexFilters.length === 0
-          ? '<div class="empty-state">Tidak ada kategori yang dicentang. Centang kategori di filter untuk menampilkan pengingat fleksibel.</div>'
-          : (hasAnyFlexible
-            ? '<div class="empty-state">Tidak ada pengingat fleksibel untuk kategori yang dicentang.</div>'
-            : '<div class="empty-state">Belum ada pengingat fleksibel. Cocok untuk hal yang tidak terikat tanggal.</div>'));
-      flexPaginationEl.hidden = true;
-      return;
-    }
-    // Belum selesai dulu, lalu yang sudah selesai di bawah. Di dalam tiap
-    // kelompok, urutkan berdasarkan waktu dibuat (dari id) sesuai
-    // flexSortOrder: 'desc' = terbaru→terlama, 'asc' = terlama→terbaru.
+    // Urutkan berdasarkan waktu dibuat (dari id) sesuai flexSortOrder:
+    // 'desc' = terbaru→terlama, 'asc' = terlama→terbaru.
     items.sort(function(a,b){
-      var doneDiff = (a.done?1:0) - (b.done?1:0);
-      if (doneDiff !== 0) return doneDiff;
       return flexSortOrder === 'asc' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id);
     });
-    // Yang terlewat (butuh perhatian) ditampilkan lebih dulu, di atas
-    // pengingat fleksibel biasa.
-    var missedItemsHtml = missed.map(function(it){
-      var c = catInfo(it.reminder.category);
-      var dtLabel = dayLabel(parseISODate(it.date));
-      var checklistItemsM = checklistLines(it.reminder.notes);
-      var hasChecklistM = checklistItemsM.length > 0;
-      var doneM = hasChecklistM && checklistAllChecked(checklistItemsM);
-      return '<li class="flex-item missed-item'+(doneM?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
-        '<button type="button" class="flex-check missed-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistM?'1':'0')+'" aria-label="Tandai selesai">' +
-          '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-        '</button>' +
-        '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
-        '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
-        renderChecklistHTML(it.reminder.notes) +
-        renderNotesListHTML(it.reminder.notes) +
-        '</div>' +
-        '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
-    });
-    var regularItemsHtml = items.map(function(r){
-      var c = catInfo(r.category);
-      var checklistItemsR = checklistLines(r.notes);
-      var hasChecklistR = checklistItemsR.length > 0;
-      var doneR = hasChecklistR ? checklistAllChecked(checklistItemsR) : !!r.done;
-      var freeText = notesFreeTextPreview(r.notes);
-      return '<li class="flex-item'+(doneR?' done':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
-        '<button type="button" class="flex-check" data-id="'+r.id+'" data-has-checklist="'+(hasChecklistR?'1':'0')+'" aria-label="Tandai selesai">' +
-          '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-        '</button>' +
-        '<div class="body"><div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
-        '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+(freeText?' · '+escapeHTML(freeText):'')+'</div>' +
-        renderChecklistHTML(r.notes) +
-        renderNotesListHTML(r.notes) +
-        '</div>' +
-        '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button></div></li>';
-    });
-    // Tampilkan 5 item per halaman. Kalau lebih dari 5, gunakan
-    // tombol "Sebelumnya"/"Selanjutnya" untuk pindah halaman.
-    var allFlexItems = missedItemsHtml.concat(regularItemsHtml);
-    var flexTotalPages = Math.max(1, Math.ceil(allFlexItems.length / FLEX_PAGE_SIZE));
-    if (flexPage >= flexTotalPages) flexPage = flexTotalPages - 1;
-    if (flexPage < 0) flexPage = 0;
-    var flexStart = flexPage * FLEX_PAGE_SIZE;
-    var flexPageItems = allFlexItems.slice(flexStart, flexStart + FLEX_PAGE_SIZE);
-    flexibleList.innerHTML = flexPageItems.join('');
-    flexPaginationEl.hidden = allFlexItems.length <= FLEX_PAGE_SIZE;
-    flexPageInfoEl.textContent = 'Halaman ' + (flexPage + 1) + ' dari ' + flexTotalPages;
-    document.getElementById('flexPrev').disabled = flexPage <= 0;
-    document.getElementById('flexNext').disabled = flexPage >= flexTotalPages - 1;
-    Array.prototype.forEach.call(flexibleList.querySelectorAll('.flex-check:not(.missed-check)'), function(btn){
-      btn.addEventListener('click', function(){
-        if (btn.getAttribute('data-has-checklist') === '1'){
-          onChecklistToggleAll(btn.getAttribute('data-id'), { type:'flex' });
-        } else {
-          toggleFlexDone(btn.getAttribute('data-id'));
-        }
+    // Yang terlewat (butuh perhatian) ditampilkan lebih dulu, di atas kedua kolom.
+    if (!missed.length){
+      flexibleListMissed.innerHTML = '';
+    } else {
+      flexibleListMissed.innerHTML = missed.map(function(it){
+        var c = catInfo(it.reminder.category);
+        var dtLabel = dayLabel(parseISODate(it.date));
+        var checklistItemsM = checklistLines(it.reminder.notes);
+        var hasChecklistM = checklistItemsM.length > 0;
+        var doneM = hasChecklistM && checklistAllChecked(checklistItemsM);
+        return '<li class="flex-item missed-item'+(doneM?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
+          '<button type="button" class="flex-check missed-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistM?'1':'0')+'" aria-label="Tandai selesai">' +
+            '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</button>' +
+          '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+          '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
+          renderChecklistHTML(it.reminder.notes) +
+          renderNotesListHTML(it.reminder.notes) +
+          '</div>' +
+          '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
+      }).join('');
+      Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.missed-check'), function(btn){
+        btn.addEventListener('click', function(){
+          if (btn.getAttribute('data-has-checklist') === '1'){
+            onChecklistToggleAll(btn.getAttribute('data-id'), { type:'missed', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
+          } else {
+            toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+          }
+        });
       });
-    });
-    Array.prototype.forEach.call(flexibleList.querySelectorAll('.missed-check'), function(btn){
-      btn.addEventListener('click', function(){
-        if (btn.getAttribute('data-has-checklist') === '1'){
-          onChecklistToggleAll(btn.getAttribute('data-id'), { type:'missed', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
-        } else {
-          toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
-        }
+      Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.edit-flex'), function(btn){
+        btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
       });
-    });
-    Array.prototype.forEach.call(flexibleList.querySelectorAll('.edit-flex'), function(btn){
-      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
-    });
-    bindChecklistClicks(flexibleList, function(host){
-      if (host.classList.contains('missed-item')){
+      bindChecklistClicks(flexibleListMissed, function(host){
         return { type:'missed', date: host.getAttribute('data-date'), time: host.querySelector('.missed-check').getAttribute('data-time') };
-      }
-      return { type:'flex' };
-    });
+      });
+    }
+    if (!items.length && !missed.length){
+      var hasAnyFlexible = state.reminders.some(function(r){ return r.flexible; });
+      var hasAnyUndone = state.reminders.some(function(r){ return r.flexible && !flexItemIsDone(r); });
+      var msg = flexSearchQuery
+        ? 'Tidak ada yang cocok dengan "'+escapeHTML(flexSearchInput.value.trim())+'".'
+        : (state.flexFilters.length === 0
+          ? 'Tidak ada kategori yang dicentang.'
+          : (hasAnyUndone
+            ? 'Tidak ada pengingat untuk kategori yang dicentang.'
+            : (hasAnyFlexible
+              ? 'Semua pengingat fleksibel sudah selesai. 🎉'
+              : 'Belum ada pengingat fleksibel.')));
+      flexCols.priority.list.innerHTML = '<div class="empty-state">'+msg+'</div>';
+      flexCols.priority.pagination.hidden = true;
+      flexCols.standard.list.innerHTML = '';
+      flexCols.standard.pagination.hidden = true;
+      renderFlexDoneSection();
+      return;
+    }
+    var priorityItemsHtml = items.filter(function(r){ return !!r.priority; }).map(flexItemHtml);
+    var standardItemsHtml = items.filter(function(r){ return !r.priority; }).map(flexItemHtml);
+    renderFlexColumn(flexCols.priority, priorityItemsHtml);
+    renderFlexColumn(flexCols.standard, standardItemsHtml);
+    renderFlexDoneSection();
   }
-  document.getElementById('flexPrev').addEventListener('click', function(){
-    if (flexPage > 0){ flexPage--; renderFlexible(); }
+  // ---------- Selesai (disembunyikan otomatis) — bisa ditampilkan lagi ----------
+  function renderFlexDoneSection(){
+    var doneItems = state.reminders.filter(function(r){
+      if (!r.flexible) return false;
+      if (state.flexFilters.indexOf(r.category) === -1) return false;
+      if (flexSearchQuery && r.title.toLowerCase().indexOf(flexSearchQuery) === -1) return false;
+      return flexItemIsDone(r);
+    });
+    doneItems.sort(function(a,b){ return b.id.localeCompare(a.id); });
+    if (!doneItems.length){
+      flexDoneToggleWrap.hidden = true;
+      flexShowDone = false;
+      flexibleListDone.hidden = true;
+      flexibleListDone.innerHTML = '';
+      return;
+    }
+    flexDoneToggleWrap.hidden = false;
+    flexDoneToggleBtn.setAttribute('aria-expanded', flexShowDone ? 'true' : 'false');
+    flexDoneToggleLabel.textContent = flexShowDone
+      ? 'Sembunyikan yang selesai'
+      : 'Tampilkan yang selesai (' + doneItems.length + ')';
+    flexibleListDone.hidden = !flexShowDone;
+    if (flexShowDone){
+      flexibleListDone.innerHTML = doneItems.map(flexItemHtml).join('');
+      bindFlexItemEvents(flexibleListDone);
+    } else {
+      flexibleListDone.innerHTML = '';
+    }
+  }
+  flexCols.priority.prevBtn.addEventListener('click', function(){
+    if (flexCols.priority.page > 0){ flexCols.priority.page--; renderFlexible(); }
   });
-  document.getElementById('flexNext').addEventListener('click', function(){
-    flexPage++; renderFlexible();
+  flexCols.priority.nextBtn.addEventListener('click', function(){
+    flexCols.priority.page++; renderFlexible();
+  });
+  flexCols.standard.prevBtn.addEventListener('click', function(){
+    if (flexCols.standard.page > 0){ flexCols.standard.page--; renderFlexible(); }
+  });
+  flexCols.standard.nextBtn.addEventListener('click', function(){
+    flexCols.standard.page++; renderFlexible();
   });
   function toggleFlexDone(id){
     var r = state.reminders.find(function(x){ return x.id===id; });
@@ -2867,6 +3112,15 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     saveReminderToCloud(updated).catch(function(err){
       console.error(err);
       showToast('Gagal memperbarui status. Coba lagi.');
+    });
+  }
+  function toggleFlexPriority(id){
+    var r = state.reminders.find(function(x){ return x.id===id; });
+    if (!r) return;
+    var updated = Object.assign({}, r, { priority: !r.priority });
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal memperbarui prioritas. Coba lagi.');
     });
   }
 
@@ -2908,10 +3162,13 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   fUntilEl.addEventListener('change', function(){ updateDateDisplay(fUntilEl, fUntilDisplay); });
   var selectedCat = CATS[0].id;
 
+  var fPriority = document.getElementById('fPriority');
+  var fPriorityField = document.getElementById('fPriorityField');
   function toggleFlexibleUI(isFlexible){
     scheduledFields.style.display = isFlexible ? 'none' : 'block';
     fDateEl.required = !isFlexible;
     fTimeEl.required = !isFlexible;
+    fPriorityField.hidden = !isFlexible;
   }
   fFlexible.addEventListener('change', function(){ toggleFlexibleUI(fFlexible.checked); });
 
@@ -3049,6 +3306,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     fTimeHoliday.value = '09:00';
     document.getElementById('fLink').value = '';
     fFlexible.checked = false;
+    fPriority.checked = false;
     toggleFlexibleUI(false);
     resetNotesToolbar();
     formOverlay.hidden = false;
@@ -3089,6 +3347,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       setNotesFmtMode(info.type === 'none' ? 'none' : info.type);
     })();
     fFlexible.checked = !!r.flexible;
+    fPriority.checked = !!r.priority;
     toggleFlexibleUI(!!r.flexible);
     formOverlay.hidden = false;
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
@@ -3112,6 +3371,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         title: document.getElementById('fTitle').value.trim(),
         category: selectedCat,
         flexible: true,
+        priority: fPriority.checked,
         done: existing ? !!existing.done : false,
         date: null,
         time: null,
@@ -3134,6 +3394,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         title: document.getElementById('fTitle').value.trim(),
         category: selectedCat,
         flexible: false,
+        priority: false,
         done: null,
         date: document.getElementById('fDate').value,
         time: baseTime,
