@@ -277,8 +277,12 @@
   .up-item .dot{width:8px; height:8px; border-radius:50%; margin-top:5px; flex:none;}
   .up-item .body{flex:1; min-width:0;}
   .up-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
+  .up-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
   .up-item .meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
   .up-item .acts{display:flex; gap:0.3rem; flex:none;}
+  .up-badge{display:inline-block; margin-top:0.32rem; font-size:0.64rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:999px; letter-spacing:0.02em;}
+  .up-badge.done{background:rgba(63,102,89,0.15); color:var(--moss-deep);}
+  .up-badge.ongoing{background:rgba(227,169,124,0.25); color:var(--amber-deep);}
   .icon-btn{
     width:24px; height:24px; border-radius:6px; border:none; background:transparent; color:var(--ink-soft);
     cursor:pointer; display:flex; align-items:center; justify-content:center;
@@ -286,6 +290,31 @@
   .icon-btn:hover{background:var(--line-soft); color:var(--ink);}
   .empty-state{padding:1.5rem 1.1rem; text-align:center; color:var(--ink-soft); font-size:0.85rem;}
   .empty-state svg{width:40px; height:40px; margin-bottom:0.5rem; opacity:0.6;}
+
+  /* ---------- "Saat Ini" (current activity) panel ---------- */
+  .current-clock{font-family:var(--font-mono); font-size:0.8rem; color:var(--ink-soft); letter-spacing:0.02em;}
+  .current-body{padding:0 0.9rem 1rem;}
+  .current-item{
+    display:flex; align-items:flex-start; gap:0.65rem; padding:0.75rem 0.75rem; border-radius:13px;
+    background:var(--selected-bg); border:1px solid var(--line);
+  }
+  .current-check{
+    width:23px; height:23px; border-radius:7px; border:1.5px solid var(--line); background:var(--paper-raised); flex:none;
+    margin-top:1px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .current-check svg{width:14px; height:14px; opacity:0; transition:opacity 0.1s ease;}
+  .current-item.done .current-check{background:var(--moss); border-color:var(--moss);}
+  .current-item.done .current-check svg{opacity:1;}
+  .current-item .body{flex:1; min-width:0;}
+  .current-item .cat-line{display:flex; align-items:center; gap:0.35rem; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); font-weight:700; margin-bottom:0.15rem;}
+  .current-item .cat-line .dot{width:7px; height:7px; border-radius:50%; flex:none;}
+  .current-item .title{font-size:0.98rem; font-weight:700; line-height:1.32; word-break:break-word;}
+  .current-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:600;}
+  .current-item .meta{font-size:0.76rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:0.3rem;}
+  .current-empty{
+    padding:0.85rem 0.9rem; text-align:left; color:var(--ink-soft); font-size:0.84rem;
+    background:var(--surface); border:1px dashed var(--line); border-radius:13px; margin:0 0.9rem 1rem;
+  }
 
   /* ---------- Flexible (no-date) reminders ---------- */
   .flex-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:320px; overflow:auto;}
@@ -306,6 +335,7 @@
   .flex-item .meta{font-size:0.72rem; color:var(--ink-soft); margin-top:2px; display:flex; align-items:center; gap:0.3rem;}
   .flex-item .meta .dot{width:6px; height:6px; border-radius:50%; flex:none;}
   .flex-item .acts{display:flex; gap:0.3rem; flex:none;}
+  .flex-item.missed-item{background:var(--notice-bg); border-color:var(--notice-border);}
 
   .checkbox-field{
     display:flex; align-items:flex-start; gap:0.55rem; background:var(--surface); border:1px solid var(--line);
@@ -454,6 +484,7 @@
     .field input, .field select, .field textarea{ font-size:0.9rem; }
   }
   .field textarea{resize:vertical; min-height:60px;}
+  #upgradeDesc{resize:vertical; min-height:80px; overflow-y:auto;}
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .cat-options{display:flex; flex-wrap:wrap; gap:0.4rem;}
   .cat-option{
@@ -628,6 +659,11 @@
     </section>
 
     <aside class="sidebar view-section" data-view="dashboard" aria-label="Dashboard">
+      <section class="panel current-panel" aria-label="Kegiatan saat ini">
+        <div class="sidebar-head"><h2>Saat Ini</h2><span class="current-clock" id="currentClock"></span></div>
+        <div class="current-body" id="currentActivity"></div>
+      </section>
+
       <section class="panel" aria-label="Pengingat mendatang" style="flex:1;">
         <div class="sidebar-head"><h2>Mendatang</h2></div>
         <ul class="upcoming-list" id="upcomingList"></ul>
@@ -867,7 +903,7 @@
       </div>
       <div class="field">
         <label for="upgradeDesc">Keterangan (opsional)</label>
-        <textarea id="upgradeDesc" maxlength="240" placeholder="Detail rencana upgrade…"></textarea>
+        <textarea id="upgradeDesc" placeholder="Detail rencana upgrade…" rows="3"></textarea>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger" id="deleteUpgradeBtn" style="display:none;">Hapus</button>
@@ -1065,7 +1101,8 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     reminders: [],
     viewDate: new Date(),
     activeFilters: loadFilters(),
-    dayPanelDate: null
+    dayPanelDate: null,
+    completions: {}
   };
 
   // ---------- Firestore-backed reminder storage (per signed-in user) ----------
@@ -1121,6 +1158,54 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     return setDoc(categoriesDocRef(), { list: list });
   }
   function catUid(){ return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+  // ---------- Firestore-backed completion status for "Saat Ini" ----------
+  // Menyimpan status "sudah dilakukan" per kemunculan (reminderId + tanggal),
+  // supaya pengingat berulang tidak selamanya tercentang. Disimpan sebagai
+  // satu dokumen berisi map kecil (bukan koleksi terpisah) dan dibersihkan
+  // dari entri yang lebih tua dari 3 hari setiap kali disimpan.
+  var unsubscribeCompletions = null;
+  function completionsDocRef(){
+    return doc(db, 'users', currentUser.uid, 'settings', 'completions');
+  }
+  function subscribeCompletions(){
+    if (unsubscribeCompletions) unsubscribeCompletions();
+    unsubscribeCompletions = onSnapshot(completionsDocRef(), function(snap){
+      state.completions = (snap.exists() && snap.data().map) ? snap.data().map : {};
+      renderCurrentActivity();
+    }, function(err){
+      console.error('Firestore completions sync error', err);
+    });
+  }
+  function saveCompletionsToCloud(map){
+    return setDoc(completionsDocRef(), { map: map });
+  }
+  function pruneOldCompletions(map){
+    var cutoff = toISODate(new Date(Date.now() - 3*86400000));
+    var out = {};
+    Object.keys(map).forEach(function(key){
+      var parts = key.split('|'); // reminderId|date|time
+      var date = parts[1];
+      if (date && date >= cutoff) out[key] = map[key];
+    });
+    return out;
+  }
+  function completionKey(reminderId, dateStr, time){ return reminderId + '|' + dateStr + '|' + time; }
+  function toggleCompletion(reminderId, dateStr, time){
+    if (!currentUser) return;
+    var key = completionKey(reminderId, dateStr, time);
+    var next = Object.assign({}, state.completions);
+    if (next[key]) delete next[key]; else next[key] = true;
+    next = pruneOldCompletions(next);
+    state.completions = next;
+    renderCurrentActivity();
+    renderUpcoming();
+    renderFlexible();
+    saveCompletionsToCloud(next).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan status. Coba lagi.');
+    });
+  }
   // Menjaga agar filter kategori aktif tetap konsisten dengan daftar kategori
   // yang ada saat ini (buang id yang sudah dihapus, tampilkan kategori baru
   // secara default).
@@ -1791,6 +1876,14 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   var upgradeDescEl = document.getElementById('upgradeDesc');
   var deleteUpgradeBtn = document.getElementById('deleteUpgradeBtn');
 
+  // Textarea "Keterangan" tumbuh mengikuti panjang ketikan, supaya seluruh
+  // teks langsung terlihat tanpa perlu scroll di dalam kotaknya.
+  function autoGrowUpgradeDesc(){
+    upgradeDescEl.style.height = 'auto';
+    upgradeDescEl.style.height = upgradeDescEl.scrollHeight + 'px';
+  }
+  upgradeDescEl.addEventListener('input', autoGrowUpgradeDesc);
+
   function openAddUpgradeForm(){
     document.getElementById('upgradeFormTitle').textContent = 'Item upgrade baru';
     document.getElementById('upgradeId').value = '';
@@ -1798,7 +1891,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     upgradeDescEl.value = '';
     deleteUpgradeBtn.style.display = 'none';
     upgradeFormOverlay.hidden = false;
-    setTimeout(function(){ upgradeTitleEl.focus(); }, 30);
+    setTimeout(function(){ upgradeTitleEl.focus(); autoGrowUpgradeDesc(); }, 30);
   }
   function openEditUpgradeForm(id){
     var it = UPGRADES.find(function(x){ return x.id===id; });
@@ -1809,7 +1902,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     upgradeDescEl.value = it.desc || '';
     deleteUpgradeBtn.style.display = '';
     upgradeFormOverlay.hidden = false;
-    setTimeout(function(){ upgradeTitleEl.focus(); }, 30);
+    setTimeout(function(){ upgradeTitleEl.focus(); autoGrowUpgradeDesc(); }, 30);
   }
   function closeUpgradeForm(){ upgradeFormOverlay.hidden = true; }
   document.getElementById('addUpgradeBtn').addEventListener('click', openAddUpgradeForm);
@@ -1859,6 +1952,64 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     });
   }
 
+  // ---------- "Saat Ini" (current activity) ----------
+  // Sebuah pengingat dianggap "sedang berlangsung" mulai dari jam
+  // kemunculannya sampai kemunculan berikutnya hari itu dimulai (pengingat
+  // di app ini tidak punya jam selesai, jadi kemunculan berikutnya menjadi
+  // batasnya secara alami).
+  var currentClockEl = document.getElementById('currentClock');
+  var currentActivityEl = document.getElementById('currentActivity');
+  function nowHM(){ var n = new Date(); return pad2(n.getHours())+':'+pad2(n.getMinutes()); }
+  function getCurrentOccurrence(){
+    var todayISO = toISODate(new Date());
+    var items = itemsForDate(todayISO); // sudah terurut naik berdasarkan jam
+    var nowTime = nowHM();
+    var current = null, next = null;
+    for (var i=0; i<items.length; i++){
+      if (items[i].time <= nowTime) current = items[i];
+      else { next = items[i]; break; }
+    }
+    return { current: current, next: next, hasToday: items.length>0 };
+  }
+  function renderCurrentActivity(){
+    if (currentClockEl) currentClockEl.textContent = nowHM();
+    if (!currentActivityEl) return;
+    if (!currentUser){
+      currentActivityEl.innerHTML = '';
+      return;
+    }
+    var res = getCurrentOccurrence();
+    if (!res.current){
+      var msg = res.next
+        ? 'Belum ada agenda yang berjalan. Berikutnya pukul '+res.next.time+': '+escapeHTML(res.next.reminder.title)+'.'
+        : (res.hasToday ? 'Semua agenda hari ini sudah lewat.' : 'Tidak ada agenda untuk hari ini.');
+      currentActivityEl.innerHTML = '<div class="current-empty">'+msg+'</div>';
+      return;
+    }
+    var it = res.current;
+    var c = catInfo(it.reminder.category);
+    var key = completionKey(it.reminder.id, it.date, it.time);
+    var done = !!state.completions[key];
+    currentActivityEl.innerHTML =
+      '<div class="current-item'+(done?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+        '<button type="button" class="current-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" aria-label="Tandai sudah dilakukan">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<div class="body">' +
+          '<div class="cat-line"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</div>' +
+          '<div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
+          '<div class="meta">Mulai '+it.time+' · '+repeatLabel(it.reminder)+(res.next ? ' · berikutnya '+res.next.time : '')+'</div>' +
+        '</div>' +
+      '</div>';
+    var checkBtn = currentActivityEl.querySelector('.current-check');
+    if (checkBtn){
+      checkBtn.addEventListener('click', function(){
+        toggleCompletion(checkBtn.getAttribute('data-id'), checkBtn.getAttribute('data-date'), checkBtn.getAttribute('data-time'));
+      });
+    }
+  }
+  setInterval(renderCurrentActivity, 15000);
+
   // ---------- Upcoming list ----------
   var upcomingList = document.getElementById('upcomingList');
   var TIME_PERIOD_ORDER = ['Dini hari','Pagi hari','Siang hari','Sore hari','Malam hari'];
@@ -1891,6 +2042,10 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       upcomingList.innerHTML = '<div class="empty-state">Tidak ada pengingat dalam 14 hari ke depan untuk kategori yang dipilih.</div>';
       return;
     }
+    // Item "saat ini" (kalau ada) dipakai untuk menandai satu kemunculan hari
+    // ini sebagai "Berlangsung" — sama seperti yang ditampilkan di panel
+    // "Saat Ini" di atas, supaya keduanya selalu sinkron.
+    var cur = getCurrentOccurrence();
     var html = '';
     groups.forEach(function(g){
       var label = dayLabel(g.dt);
@@ -1907,10 +2062,16 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         html += '<div class="up-subgroup-label">'+period+'</div>';
         list.forEach(function(it){
           var c = catInfo(it.reminder.category);
-          html += '<li class="up-item" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+          var key = completionKey(it.reminder.id, it.date, it.time);
+          var isDone = !!state.completions[key];
+          var isOngoing = !isDone && cur.current && cur.current.reminder.id===it.reminder.id &&
+            cur.current.date===it.date && cur.current.time===it.time;
+          var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
+            : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
+          html += '<li class="up-item'+(isDone?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
             '<span class="dot" style="background:'+c.hex+'"></span>' +
             '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
-            '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div></div>' +
+            '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge+'</div>' +
             '<div class="acts">' +
               '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button>' +
             '</div></li>';
@@ -1926,19 +2087,60 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     });
   }
 
+  // ---------- Missed (overdue, not-daily) occurrences → surfaced in Fleksibel ----------
+  // Kalau sampai hari itu berakhir sebuah kemunculan belum ditandai selesai,
+  // dan jenis pengulangannya BUKAN harian (harian pasti muncul lagi besok,
+  // jadi tidak perlu ditumpuk di Fleksibel), kemunculan itu ikut tampil di
+  // daftar Fleksibel sampai ditandai selesai dari sana. Jendela pencarian
+  // dibatasi selaras dengan masa penyimpanan status selesai (3 hari).
+  var MISSED_LOOKBACK_DAYS = 3;
+  function getMissedItems(){
+    var out = [];
+    var today = new Date();
+    for (var i=1; i<=MISSED_LOOKBACK_DAYS; i++){
+      var dt = new Date(today.getFullYear(), today.getMonth(), today.getDate()-i);
+      var dateStr = toISODate(dt);
+      state.reminders.forEach(function(r){
+        if (r.flexible || r.repeat === 'daily') return;
+        if (state.activeFilters.indexOf(r.category) === -1) return;
+        var times = occurrencesOnDate(r, dateStr);
+        times.forEach(function(t){
+          var key = completionKey(r.id, dateStr, t);
+          if (!state.completions[key]) out.push({ reminder:r, time:t, date:dateStr });
+        });
+      });
+    }
+    out.sort(function(a,b){ return a.date===b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date); });
+    return out;
+  }
+
   // ---------- Flexible (no-date) reminders ----------
   var flexibleList = document.getElementById('flexibleList');
   function renderFlexible(){
     var items = state.reminders.filter(function(r){
       return r.flexible && state.activeFilters.indexOf(r.category) !== -1;
     });
-    if (!items.length){
+    var missed = getMissedItems();
+    if (!items.length && !missed.length){
       flexibleList.innerHTML = '<div class="empty-state">Belum ada pengingat fleksibel. Cocok untuk hal yang tidak terikat tanggal.</div>';
       return;
     }
     // Belum selesai dulu, lalu yang sudah selesai di bawah.
     items.sort(function(a,b){ return (a.done?1:0) - (b.done?1:0); });
-    flexibleList.innerHTML = items.map(function(r){
+    // Yang terlewat (butuh perhatian) ditampilkan lebih dulu, di atas
+    // pengingat fleksibel biasa.
+    var missedHtml = missed.map(function(it){
+      var c = catInfo(it.reminder.category);
+      var dtLabel = dayLabel(parseISODate(it.date));
+      return '<li class="flex-item missed-item" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+        '<button type="button" class="flex-check missed-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" aria-label="Tandai selesai">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
+        '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div></div>' +
+        '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
+    }).join('');
+    var regularHtml = items.map(function(r){
       var c = catInfo(r.category);
       return '<li class="flex-item'+(r.done?' done':'')+'" data-id="'+r.id+'">' +
         '<button type="button" class="flex-check" data-id="'+r.id+'" aria-label="Tandai selesai">' +
@@ -1948,8 +2150,14 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+(r.notes?' · '+escapeHTML(r.notes):'')+'</div></div>' +
         '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button></div></li>';
     }).join('');
-    Array.prototype.forEach.call(flexibleList.querySelectorAll('.flex-check'), function(btn){
+    flexibleList.innerHTML = missedHtml + regularHtml;
+    Array.prototype.forEach.call(flexibleList.querySelectorAll('.flex-check:not(.missed-check)'), function(btn){
       btn.addEventListener('click', function(){ toggleFlexDone(btn.getAttribute('data-id')); });
+    });
+    Array.prototype.forEach.call(flexibleList.querySelectorAll('.missed-check'), function(btn){
+      btn.addEventListener('click', function(){
+        toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+      });
     });
     Array.prototype.forEach.call(flexibleList.querySelectorAll('.edit-flex'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
@@ -1971,6 +2179,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     var diff = Math.round((new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()) - t0) / 86400000);
     if (diff===0) return 'Hari ini';
     if (diff===1) return 'Besok';
+    if (diff===-1) return 'Kemarin';
     var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     return days[dt.getDay()] + ', ' + dt.getDate() + ' ' + MONTH_NAMES[dt.getMonth()];
   }
@@ -2427,12 +2636,15 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       subscribeReminders();
       subscribeCategories();
       subscribeUpgrades();
+      subscribeCompletions();
       refreshNotifyBanner();
     } else {
       if (unsubscribeReminders){ unsubscribeReminders(); unsubscribeReminders = null; }
       if (unsubscribeCategories){ unsubscribeCategories(); unsubscribeCategories = null; }
       if (unsubscribeUpgrades){ unsubscribeUpgrades(); unsubscribeUpgrades = null; }
+      if (unsubscribeCompletions){ unsubscribeCompletions(); unsubscribeCompletions = null; }
       state.reminders = [];
+      state.completions = {};
       CATS = DEFAULT_CATS.slice();
       UPGRADES = [];
       upgradePage = 0;
@@ -2506,6 +2718,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     renderCalendar();
     renderCategorySettings();
     renderUpgradeSettings();
+    renderCurrentActivity();
     renderUpcoming();
     renderFlexible();
   }
