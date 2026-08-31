@@ -38,7 +38,7 @@
     --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0; overflow-x:hidden;}
   body{
     background:var(--paper);
     color:var(--ink);
@@ -155,7 +155,7 @@
   }
   .day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
   .day-cell{
-    min-height:96px; border-radius:10px; background:#FBFAF5; border:1px solid var(--line-soft);
+    min-height:96px; min-width:0; border-radius:10px; background:#FBFAF5; border:1px solid var(--line-soft);
     padding:0.4rem 0.4rem 0.35rem; cursor:pointer; text-align:left; display:flex; flex-direction:column;
     gap:0.3rem; transition:box-shadow 0.12s ease, border-color 0.12s ease;
   }
@@ -168,10 +168,10 @@
     width:16px; height:16px; border-radius:50%; background:var(--amber); position:relative; flex:none;
   }
   .pin::after{content:""; position:absolute; inset:4.5px; border-radius:50%; background:#3E2A18;}
-  .day-items{display:flex; flex-direction:column; gap:2px; overflow:hidden;}
+  .day-items{display:flex; flex-direction:column; gap:2px; overflow:hidden; min-width:0;}
   .chip{
     display:flex; align-items:center; gap:0.3rem; font-size:0.68rem; padding:2px 5px; border-radius:6px;
-    background:var(--line-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    background:var(--line-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;
   }
   .chip .dot{width:6px; height:6px; border-radius:50%; flex:none;}
   .chip .t{font-family:var(--font-mono); color:var(--ink-soft); flex:none;}
@@ -209,6 +209,78 @@
   .icon-btn:hover{background:var(--line-soft); color:var(--ink);}
   .empty-state{padding:1.5rem 1.1rem; text-align:center; color:var(--ink-soft); font-size:0.85rem;}
   .empty-state svg{width:40px; height:40px; margin-bottom:0.5rem; opacity:0.6;}
+
+  /* ---------- Flexible (no-date) reminders ---------- */
+  .flex-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:320px; overflow:auto;}
+  .flex-item{
+    display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:#FBFAF5;
+    border:1px solid var(--line-soft);
+  }
+  .flex-check{
+    width:19px; height:19px; border-radius:6px; border:1.5px solid var(--line); background:#fff; flex:none;
+    margin-top:1px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .flex-check svg{width:12px; height:12px; opacity:0; transition:opacity 0.1s ease;}
+  .flex-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
+  .flex-item.done .flex-check svg{opacity:1;}
+  .flex-item .body{flex:1; min-width:0;}
+  .flex-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
+  .flex-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
+  .flex-item .meta{font-size:0.72rem; color:var(--ink-soft); margin-top:2px; display:flex; align-items:center; gap:0.3rem;}
+  .flex-item .meta .dot{width:6px; height:6px; border-radius:50%; flex:none;}
+  .flex-item .acts{display:flex; gap:0.3rem; flex:none;}
+
+  .checkbox-field{
+    display:flex; align-items:flex-start; gap:0.55rem; background:#FBFAF5; border:1px solid var(--line);
+    border-radius:10px; padding:0.6rem 0.7rem; margin-bottom:0.9rem;
+  }
+  .checkbox-field input[type="checkbox"]{width:auto; margin:2px 0 0;}
+  .checkbox-field label{font-size:0.82rem; font-weight:600; color:var(--ink); margin:0; cursor:pointer;}
+  .checkbox-field .hint{margin:0.15rem 0 0;}
+
+  /* ---------- Mobile tab navigation (Dashboard / Kalender / Pengaturan) ---------- */
+  .bottom-nav{
+    display:none;
+    position:fixed; left:0; right:0; bottom:0; z-index:40;
+    background:var(--paper-raised); border-top:1px solid var(--line);
+    padding:0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom));
+    justify-content:space-around; align-items:stretch; gap:0.25rem;
+    box-shadow:0 -6px 20px -14px rgba(74,64,56,0.3);
+  }
+  .nav-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.2rem;
+    border:none; background:transparent; color:var(--ink-soft); font-size:0.66rem; font-weight:700;
+    padding:0.4rem 0.2rem; border-radius:12px; cursor:pointer; position:relative;
+  }
+  .nav-btn svg{width:20px; height:20px;}
+  .nav-btn.active{color:var(--moss-deep); background:#EEF3F0;}
+  .nav-btn .nav-dot{
+    position:absolute; top:2px; right:calc(50% - 15px); width:7px; height:7px; border-radius:50%;
+    background:var(--amber-deep); border:1.5px solid var(--paper-raised); display:none;
+  }
+  .nav-btn .nav-dot.show{display:block;}
+
+  /* ---------- Settings (Pengaturan) view ---------- */
+  .settings-panel{display:none; padding:0.3rem 0.2rem 1rem;}
+  .settings-block{padding:1rem 1.1rem; border-bottom:1px solid var(--line-soft);}
+  .settings-block:last-child{border-bottom:none;}
+  .settings-block h2{font-family:var(--font-display); font-size:1.02rem; margin:0 0 0.6rem; font-weight:600;}
+  .settings-account-email{font-size:0.9rem; font-weight:600; margin:0 0 0.7rem; word-break:break-word;}
+  .settings-block .btn{margin-top:0.2rem;}
+  .settings-status{font-size:0.78rem; color:var(--ink-soft); margin:0 0 0.6rem;}
+
+  @media (max-width:859px){
+    body{padding-bottom:5.5rem;}
+    .bottom-nav{display:flex;}
+    .view-section{display:none;}
+    .view-section.active{display:block;}
+    .sidebar.view-section.active{display:flex;}
+    .settings-panel.active{display:block;}
+    body:not([data-view="calendar"]) .month-nav{display:none;}
+    body:not([data-view="dashboard"]) .add-btn{display:none;}
+    body[data-view="settings"] .toolbar{display:none;}
+    .account-chip{display:none !important;}
+  }
 
   /* ---------- Modal ---------- */
   .overlay{
@@ -399,17 +471,22 @@
   </div>
 
   <div class="layout">
-    <section class="panel calendar" aria-label="Kalender">
+    <section class="panel calendar view-section" data-view="calendar" aria-label="Kalender">
       <div class="weekday-row">
         <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
       </div>
       <div class="day-grid" id="dayGrid"></div>
     </section>
 
-    <aside class="sidebar">
+    <aside class="sidebar view-section" data-view="dashboard" aria-label="Dashboard">
       <section class="panel" aria-label="Filter kategori">
         <div class="sidebar-head"><h2>Kategori</h2></div>
         <div class="filter-row" id="filterRow"></div>
+      </section>
+
+      <section class="panel" aria-label="Pengingat fleksibel">
+        <div class="sidebar-head"><h2>Fleksibel</h2></div>
+        <ul class="flex-list" id="flexibleList"></ul>
       </section>
 
       <section class="panel" aria-label="Pengingat mendatang" style="flex:1;">
@@ -418,7 +495,45 @@
       </section>
     </aside>
   </div>
+
+  <section class="panel view-section settings-panel" data-view="settings" aria-label="Pengaturan">
+    <div class="settings-block">
+      <h2>Akun</h2>
+      <p class="settings-account-email" id="settingsEmail">—</p>
+      <button type="button" class="btn btn-danger" id="logoutBtnSettings">Keluar</button>
+    </div>
+    <div class="settings-block">
+      <h2>Notifikasi</h2>
+      <p class="settings-status" id="settingsNotifyStatus">Memeriksa status izin…</p>
+      <button type="button" class="btn btn-primary" id="enableNotifySettings">Aktifkan notifikasi</button>
+    </div>
+    <div class="settings-block">
+      <h2>Aplikasi</h2>
+      <p class="settings-status">Pasang EssentiaPath di layar utama untuk akses lebih cepat, seperti aplikasi biasa.</p>
+      <button type="button" class="btn btn-ghost" id="installBtnSettings">Pasang aplikasi</button>
+    </div>
+    <div class="settings-block">
+      <h2>Tentang</h2>
+      <p class="settings-status">Pengingat Anda tersimpan di akun Firebase Anda dan hanya bisa diakses setelah masuk dengan email &amp; kata sandi.</p>
+    </div>
+  </section>
 </main>
+
+<nav class="bottom-nav" id="bottomNav" aria-label="Navigasi utama">
+  <button type="button" class="nav-btn active" data-view="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Dashboard</span>
+  </button>
+  <button type="button" class="nav-btn" data-view="calendar">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="14.5" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>Kalender</span>
+  </button>
+  <button type="button" class="nav-btn" data-view="settings">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.9 4.9l1.55 1.55M17.55 17.55l1.55 1.55M3 12h2.2M18.8 12H21M4.9 19.1l1.55-1.55M17.55 6.45l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>Pengaturan</span>
+    <span class="nav-dot" id="settingsNavDot"></span>
+  </button>
+</nav>
 
 <footer>Pengingat Anda tersimpan di akun Firebase Anda dan hanya bisa diakses setelah masuk dengan email &amp; kata sandi.</footer>
 
@@ -436,44 +551,53 @@
         <label>Kategori</label>
         <div class="cat-options" id="catOptions"></div>
       </div>
-      <div class="row-2">
-        <div class="field">
-          <label for="fDate">Tanggal mulai</label>
-          <input type="date" id="fDate" required>
-        </div>
-        <div class="field">
-          <label for="fTime">Waktu</label>
-          <input type="time" id="fTime" required>
+      <div class="checkbox-field">
+        <input type="checkbox" id="fFlexible">
+        <div>
+          <label for="fFlexible">Tanpa tanggal — kerjakan kapan saja (fleksibel)</label>
+          <p class="hint">Tidak muncul di kalender. Muncul di daftar "Fleksibel" dan bisa dicentang saat selesai.</p>
         </div>
       </div>
-      <div class="field">
-        <label for="fRepeat">Ulangi</label>
-        <select id="fRepeat">
-          <option value="none">Tidak berulang</option>
-          <option value="hourly">Tiap beberapa jam</option>
-          <option value="daily">Harian</option>
-          <option value="weekday">Hari kerja (Sen–Jum)</option>
-          <option value="weekend">Akhir pekan (Sab–Min)</option>
-          <option value="biweekly">Dua mingguan</option>
-          <option value="monthly">Bulanan</option>
-          <option value="quarterly">Triwulanan (tiap 3 bulan)</option>
-          <option value="annually">Tahunan</option>
-        </select>
-      </div>
-      <div class="row-2" id="hourlyRow" style="display:none;">
-        <div class="field">
-          <label for="fHourly">Setiap berapa jam</label>
-          <input type="number" id="fHourly" min="1" max="23" value="4">
+      <div id="scheduledFields">
+        <div class="row-2">
+          <div class="field">
+            <label for="fDate">Tanggal mulai</label>
+            <input type="date" id="fDate">
+          </div>
+          <div class="field">
+            <label for="fTime">Waktu</label>
+            <input type="time" id="fTime">
+          </div>
         </div>
         <div class="field">
-          <label>&nbsp;</label>
-          <p class="hint" style="margin-top:0.6rem;">Mulai dari waktu di atas, diulang tiap N jam setiap harinya.</p>
+          <label for="fRepeat">Ulangi</label>
+          <select id="fRepeat">
+            <option value="none">Tidak berulang</option>
+            <option value="hourly">Tiap beberapa jam</option>
+            <option value="daily">Harian</option>
+            <option value="weekday">Hari kerja (Sen–Jum)</option>
+            <option value="weekend">Akhir pekan (Sab–Min)</option>
+            <option value="biweekly">Dua mingguan</option>
+            <option value="monthly">Bulanan</option>
+            <option value="quarterly">Triwulanan (tiap 3 bulan)</option>
+            <option value="annually">Tahunan</option>
+          </select>
         </div>
-      </div>
-      <div class="field" id="untilRow">
-        <label for="fUntil">Berakhir pada (opsional)</label>
-        <input type="date" id="fUntil">
-        <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
+        <div class="row-2" id="hourlyRow" style="display:none;">
+          <div class="field">
+            <label for="fHourly">Setiap berapa jam</label>
+            <input type="number" id="fHourly" min="1" max="23" value="4">
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <p class="hint" style="margin-top:0.6rem;">Mulai dari waktu di atas, diulang tiap N jam setiap harinya.</p>
+          </div>
+        </div>
+        <div class="field" id="untilRow">
+          <label for="fUntil">Berakhir pada (opsional)</label>
+          <input type="date" id="fUntil">
+          <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
+        </div>
       </div>
       <div class="field">
         <label for="fNotes">Catatan (opsional)</label>
@@ -603,6 +727,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
 
   // ---------- Recurrence engine ----------
   function occurrencesOnDate(r, dateStr){
+    if (r.flexible || !r.date) return [];
     var d = parseISODate(dateStr);
     var start = parseISODate(r.date);
     if (d < start) return [];
@@ -749,6 +874,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         renderFilters();
         renderCalendar();
         renderUpcoming();
+        renderFlexible();
       });
     });
   }
@@ -798,6 +924,45 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     });
   }
 
+  // ---------- Flexible (no-date) reminders ----------
+  var flexibleList = document.getElementById('flexibleList');
+  function renderFlexible(){
+    var items = state.reminders.filter(function(r){
+      return r.flexible && state.activeFilters.indexOf(r.category) !== -1;
+    });
+    if (!items.length){
+      flexibleList.innerHTML = '<div class="empty-state">Belum ada pengingat fleksibel. Cocok untuk hal yang tidak terikat tanggal.</div>';
+      return;
+    }
+    // Belum selesai dulu, lalu yang sudah selesai di bawah.
+    items.sort(function(a,b){ return (a.done?1:0) - (b.done?1:0); });
+    flexibleList.innerHTML = items.map(function(r){
+      var c = catInfo(r.category);
+      return '<li class="flex-item'+(r.done?' done':'')+'" data-id="'+r.id+'">' +
+        '<button type="button" class="flex-check" data-id="'+r.id+'" aria-label="Tandai selesai">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<div class="body"><div class="title">'+escapeHTML(r.title)+'</div>' +
+        '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+(r.notes?' · '+escapeHTML(r.notes):'')+'</div></div>' +
+        '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button></div></li>';
+    }).join('');
+    Array.prototype.forEach.call(flexibleList.querySelectorAll('.flex-check'), function(btn){
+      btn.addEventListener('click', function(){ toggleFlexDone(btn.getAttribute('data-id')); });
+    });
+    Array.prototype.forEach.call(flexibleList.querySelectorAll('.edit-flex'), function(btn){
+      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+    });
+  }
+  function toggleFlexDone(id){
+    var r = state.reminders.find(function(x){ return x.id===id; });
+    if (!r) return;
+    var updated = Object.assign({}, r, { done: !r.done });
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal memperbarui status. Coba lagi.');
+    });
+  }
+
   function dayLabel(dt){
     var today = new Date();
     var t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -814,7 +979,18 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   var catOptions = document.getElementById('catOptions');
   var fRepeat = document.getElementById('fRepeat');
   var hourlyRow = document.getElementById('hourlyRow');
+  var fFlexible = document.getElementById('fFlexible');
+  var scheduledFields = document.getElementById('scheduledFields');
+  var fDateEl = document.getElementById('fDate');
+  var fTimeEl = document.getElementById('fTime');
   var selectedCat = CATS[0].id;
+
+  function toggleFlexibleUI(isFlexible){
+    scheduledFields.style.display = isFlexible ? 'none' : 'block';
+    fDateEl.required = !isFlexible;
+    fTimeEl.required = !isFlexible;
+  }
+  fFlexible.addEventListener('change', function(){ toggleFlexibleUI(fFlexible.checked); });
 
   function renderCatOptions(){
     catOptions.innerHTML = CATS.map(function(c){
@@ -846,6 +1022,8 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     fRepeat.value = 'none';
     hourlyRow.style.display = 'none';
     document.getElementById('fHourly').value = 4;
+    fFlexible.checked = false;
+    toggleFlexibleUI(false);
     formOverlay.hidden = false;
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
   }
@@ -860,13 +1038,15 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     document.getElementById('fTitle').value = r.title;
     selectedCat = r.category;
     renderCatOptions();
-    document.getElementById('fDate').value = r.date;
-    document.getElementById('fTime').value = r.time;
-    fRepeat.value = r.repeat;
+    document.getElementById('fDate').value = r.date || toISODate(new Date());
+    document.getElementById('fTime').value = r.time || '09:00';
+    fRepeat.value = r.repeat && r.repeat!=='none' ? r.repeat : 'none';
     hourlyRow.style.display = r.repeat==='hourly' ? 'grid' : 'none';
     document.getElementById('fHourly').value = r.hourlyInterval || 4;
     document.getElementById('fUntil').value = r.until || '';
     document.getElementById('fNotes').value = r.notes || '';
+    fFlexible.checked = !!r.flexible;
+    toggleFlexibleUI(!!r.flexible);
     formOverlay.hidden = false;
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
   }
@@ -880,18 +1060,40 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   reminderForm.addEventListener('submit', function(e){
     e.preventDefault();
     var id = document.getElementById('reminderId').value;
-    var data = {
-      id: id || uid(),
-      title: document.getElementById('fTitle').value.trim(),
-      category: selectedCat,
-      date: document.getElementById('fDate').value,
-      time: document.getElementById('fTime').value,
-      repeat: fRepeat.value,
-      hourlyInterval: fRepeat.value==='hourly' ? parseInt(document.getElementById('fHourly').value||4,10) : null,
-      until: document.getElementById('fUntil').value || null,
-      notes: document.getElementById('fNotes').value.trim()
-    };
-    if (!data.title || !data.date || !data.time) return;
+    var isFlexible = fFlexible.checked;
+    var existing = id ? state.reminders.find(function(x){ return x.id===id; }) : null;
+    var data;
+    if (isFlexible){
+      data = {
+        id: id || uid(),
+        title: document.getElementById('fTitle').value.trim(),
+        category: selectedCat,
+        flexible: true,
+        done: existing ? !!existing.done : false,
+        date: null,
+        time: null,
+        repeat: 'none',
+        hourlyInterval: null,
+        until: null,
+        notes: document.getElementById('fNotes').value.trim()
+      };
+      if (!data.title) return;
+    } else {
+      data = {
+        id: id || uid(),
+        title: document.getElementById('fTitle').value.trim(),
+        category: selectedCat,
+        flexible: false,
+        done: null,
+        date: document.getElementById('fDate').value,
+        time: document.getElementById('fTime').value,
+        repeat: fRepeat.value,
+        hourlyInterval: fRepeat.value==='hourly' ? parseInt(document.getElementById('fHourly').value||4,10) : null,
+        until: document.getElementById('fUntil').value || null,
+        notes: document.getElementById('fNotes').value.trim()
+      };
+      if (!data.title || !data.date || !data.time) return;
+    }
     if (!currentUser) return;
 
     closeForm();
@@ -977,6 +1179,9 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
 
   // ---------- Notifications ----------
   var notifyNotice = document.getElementById('notifyNotice');
+  var settingsNotifyStatus = document.getElementById('settingsNotifyStatus');
+  var enableNotifySettings = document.getElementById('enableNotifySettings');
+  var settingsNavDot = document.getElementById('settingsNavDot');
   function refreshNotifyBanner(){
     var dismissed = sessionStorage.getItem('essentiapath.notifyDismissed');
     if ('Notification' in window && Notification.permission === 'default' && !dismissed){
@@ -984,8 +1189,34 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     } else {
       notifyNotice.hidden = true;
     }
+    refreshSettingsNotifyStatus();
+  }
+  function refreshSettingsNotifyStatus(){
+    if (!('Notification' in window)){
+      settingsNotifyStatus.textContent = 'Browser ini tidak mendukung notifikasi.';
+      enableNotifySettings.style.display = 'none';
+    } else if (Notification.permission === 'granted'){
+      settingsNotifyStatus.textContent = 'Notifikasi aktif — EssentiaPath akan mengingatkan Anda saat aplikasi ini terbuka.';
+      enableNotifySettings.style.display = 'none';
+    } else if (Notification.permission === 'denied'){
+      settingsNotifyStatus.textContent = 'Notifikasi diblokir. Aktifkan lewat pengaturan browser/perangkat Anda.';
+      enableNotifySettings.style.display = 'none';
+    } else {
+      settingsNotifyStatus.textContent = 'Notifikasi belum diaktifkan.';
+      enableNotifySettings.style.display = 'inline-block';
+    }
+    refreshSettingsNavDot();
+  }
+  function refreshSettingsNavDot(){
+    var needsAttention = ('Notification' in window && Notification.permission === 'default')
+      || (deferredPrompt && !sessionStorage.getItem('essentiapath.installDismissed'));
+    settingsNavDot.classList.toggle('show', !!needsAttention);
   }
   document.getElementById('enableNotify').addEventListener('click', function(){
+    if (!('Notification' in window)) return;
+    Notification.requestPermission().then(function(){ refreshNotifyBanner(); });
+  });
+  enableNotifySettings.addEventListener('click', function(){
     if (!('Notification' in window)) return;
     Notification.requestPermission().then(function(){ refreshNotifyBanner(); });
   });
@@ -1043,18 +1274,32 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   // ---------- PWA install prompt ----------
   var deferredPrompt = null;
   var installNotice = document.getElementById('installNotice');
+  var installBtnSettings = document.getElementById('installBtnSettings');
   window.addEventListener('beforeinstallprompt', function(e){
     e.preventDefault();
     deferredPrompt = e;
     if (!sessionStorage.getItem('essentiapath.installDismissed')) installNotice.hidden = false;
+    refreshSettingsNavDot();
   });
   document.getElementById('installBtn').addEventListener('click', function(){
     installNotice.hidden = true;
     if (deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; }
+    refreshSettingsNavDot();
   });
   document.getElementById('dismissInstall').addEventListener('click', function(){
     sessionStorage.setItem('essentiapath.installDismissed','1');
     installNotice.hidden = true;
+    refreshSettingsNavDot();
+  });
+  installBtnSettings.addEventListener('click', function(){
+    installNotice.hidden = true;
+    if (deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt = null;
+      refreshSettingsNavDot();
+    } else {
+      showToast('Aplikasi sudah terpasang atau tidak didukung browser ini.');
+    }
   });
 
   if ('serviceWorker' in navigator){
@@ -1147,6 +1392,10 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   document.getElementById('logoutBtn').addEventListener('click', function(){
     signOut(auth);
   });
+  document.getElementById('logoutBtnSettings').addEventListener('click', function(){
+    signOut(auth);
+  });
+  var settingsEmailEl = document.getElementById('settingsEmail');
 
   onAuthStateChanged(auth, function(user){
     currentUser = user;
@@ -1155,12 +1404,14 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       authOverlay.hidden = true;
       accountChip.hidden = false;
       accountEmail.textContent = user.email || '';
+      settingsEmailEl.textContent = user.email || '';
       subscribeReminders();
       refreshNotifyBanner();
     } else {
       if (unsubscribeReminders){ unsubscribeReminders(); unsubscribeReminders = null; }
       state.reminders = [];
       accountChip.hidden = true;
+      settingsEmailEl.textContent = '—';
       authOverlay.hidden = false;
       authCard.hidden = false;
       authForm.reset();
@@ -1169,11 +1420,27 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     }
   });
 
+  // ---------- View navigation (Dashboard / Kalender / Pengaturan) ----------
+  function setView(view){
+    document.body.setAttribute('data-view', view);
+    Array.prototype.forEach.call(document.querySelectorAll('.view-section'), function(el){
+      el.classList.toggle('active', el.getAttribute('data-view') === view);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(btn){
+    btn.addEventListener('click', function(){ setView(btn.getAttribute('data-view')); });
+  });
+  setView('dashboard');
+
   // ---------- Init ----------
   function renderAll(){
     renderCalendar();
     renderFilters();
     renderUpcoming();
+    renderFlexible();
   }
   renderAll();
   refreshNotifyBanner();
