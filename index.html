@@ -211,8 +211,21 @@
   .day-num{font-size:0.82rem; font-weight:700; font-family:var(--font-mono); color:var(--ink);}
   .day-num.is-sunday{color:var(--sunday);}
   .day-num.is-saturday{color:var(--saturday);}
+  .day-num.is-cuti{color:var(--amber-deep);}
   .weekday-row span.is-sunday{color:var(--sunday);}
   .weekday-row span.is-saturday{color:var(--saturday);}
+  .day-holiday-tag{
+    font-size:0.58rem; font-weight:700; line-height:1.15; color:var(--sunday);
+    margin:0.1rem 0 0.15rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .day-holiday-tag.cuti{color:var(--amber-deep);}
+  .day-panel-holiday{
+    font-size:0.8rem; font-weight:600; color:var(--sunday); background:var(--danger-bg);
+    border:1px solid var(--danger-border); border-radius:10px; padding:0.45rem 0.7rem; margin:0.6rem 0 0;
+  }
+  .day-panel-holiday.cuti{
+    color:var(--amber-deep); background:var(--notice-bg); border-color:var(--notice-border);
+  }
   .pin{
     width:16px; height:16px; border-radius:50%; background:var(--amber); position:relative; flex:none;
   }
@@ -230,14 +243,6 @@
   .sidebar{display:flex; flex-direction:column; gap:1rem;}
   .sidebar-head{padding:1rem 1.1rem 0.4rem; display:flex; align-items:center; justify-content:space-between;}
   .sidebar-head h2{font-family:var(--font-display); font-size:1.05rem; margin:0; font-weight:600;}
-  .filter-row{display:flex; flex-wrap:wrap; gap:0.4rem; padding:0 1.1rem 0.9rem;}
-  .filter-chip{
-    border:1px solid var(--line); background:var(--paper-raised); border-radius:999px; padding:0.28rem 0.65rem;
-    font-size:0.72rem; cursor:pointer; display:flex; align-items:center; gap:0.35rem; color:var(--ink-soft);
-  }
-  .filter-chip.active{border-color:var(--moss); color:var(--ink); background:var(--selected-bg); font-weight:600;}
-  .filter-chip .dot{width:7px; height:7px; border-radius:50%;}
-
   .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:420px; overflow:auto;}
   .up-group-label{
     font-size:0.68rem; text-transform:none; color:var(--ink-soft); font-weight:700; padding:0.5rem 0.5rem 0.15rem;
@@ -330,6 +335,28 @@
   .settings-block .btn{margin-top:0.2rem;}
   .settings-status{font-size:0.78rem; color:var(--ink-soft); margin:0 0 0.6rem;}
 
+  .cat-manage-list{display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.8rem;}
+  .cat-manage-row{
+    display:flex; align-items:center; justify-content:space-between; gap:0.5rem;
+    padding:0.5rem 0.5rem 0.5rem 0.7rem; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft);
+  }
+  .cat-manage-toggle{
+    display:flex; align-items:center; gap:0.55rem; border:none; background:transparent; padding:0;
+    font-size:0.85rem; font-weight:700; color:var(--ink); cursor:pointer; opacity:0.4; text-align:left; min-width:0;
+  }
+  .cat-manage-toggle span.label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cat-manage-toggle.active{opacity:1;}
+  .cat-manage-toggle .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+  .cat-manage-row .acts{display:flex; gap:0.2rem; flex:none;}
+  .cat-color-row{display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap;}
+  .cat-swatches{display:flex; gap:0.4rem; flex-wrap:wrap;}
+  .cat-swatch{width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0;}
+  .cat-swatch.selected{border-color:var(--ink);}
+  #catColorPicker{width:30px; height:30px; padding:0; border:none; border-radius:50%; background:none; cursor:pointer; flex:none;}
+  #catColorPicker::-webkit-color-swatch-wrapper{padding:0;}
+  #catColorPicker::-webkit-color-swatch{border-radius:50%; border:2px solid var(--line);}
+  #catColorPicker::-moz-color-swatch{border-radius:50%; border:2px solid var(--line);}
+
   .theme-tabs{display:flex; gap:0.4rem; background:var(--surface); padding:4px; border-radius:999px; margin-bottom:0.2rem;}
   .theme-tab{
     flex:1; border:none; background:transparent; padding:0.45rem 0.5rem; border-radius:999px; font-size:0.82rem;
@@ -345,6 +372,8 @@
   body:not([data-view="calendar"]) .month-nav{display:none;}
   body:not([data-view="dashboard"]) .add-btn{display:none;}
   body[data-view="settings"] .toolbar{display:none;}
+  body[data-view="settings"] .layout{display:none;}
+  .settings-panel{margin-top:1.25rem; position:relative; z-index:2;}
   .account-chip{display:none !important;}
 
   /* ---------- Modal ---------- */
@@ -543,11 +572,6 @@
     </section>
 
     <aside class="sidebar view-section" data-view="dashboard" aria-label="Dashboard">
-      <section class="panel" aria-label="Filter kategori">
-        <div class="sidebar-head"><h2>Kategori</h2></div>
-        <div class="filter-row" id="filterRow"></div>
-      </section>
-
       <section class="panel" aria-label="Pengingat fleksibel">
         <div class="sidebar-head"><h2>Fleksibel</h2></div>
         <ul class="flex-list" id="flexibleList"></ul>
@@ -578,6 +602,12 @@
         </button>
       </div>
       <p class="hint">"Sistem" mengikuti pengaturan terang/gelap perangkat Anda secara otomatis.</p>
+    </div>
+    <div class="settings-block">
+      <h2>Kategori</h2>
+      <p class="hint">Ketuk kategori untuk menampilkan/menyembunyikannya di kalender dan daftar. Gunakan ✎ untuk mengubah, 🗑 untuk menghapus.</p>
+      <div class="cat-manage-list" id="catManageList"></div>
+      <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
     </div>
     <div class="settings-block">
       <h2>Akun</h2>
@@ -695,10 +725,37 @@
   </div>
 </div>
 
+<!-- Add/Edit category -->
+<div class="overlay" id="catFormOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="catFormTitle">
+    <h2 id="catFormTitle">Kategori baru</h2>
+    <form id="catForm">
+      <input type="hidden" id="catId">
+      <div class="field">
+        <label for="catLabel">Nama kategori</label>
+        <input type="text" id="catLabel" required maxlength="24" placeholder="Contoh: Belajar">
+      </div>
+      <div class="field">
+        <label>Warna</label>
+        <div class="cat-color-row">
+          <div class="cat-swatches" id="catSwatches"></div>
+          <input type="color" id="catColorPicker" value="#93AF9E" aria-label="Warna kustom">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <div style="flex:1;"></div>
+        <button type="button" class="btn btn-ghost" id="cancelCatForm">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Day detail popover -->
 <div class="overlay day-panel" id="dayOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dayPanelTitle">
     <h2 id="dayPanelTitle">Tanggal</h2>
+    <div class="day-panel-holiday" id="dayPanelHoliday" hidden></div>
     <div class="day-panel-list" id="dayPanelList"></div>
     <div class="modal-actions">
       <div style="flex:1;"></div>
@@ -738,20 +795,29 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
 (function(){
   "use strict";
 
-  var CATS = [
-    { id:"kerja",     label:"Kerja",     color:"var(--cat-kerja)",     hex:"#93AF9E" },
-    { id:"pribadi",   label:"Pribadi",   color:"var(--cat-pribadi)",   hex:"#E3A97C" },
-    { id:"kesehatan", label:"Kesehatan", color:"var(--cat-kesehatan)", hex:"#C6A6C4" },
-    { id:"keuangan",  label:"Keuangan",  color:"var(--cat-keuangan)",  hex:"#A3BED1" },
-    { id:"lainnya",   label:"Lainnya",   color:"var(--cat-lainnya)",   hex:"#CDBF92" }
+  // Kategori bawaan — dipakai untuk mengisi akun baru dan sebagai fallback
+  // sebelum data kategori dari cloud dimuat. Setelah login, daftar kategori
+  // yang sebenarnya berasal dari Firestore (bisa ditambah/ubah/hapus di
+  // Pengaturan) dan disimpan ke variabel CATS di bawah.
+  var DEFAULT_CATS = [
+    { id:"kerja",     label:"Kerja",     hex:"#93AF9E" },
+    { id:"pribadi",   label:"Pribadi",   hex:"#E3A97C" },
+    { id:"kesehatan", label:"Kesehatan", hex:"#C6A6C4" },
+    { id:"keuangan",  label:"Keuangan",  hex:"#A3BED1" },
+    { id:"lainnya",   label:"Lainnya",   hex:"#CDBF92" }
   ];
+  var CAT_PALETTE = [
+    "#93AF9E","#E3A97C","#C6A6C4","#A3BED1","#CDBF92",
+    "#B79C8C","#8FB8A8","#D9A0A0","#A9A0D9","#7C9484"
+  ];
+  var CATS = DEFAULT_CATS.slice();
   var REPEAT_LABEL = {
     none:"Sekali", hourly:"Tiap jam", daily:"Harian", weekday:"Hari kerja", weekend:"Akhir pekan",
     biweekly:"Dua mingguan", monthly:"Bulanan", quarterly:"Triwulanan", annually:"Tahunan"
   };
   var MONTH_NAMES = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
-  // ---------- Hari libur nasional Indonesia ----------
+  // ---------- Hari libur nasional & cuti bersama Indonesia ----------
   // Tanggal tetap (berlaku tiap tahun, tidak berubah).
   var FIXED_HOLIDAYS = [
     { m:1,  d:1,  name:"Tahun Baru Masehi" },
@@ -793,18 +859,62 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       { m:8, d:25, name:"Maulid Nabi Muhammad SAW" }
     ]
   };
-  function getHolidayName(date){
+  // Tanggal cuti bersama (bukan tanggal merah resmi, tapi hari libur kolektif
+  // yang ditetapkan lewat SKB 3 Menteri yang sama). Perbarui/tambahkan tahun
+  // berikutnya di sini setiap SKB baru terbit.
+  var CUTI_BERSAMA_BY_YEAR = {
+    2025: [
+      { m:1,  d:28, name:"Cuti Bersama Tahun Baru Imlek" },
+      { m:3,  d:28, name:"Cuti Bersama Hari Suci Nyepi" },
+      { m:4,  d:2,  name:"Cuti Bersama Idul Fitri" },
+      { m:4,  d:3,  name:"Cuti Bersama Idul Fitri" },
+      { m:4,  d:4,  name:"Cuti Bersama Idul Fitri" },
+      { m:4,  d:7,  name:"Cuti Bersama Idul Fitri" },
+      { m:5,  d:13, name:"Cuti Bersama Hari Raya Waisak" },
+      { m:5,  d:30, name:"Cuti Bersama Kenaikan Yesus Kristus" },
+      { m:6,  d:9,  name:"Cuti Bersama Idul Adha" },
+      { m:8,  d:18, name:"Cuti Bersama HUT ke-80 Kemerdekaan RI" },
+      { m:12, d:26, name:"Cuti Bersama Hari Raya Natal" }
+    ],
+    2026: [
+      { m:2,  d:16, name:"Cuti Bersama Tahun Baru Imlek" },
+      { m:3,  d:18, name:"Cuti Bersama Hari Suci Nyepi" },
+      { m:3,  d:20, name:"Cuti Bersama Idul Fitri" },
+      { m:3,  d:23, name:"Cuti Bersama Idul Fitri" },
+      { m:3,  d:24, name:"Cuti Bersama Idul Fitri" },
+      { m:5,  d:15, name:"Cuti Bersama Kenaikan Yesus Kristus" },
+      { m:5,  d:28, name:"Cuti Bersama Idul Adha" },
+      { m:12, d:24, name:"Cuti Bersama Hari Raya Natal" }
+    ]
+  };
+  // Mengembalikan { name, type } dengan type 'libur' (tanggal merah resmi)
+  // atau 'cuti' (cuti bersama), atau null kalau tanggal biasa.
+  function getHolidayInfo(date){
     var m = date.getMonth()+1, d = date.getDate(), y = date.getFullYear();
     for (var i=0; i<FIXED_HOLIDAYS.length; i++){
-      if (FIXED_HOLIDAYS[i].m === m && FIXED_HOLIDAYS[i].d === d) return FIXED_HOLIDAYS[i].name;
+      if (FIXED_HOLIDAYS[i].m === m && FIXED_HOLIDAYS[i].d === d) return { name:FIXED_HOLIDAYS[i].name, type:'libur' };
     }
     var list = MOVABLE_HOLIDAYS_BY_YEAR[y];
     if (list){
       for (var j=0; j<list.length; j++){
-        if (list[j].m === m && list[j].d === d) return list[j].name;
+        if (list[j].m === m && list[j].d === d) return { name:list[j].name, type:'libur' };
+      }
+    }
+    var cuti = CUTI_BERSAMA_BY_YEAR[y];
+    if (cuti){
+      for (var k=0; k<cuti.length; k++){
+        if (cuti[k].m === m && cuti[k].d === d) return { name:cuti[k].name, type:'cuti' };
       }
     }
     return null;
+  }
+  // Dipertahankan untuk kompatibilitas — hanya mengembalikan nama.
+  function getHolidayName(date){
+    var info = getHolidayInfo(date);
+    return info ? info.name : null;
+  }
+  function holidayLabel(info){
+    return info.type === 'cuti' ? info.name : (info.name + ' (Libur Nasional)');
   }
   var NOTIFIED_KEY = "essentiapath.notified.v1";
   var ACTIVE_FILTERS_KEY = "essentiapath.filters.v1";
@@ -842,6 +952,45 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
   function deleteReminderFromCloud(id){
     return deleteDoc(reminderDocRef(id));
+  }
+
+  // ---------- Firestore-backed category list (per signed-in user) ----------
+  var unsubscribeCategories = null;
+  function categoriesDocRef(){
+    return doc(db, 'users', currentUser.uid, 'settings', 'categories');
+  }
+  function subscribeCategories(){
+    if (unsubscribeCategories) unsubscribeCategories();
+    unsubscribeCategories = onSnapshot(categoriesDocRef(), function(snap){
+      if (snap.exists() && snap.data().list && snap.data().list.length){
+        CATS = snap.data().list;
+      } else {
+        CATS = DEFAULT_CATS.slice();
+        saveCategoriesToCloud(CATS).catch(function(){});
+      }
+      syncFiltersWithCategories();
+      renderAll();
+      renderCategorySettings();
+    }, function(err){
+      console.error('Firestore categories sync error', err);
+      showToast('Gagal memuat kategori dari server');
+    });
+  }
+  function saveCategoriesToCloud(list){
+    return setDoc(categoriesDocRef(), { list: list });
+  }
+  function catUid(){ return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+  // Menjaga agar filter kategori aktif tetap konsisten dengan daftar kategori
+  // yang ada saat ini (buang id yang sudah dihapus, tampilkan kategori baru
+  // secara default).
+  function syncFiltersWithCategories(){
+    var validIds = CATS.map(function(c){ return c.id; });
+    state.activeFilters = state.activeFilters.filter(function(id){ return validIds.indexOf(id) !== -1; });
+    validIds.forEach(function(id){
+      if (state.activeFilters.indexOf(id) === -1) state.activeFilters.push(id);
+    });
+    if (state.activeFilters.length === 0 && validIds.length) state.activeFilters = [validIds[0]];
+    saveFilters();
   }
 
   function loadFilters(){
@@ -966,20 +1115,25 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       var items = itemsForDate(dateStr);
       var cls = 'day-cell' + (inMonth?'':' muted') + (isToday?' today':'');
       var dow = cellDate.getDay(); // 0 = Minggu, 6 = Sabtu
-      var holidayName = getHolidayName(cellDate);
+      var holidayInfo = getHolidayInfo(cellDate);
       var numCls = 'day-num';
       var titleAttr = '';
-      if (holidayName || dow === 0){
+      if ((holidayInfo && holidayInfo.type === 'libur') || dow === 0){
         numCls += ' is-sunday';
-        if (holidayName) titleAttr = ' title="'+escapeHTML(holidayName)+'"';
+      } else if (holidayInfo && holidayInfo.type === 'cuti'){
+        numCls += ' is-cuti';
       } else if (dow === 6){
         numCls += ' is-saturday';
       }
+      if (holidayInfo) titleAttr = ' title="'+escapeHTML(holidayLabel(holidayInfo))+'"';
 
       html += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">';
       html += '<div class="day-num-row"><span class="'+numCls+'"'+titleAttr+'>'+cellDate.getDate()+'</span>';
       if (isToday) html += '<span class="pin" aria-hidden="true"></span>';
       html += '</div>';
+      if (holidayInfo){
+        html += '<div class="day-holiday-tag'+(holidayInfo.type==='cuti'?' cuti':'')+'">'+escapeHTML(holidayInfo.name)+'</div>';
+      }
       html += '<div class="day-items">';
       var shown = items.slice(0,3);
       shown.forEach(function(it){
@@ -1004,26 +1158,143 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     });
   }
 
-  // ---------- Filters ----------
-  var filterRow = document.getElementById('filterRow');
-  function renderFilters(){
-    filterRow.innerHTML = CATS.map(function(c){
+  // ---------- Category management (Pengaturan) ----------
+  var catManageList = document.getElementById('catManageList');
+  function renderCategorySettings(){
+    catManageList.innerHTML = CATS.map(function(c){
       var active = state.activeFilters.indexOf(c.id) !== -1;
-      return '<button type="button" class="filter-chip'+(active?' active':'')+'" data-cat="'+c.id+'">'+
-             '<span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</button>';
+      return '<div class="cat-manage-row" data-id="'+c.id+'">' +
+        '<button type="button" class="cat-manage-toggle'+(active?' active':'')+'" data-id="'+c.id+'" aria-label="Tampilkan/sembunyikan '+escapeHTML(c.label)+'">' +
+          '<span class="dot" style="background:'+c.hex+'"></span><span class="label">'+escapeHTML(c.label)+'</span>' +
+        '</button>' +
+        '<div class="acts">' +
+          '<button type="button" class="icon-btn edit-cat" data-id="'+c.id+'" aria-label="Ubah kategori">✎</button>' +
+          '<button type="button" class="icon-btn delete-cat" data-id="'+c.id+'" aria-label="Hapus kategori">🗑</button>' +
+        '</div>' +
+      '</div>';
     }).join('');
-    Array.prototype.forEach.call(filterRow.querySelectorAll('.filter-chip'), function(btn){
+    Array.prototype.forEach.call(catManageList.querySelectorAll('.cat-manage-toggle'), function(btn){
       btn.addEventListener('click', function(){
-        var id = btn.getAttribute('data-cat');
+        var id = btn.getAttribute('data-id');
         var idx = state.activeFilters.indexOf(id);
         if (idx===-1) state.activeFilters.push(id); else state.activeFilters.splice(idx,1);
-        if (state.activeFilters.length===0) state.activeFilters = [id]; // keep at least one
+        if (state.activeFilters.length===0) state.activeFilters = [id]; // keep at least one visible
         saveFilters();
-        renderFilters();
+        renderCategorySettings();
         renderCalendar();
         renderUpcoming();
         renderFlexible();
       });
+    });
+    Array.prototype.forEach.call(catManageList.querySelectorAll('.edit-cat'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openEditCategoryForm(btn.getAttribute('data-id'));
+      });
+    });
+    Array.prototype.forEach.call(catManageList.querySelectorAll('.delete-cat'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        deleteCategory(btn.getAttribute('data-id'));
+      });
+    });
+  }
+
+  // ---------- Add/Edit category form ----------
+  var catFormOverlay = document.getElementById('catFormOverlay');
+  var catForm = document.getElementById('catForm');
+  var catLabelEl = document.getElementById('catLabel');
+  var catSwatchesEl = document.getElementById('catSwatches');
+  var catColorPicker = document.getElementById('catColorPicker');
+  var selectedCatHex = CAT_PALETTE[0];
+
+  function renderCatSwatches(){
+    catSwatchesEl.innerHTML = CAT_PALETTE.map(function(hex){
+      var sel = hex.toLowerCase() === selectedCatHex.toLowerCase();
+      return '<button type="button" class="cat-swatch'+(sel?' selected':'')+'" data-hex="'+hex+'" style="background:'+hex+';" aria-label="Pilih warna '+hex+'"></button>';
+    }).join('');
+    Array.prototype.forEach.call(catSwatchesEl.querySelectorAll('.cat-swatch'), function(btn){
+      btn.addEventListener('click', function(){
+        selectedCatHex = btn.getAttribute('data-hex');
+        catColorPicker.value = selectedCatHex;
+        renderCatSwatches();
+      });
+    });
+  }
+  catColorPicker.addEventListener('input', function(){
+    selectedCatHex = catColorPicker.value;
+    renderCatSwatches();
+  });
+
+  function openAddCategoryForm(){
+    document.getElementById('catFormTitle').textContent = 'Kategori baru';
+    document.getElementById('catId').value = '';
+    catLabelEl.value = '';
+    selectedCatHex = CAT_PALETTE[CATS.length % CAT_PALETTE.length];
+    catColorPicker.value = selectedCatHex;
+    renderCatSwatches();
+    catFormOverlay.hidden = false;
+    setTimeout(function(){ catLabelEl.focus(); }, 30);
+  }
+  function openEditCategoryForm(id){
+    var cat = CATS.find(function(c){ return c.id===id; });
+    if (!cat) return;
+    document.getElementById('catFormTitle').textContent = 'Ubah kategori';
+    document.getElementById('catId').value = cat.id;
+    catLabelEl.value = cat.label;
+    selectedCatHex = cat.hex;
+    catColorPicker.value = cat.hex;
+    renderCatSwatches();
+    catFormOverlay.hidden = false;
+    setTimeout(function(){ catLabelEl.focus(); }, 30);
+  }
+  function closeCatForm(){ catFormOverlay.hidden = true; }
+  document.getElementById('addCategoryBtn').addEventListener('click', openAddCategoryForm);
+  document.getElementById('cancelCatForm').addEventListener('click', closeCatForm);
+  catFormOverlay.addEventListener('click', function(e){ if (e.target===catFormOverlay) closeCatForm(); });
+
+  catForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (!currentUser) return;
+    var id = document.getElementById('catId').value;
+    var label = catLabelEl.value.trim();
+    if (!label) return;
+    var hex = selectedCatHex;
+    var newList;
+    if (id){
+      newList = CATS.map(function(c){ return c.id===id ? { id:id, label:label, hex:hex } : c; });
+    } else {
+      newList = CATS.concat([{ id:catUid(), label:label, hex:hex }]);
+    }
+    closeCatForm();
+    saveCategoriesToCloud(newList).then(function(){
+      showToast(id ? 'Kategori diperbarui' : 'Kategori ditambahkan');
+    }).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan kategori. Coba lagi.');
+    });
+  });
+
+  function deleteCategory(id){
+    if (!currentUser) return;
+    var cat = CATS.find(function(c){ return c.id===id; });
+    if (!cat) return;
+    if (CATS.length <= 1){
+      showToast('Tidak bisa menghapus kategori terakhir.');
+      return;
+    }
+    var inUse = state.reminders.filter(function(r){ return r.category === id; }).length;
+    if (inUse > 0){
+      showToast('Kategori "'+cat.label+'" masih dipakai '+inUse+' pengingat. Ubah kategorinya dulu sebelum menghapus.');
+      return;
+    }
+    if (!confirm('Hapus kategori "'+cat.label+'"?')) return;
+    var newList = CATS.filter(function(c){ return c.id !== id; });
+    saveCategoriesToCloud(newList).then(function(){
+      showToast('Kategori dihapus');
+    }).catch(function(err){
+      console.error(err);
+      showToast('Gagal menghapus kategori. Coba lagi.');
     });
   }
 
@@ -1275,6 +1546,15 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     var dt = parseISODate(dateStr);
     var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     document.getElementById('dayPanelTitle').textContent = days[dt.getDay()]+', '+dt.getDate()+' '+MONTH_NAMES[dt.getMonth()]+' '+dt.getFullYear();
+    var dayPanelHolidayEl = document.getElementById('dayPanelHoliday');
+    var holidayInfoForPanel = getHolidayInfo(dt);
+    if (holidayInfoForPanel){
+      dayPanelHolidayEl.textContent = (holidayInfoForPanel.type === 'cuti' ? '🟠 ' : '🔴 ') + holidayLabel(holidayInfoForPanel);
+      dayPanelHolidayEl.className = 'day-panel-holiday' + (holidayInfoForPanel.type === 'cuti' ? ' cuti' : '');
+      dayPanelHolidayEl.hidden = false;
+    } else {
+      dayPanelHolidayEl.hidden = true;
+    }
     var items = itemsForDate(dateStr);
     if (!items.length){
       dayPanelList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini.</div>';
@@ -1554,10 +1834,13 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       accountEmail.textContent = user.email || '';
       settingsEmailEl.textContent = user.email || '';
       subscribeReminders();
+      subscribeCategories();
       refreshNotifyBanner();
     } else {
       if (unsubscribeReminders){ unsubscribeReminders(); unsubscribeReminders = null; }
+      if (unsubscribeCategories){ unsubscribeCategories(); unsubscribeCategories = null; }
       state.reminders = [];
+      CATS = DEFAULT_CATS.slice();
       accountChip.hidden = true;
       settingsEmailEl.textContent = '—';
       authOverlay.hidden = false;
@@ -1624,7 +1907,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   // ---------- Init ----------
   function renderAll(){
     renderCalendar();
-    renderFilters();
+    renderCategorySettings();
     renderUpcoming();
     renderFlexible();
   }
@@ -1635,6 +1918,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape'){
       if (!formOverlay.hidden) closeForm();
+      else if (!catFormOverlay.hidden) closeCatForm();
       else if (!dayOverlay.hidden) closeDayPanel();
     }
   });

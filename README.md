@@ -55,7 +55,7 @@ Untuk revisi berikutnya:
 - **Sinkron ke cloud (Firestore)** — pengingat tersimpan di `users/{uid}/reminders` dan otomatis tersinkron real-time; buka akun yang sama di perangkat lain, pengingatnya ikut muncul.
 - **Kalender bulanan** dengan navigasi bulan, penanda "hari ini", dan ringkasan pengingat per hari.
 - **Jenis pengulangan**: sekali, tiap jam (interval bisa diatur), harian, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan — dengan tanggal berakhir opsional.
-- **Kategori berwarna** (Kerja, Pribadi, Kesehatan, Keuangan, Lainnya) beserta filter di sidebar.
+- **Kategori berwarna, bisa dikustomisasi** — kelola daftar kategori (tambah, ubah nama/warna, hapus) dari tab Pengaturan → Kategori. Kategori juga tersinkron ke cloud per akun (`users/{uid}/settings/categories`), dan bisa disembunyikan/ditampilkan sebagai filter dari layar yang sama. Kategori yang masih dipakai pengingat tidak bisa dihapus sampai pengingatnya dipindah dulu.
 - **Daftar Mendatang** — semua pengingat 14 hari ke depan, dikelompokkan per tanggal.
 - **Notifikasi lokal** — saat aplikasi terbuka di tab/perangkat, EssentiaPath memeriksa pengingat yang jatuh tempo setiap 20 detik dan menampilkan notifikasi browser (perlu izin notifikasi, dan perangkat harus dalam keadaan menjalankan aplikasi — lihat catatan di bawah).
 - **Mode offline** dasar via service worker (aset di-cache) + cache offline Firestore (data terakhir tetap terbaca saat koneksi putus, lalu tersinkron ulang begitu online).
@@ -80,11 +80,16 @@ Aplikasi ini sudah diisi dengan konfigurasi proyek Firebase **essentiapath** lan
        match /users/{userId}/reminders/{reminderId} {
          allow read, write: if request.auth != null && request.auth.uid == userId;
        }
+       match /users/{userId}/settings/{docId} {
+         allow read, write: if request.auth != null && request.auth.uid == userId;
+       }
      }
    }
    ```
 
    Tanpa aturan ini, database akan memakai aturan default (biasanya menolak semua akses, atau — kalau masih mode test — mengizinkan siapa saja membaca/menulis, yang tidak aman untuk produksi).
+
+   > **Sudah pernah pasang aturan versi lama (hanya `reminders`)?** Tambahkan blok `match /users/{userId}/settings/{docId}` di atas ke aturan yang sudah ada, lalu simpan lagi — kalau tidak, penyimpanan kategori kustom akan gagal dengan error izin ditolak.
 
 4. Kalau nanti membuat proyek Firebase baru atau ganti proyek, tinggal ganti nilai `firebaseConfig` di `index.html` (dekat bagian atas `<script type="module">`) dengan konfigurasi dari **Project settings → Your apps** di Firebase Console.
 
