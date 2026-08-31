@@ -950,8 +950,10 @@
             <option value="everyNDays">Setiap X hari sekali</option>
             <option value="weekday">Hari kerja (Sen–Jum)</option>
             <option value="weekend">Akhir pekan (Sab–Min)</option>
+            <option value="weekly">Mingguan</option>
             <option value="biweekly">Dua mingguan</option>
             <option value="monthly">Bulanan</option>
+            <option value="endOfMonth">Akhir bulan</option>
             <option value="quarterly">Triwulanan (tiap 3 bulan)</option>
             <option value="annually">Tahunan</option>
           </select>
@@ -1125,7 +1127,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   var CATS = DEFAULT_CATS.slice();
   var REPEAT_LABEL = {
     none:"Sekali", hourly:"Tiap jam", daily:"Harian", everyNDays:"Setiap X hari", weekday:"Hari kerja", weekend:"Akhir pekan",
-    biweekly:"Dua mingguan", monthly:"Bulanan", quarterly:"Triwulanan", annually:"Tahunan"
+    weekly:"Mingguan", biweekly:"Dua mingguan", monthly:"Bulanan", endOfMonth:"Akhir bulan", quarterly:"Triwulanan", annually:"Tahunan"
   };
   function repeatLabel(r){
     if (r.repeat === 'hourly'){
@@ -1460,6 +1462,10 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         var we = d.getDay();
         return (we===0 || we===6) ? [r.time] : [];
       }
+      case 'weekly': {
+        var diffDaysW = Math.round((d - start) / 86400000);
+        return (diffDaysW>=0 && diffDaysW % 7 === 0) ? [r.time] : [];
+      }
       case 'biweekly': {
         var diffDays = Math.round((d - start) / 86400000);
         return (diffDays>=0 && diffDays % 14 === 0) ? [r.time] : [];
@@ -1468,6 +1474,13 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         var lastDay = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
         var target = Math.min(start.getDate(), lastDay);
         return (d.getDate()===target) ? [r.time] : [];
+      }
+      case 'endOfMonth': {
+        // Selalu jatuh di hari terakhir tiap bulan, apa pun jumlah harinya
+        // (mis. 31 Jan, 28/29 Feb, 30 Apr, dst) — tidak tergantung tanggal
+        // awal pengingat dibuat, cukup bulannya sudah dimulai (>= start).
+        var lastDayEOM = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+        return (d.getDate()===lastDayEOM) ? [r.time] : [];
       }
       case 'quarterly': {
         var monthsDiff = (d.getFullYear()-start.getFullYear())*12 + (d.getMonth()-start.getMonth());
