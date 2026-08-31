@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('essentiapath.theme') || 'system';
+    var resolved = (t === 'dark' || t === 'light') ? t
+      : ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', resolved);
+  } catch(e){}
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>EssentiaPath — Pengingat &amp; Kalender</title>
@@ -24,9 +34,19 @@
     --amber-deep:#CE8F5C;
     --paper:#FBF7EF;
     --paper-raised:#FFFFFF;
-    --line:rgba(74,64,56,0.13);
-    --line-soft:rgba(74,64,56,0.07);
-    --shadow:0 1px 2px rgba(74,64,56,0.05), 0 10px 24px -14px rgba(74,64,56,0.14);
+    --surface:#FBFAF5;
+    --line:rgba(var(--tint-rgb),0.13);
+    --line-soft:rgba(var(--tint-rgb),0.07);
+    --tint-rgb:74,64,56;
+    --shadow:0 1px 2px rgba(20,15,10,0.06), 0 10px 24px -14px rgba(20,15,10,0.18);
+    --selected-bg:#EEF3F0;
+    --notice-bg:#FBF3E7;
+    --notice-border:rgba(227,169,124,0.4);
+    --danger:#8B3A2B;
+    --danger-bg:#FBEAE5;
+    --danger-border:rgba(139,58,43,0.3);
+    --sunday:#B23A2E;
+    --saturday:#2E7D4F;
     --cat-kerja:#93AF9E;
     --cat-pribadi:#E3A97C;
     --cat-kesehatan:#C6A6C4;
@@ -37,6 +57,31 @@
     --font-body:'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   }
+  :root[data-theme="dark"]{
+    --ink:#ECE5D8;
+    --ink-soft:#A79C8C;
+    --moss:#6FA98C;
+    --moss-deep:#8FC8A9;
+    --hero-top:#212E26;
+    --hero-bottom:#161E19;
+    --amber:#E7B488;
+    --amber-deep:#D89A66;
+    --paper:#17130F;
+    --paper-raised:#231C16;
+    --surface:#1C1712;
+    --line:rgba(255,255,255,0.11);
+    --line-soft:rgba(255,255,255,0.06);
+    --tint-rgb:255,255,255;
+    --shadow:0 1px 2px rgba(0,0,0,0.4), 0 10px 24px -14px rgba(0,0,0,0.6);
+    --selected-bg:#1F2E27;
+    --notice-bg:#2E2013;
+    --notice-border:rgba(231,180,136,0.3);
+    --danger:#E8897A;
+    --danger-bg:#3A211D;
+    --danger-border:rgba(232,137,122,0.3);
+    --sunday:#E8776A;
+    --saturday:#5FC98A;
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0; overflow-x:hidden;}
   body{
@@ -45,7 +90,8 @@
     font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
-    padding-bottom:2.5rem;
+    padding-bottom:5.5rem;
+    transition:background-color 0.2s ease, color 0.2s ease;
   }
   a{color:inherit;}
   button{font-family:inherit;}
@@ -74,15 +120,15 @@
   .brand-tag{font-size:0.85rem; color:var(--ink-soft); margin-top:0.15rem;}
 
   .account-chip{
-    display:flex; align-items:center; gap:0.6rem; background:rgba(74,64,56,0.06);
-    border:1px solid rgba(74,64,56,0.16); border-radius:999px; padding:0.35rem 0.45rem 0.35rem 0.85rem;
+    display:flex; align-items:center; gap:0.6rem; background:rgba(var(--tint-rgb),0.06);
+    border:1px solid rgba(var(--tint-rgb),0.16); border-radius:999px; padding:0.35rem 0.45rem 0.35rem 0.85rem;
   }
   .account-email{font-size:0.78rem; color:var(--ink-soft); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .account-logout{
-    border:none; background:rgba(74,64,56,0.1); color:var(--ink); font-size:0.74rem; font-weight:700;
+    border:none; background:rgba(var(--tint-rgb),0.1); color:var(--ink); font-size:0.74rem; font-weight:700;
     padding:0.32rem 0.7rem; border-radius:999px; cursor:pointer;
   }
-  .account-logout:hover{background:rgba(74,64,56,0.18);}
+  .account-logout:hover{background:rgba(var(--tint-rgb),0.18);}
 
   .toolbar{
     display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
@@ -90,18 +136,18 @@
   }
   .month-nav{display:flex; align-items:center; gap:0.6rem;}
   .month-nav button{
-    width:36px; height:36px; border-radius:50%; border:1px solid rgba(74,64,56,0.18);
-    background:rgba(74,64,56,0.05); color:var(--ink); cursor:pointer; font-size:1rem;
+    width:36px; height:36px; border-radius:50%; border:1px solid rgba(var(--tint-rgb),0.18);
+    background:rgba(var(--tint-rgb),0.05); color:var(--ink); cursor:pointer; font-size:1rem;
     display:flex; align-items:center; justify-content:center; transition:background 0.15s ease;
   }
-  .month-nav button:hover{background:rgba(74,64,56,0.12);}
+  .month-nav button:hover{background:rgba(var(--tint-rgb),0.12);}
   .month-label{font-family:var(--font-display); font-size:1.3rem; font-weight:600; min-width:11ch; text-align:center;}
   .today-btn{
-    border:1px solid rgba(74,64,56,0.2); background:transparent; color:var(--ink);
+    border:1px solid rgba(var(--tint-rgb),0.2); background:transparent; color:var(--ink);
     padding:0.4rem 0.85rem; border-radius:999px; font-size:0.82rem; cursor:pointer; font-weight:600;
     white-space:nowrap;
   }
-  .today-btn:hover{background:rgba(74,64,56,0.08);}
+  .today-btn:hover{background:rgba(var(--tint-rgb),0.08);}
   .add-btn{
     background:var(--amber); color:#3E2A18; border:none; padding:0.65rem 1.15rem; border-radius:999px;
     font-weight:700; font-size:0.92rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.45rem;
@@ -111,10 +157,9 @@
 
   /* ---------- Layout ---------- */
   .layout{
-    display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:1.5rem;
+    display:grid; grid-template-columns:1fr; gap:1.5rem;
     margin-top:-1.75rem; position:relative; z-index:2;
   }
-  @media (max-width:860px){ .layout{grid-template-columns:1fr;} }
 
   .panel{
     background:var(--paper-raised); border-radius:var(--radius); box-shadow:var(--shadow);
@@ -124,7 +169,7 @@
   /* ---------- Notice banners ---------- */
   .notice{
     display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;
-    background:#FBF3E7; border:1px solid rgba(227,169,124,0.4); color:var(--ink);
+    background:var(--notice-bg); border:1px solid var(--notice-border); color:var(--ink);
     padding:0.7rem 1rem; border-radius:12px; font-size:0.87rem; margin:1.25rem 0 0;
     position:relative; z-index:2;
   }
@@ -155,15 +200,19 @@
   }
   .day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
   .day-cell{
-    min-height:96px; min-width:0; border-radius:10px; background:#FBFAF5; border:1px solid var(--line-soft);
+    min-height:96px; min-width:0; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft);
     padding:0.4rem 0.4rem 0.35rem; cursor:pointer; text-align:left; display:flex; flex-direction:column;
     gap:0.3rem; transition:box-shadow 0.12s ease, border-color 0.12s ease;
   }
   .day-cell:hover{border-color:var(--moss); box-shadow:0 0 0 1px var(--moss) inset;}
   .day-cell.muted{opacity:0.38;}
-  .day-cell.today{border-color:var(--amber); background:#FFF7EE;}
+  .day-cell.today{border-color:var(--amber); background:var(--surface);}
   .day-num-row{display:flex; align-items:center; justify-content:space-between;}
-  .day-num{font-size:0.82rem; font-weight:700; font-family:var(--font-mono);}
+  .day-num{font-size:0.82rem; font-weight:700; font-family:var(--font-mono); color:var(--ink);}
+  .day-num.is-sunday{color:var(--sunday);}
+  .day-num.is-saturday{color:var(--saturday);}
+  .weekday-row span.is-sunday{color:var(--sunday);}
+  .weekday-row span.is-saturday{color:var(--saturday);}
   .pin{
     width:16px; height:16px; border-radius:50%; background:var(--amber); position:relative; flex:none;
   }
@@ -183,10 +232,10 @@
   .sidebar-head h2{font-family:var(--font-display); font-size:1.05rem; margin:0; font-weight:600;}
   .filter-row{display:flex; flex-wrap:wrap; gap:0.4rem; padding:0 1.1rem 0.9rem;}
   .filter-chip{
-    border:1px solid var(--line); background:#fff; border-radius:999px; padding:0.28rem 0.65rem;
+    border:1px solid var(--line); background:var(--paper-raised); border-radius:999px; padding:0.28rem 0.65rem;
     font-size:0.72rem; cursor:pointer; display:flex; align-items:center; gap:0.35rem; color:var(--ink-soft);
   }
-  .filter-chip.active{border-color:var(--moss); color:var(--ink); background:#EEF3F0; font-weight:600;}
+  .filter-chip.active{border-color:var(--moss); color:var(--ink); background:var(--selected-bg); font-weight:600;}
   .filter-chip .dot{width:7px; height:7px; border-radius:50%;}
 
   .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:420px; overflow:auto;}
@@ -194,7 +243,7 @@
     font-size:0.68rem; text-transform:none; color:var(--ink-soft); font-weight:700; padding:0.5rem 0.5rem 0.15rem;
   }
   .up-item{
-    display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:#FBFAF5;
+    display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:var(--surface);
     border:1px solid var(--line-soft);
   }
   .up-item .dot{width:8px; height:8px; border-radius:50%; margin-top:5px; flex:none;}
@@ -213,11 +262,11 @@
   /* ---------- Flexible (no-date) reminders ---------- */
   .flex-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:320px; overflow:auto;}
   .flex-item{
-    display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:#FBFAF5;
+    display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:var(--surface);
     border:1px solid var(--line-soft);
   }
   .flex-check{
-    width:19px; height:19px; border-radius:6px; border:1.5px solid var(--line); background:#fff; flex:none;
+    width:19px; height:19px; border-radius:6px; border:1.5px solid var(--line); background:var(--paper-raised); flex:none;
     margin-top:1px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
   }
   .flex-check svg{width:12px; height:12px; opacity:0; transition:opacity 0.1s ease;}
@@ -231,21 +280,33 @@
   .flex-item .acts{display:flex; gap:0.3rem; flex:none;}
 
   .checkbox-field{
-    display:flex; align-items:flex-start; gap:0.55rem; background:#FBFAF5; border:1px solid var(--line);
+    display:flex; align-items:flex-start; gap:0.55rem; background:var(--surface); border:1px solid var(--line);
     border-radius:10px; padding:0.6rem 0.7rem; margin-bottom:0.9rem;
   }
   .checkbox-field input[type="checkbox"]{width:auto; margin:2px 0 0;}
   .checkbox-field label{font-size:0.82rem; font-weight:600; color:var(--ink); margin:0; cursor:pointer;}
   .checkbox-field .hint{margin:0.15rem 0 0;}
 
-  /* ---------- Mobile tab navigation (Dashboard / Kalender / Pengaturan) ---------- */
+  /* ---------- Tab navigation (Dashboard / Kalender / Pengaturan) ---------- */
+  /* Same tabbed navigation on every screen size — laptop/desktop no longer
+     shows the calendar and sidebar stacked side by side; it switches views
+     exactly like the phone does, and gains access to the Pengaturan tab
+     (which used to be completely unreachable above 859px). */
   .bottom-nav{
-    display:none;
+    display:flex;
     position:fixed; left:0; right:0; bottom:0; z-index:40;
+    margin:0 auto; max-width:640px;
     background:var(--paper-raised); border-top:1px solid var(--line);
     padding:0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom));
     justify-content:space-around; align-items:stretch; gap:0.25rem;
-    box-shadow:0 -6px 20px -14px rgba(74,64,56,0.3);
+    box-shadow:0 -6px 20px -14px rgba(0,0,0,0.3);
+  }
+  @media (min-width:640px){
+    .bottom-nav{
+      border-left:1px solid var(--line); border-right:1px solid var(--line);
+      border-radius:16px 16px 0 0; bottom:0.9rem;
+      box-shadow:0 12px 30px -12px rgba(0,0,0,0.3);
+    }
   }
   .nav-btn{
     flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.2rem;
@@ -253,7 +314,7 @@
     padding:0.4rem 0.2rem; border-radius:12px; cursor:pointer; position:relative;
   }
   .nav-btn svg{width:20px; height:20px;}
-  .nav-btn.active{color:var(--moss-deep); background:#EEF3F0;}
+  .nav-btn.active{color:var(--moss-deep); background:var(--selected-bg);}
   .nav-btn .nav-dot{
     position:absolute; top:2px; right:calc(50% - 15px); width:7px; height:7px; border-radius:50%;
     background:var(--amber-deep); border:1.5px solid var(--paper-raised); display:none;
@@ -269,22 +330,26 @@
   .settings-block .btn{margin-top:0.2rem;}
   .settings-status{font-size:0.78rem; color:var(--ink-soft); margin:0 0 0.6rem;}
 
-  @media (max-width:859px){
-    body{padding-bottom:5.5rem;}
-    .bottom-nav{display:flex;}
-    .view-section{display:none;}
-    .view-section.active{display:block;}
-    .sidebar.view-section.active{display:flex;}
-    .settings-panel.active{display:block;}
-    body:not([data-view="calendar"]) .month-nav{display:none;}
-    body:not([data-view="dashboard"]) .add-btn{display:none;}
-    body[data-view="settings"] .toolbar{display:none;}
-    .account-chip{display:none !important;}
+  .theme-tabs{display:flex; gap:0.4rem; background:var(--surface); padding:4px; border-radius:999px; margin-bottom:0.2rem;}
+  .theme-tab{
+    flex:1; border:none; background:transparent; padding:0.45rem 0.5rem; border-radius:999px; font-size:0.82rem;
+    font-weight:700; color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.35rem;
   }
+  .theme-tab svg{width:15px; height:15px;}
+  .theme-tab.active{background:var(--paper-raised); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,0.12);}
+
+  .view-section{display:none;}
+  .view-section.active{display:block;}
+  .sidebar.view-section.active{display:flex;}
+  .settings-panel.active{display:block;}
+  body:not([data-view="calendar"]) .month-nav{display:none;}
+  body:not([data-view="dashboard"]) .add-btn{display:none;}
+  body[data-view="settings"] .toolbar{display:none;}
+  .account-chip{display:none !important;}
 
   /* ---------- Modal ---------- */
   .overlay{
-    position:fixed; inset:0; background:rgba(74,64,56,0.4); display:flex; align-items:flex-end;
+    position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:flex-end;
     justify-content:center; z-index:50; padding:0;
   }
   @media (min-width:640px){ .overlay{align-items:center; padding:1.5rem;} }
@@ -299,24 +364,24 @@
   .field label{display:block; font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin-bottom:0.3rem;}
   .field input, .field select, .field textarea{
     width:100%; border:1px solid var(--line); border-radius:9px; padding:0.55rem 0.65rem; font-size:0.9rem;
-    font-family:inherit; background:#FBFAF5; color:var(--ink);
+    font-family:inherit; background:var(--surface); color:var(--ink);
   }
   .field textarea{resize:vertical; min-height:60px;}
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .cat-options{display:flex; flex-wrap:wrap; gap:0.4rem;}
   .cat-option{
     border:1.5px solid var(--line); border-radius:999px; padding:0.32rem 0.7rem 0.32rem 0.55rem; font-size:0.78rem;
-    display:flex; align-items:center; gap:0.35rem; cursor:pointer; background:#fff;
+    display:flex; align-items:center; gap:0.35rem; cursor:pointer; background:var(--paper-raised);
   }
   .cat-option input{width:auto; margin:0;}
   .cat-option .dot{width:9px; height:9px; border-radius:50%;}
-  .cat-option.selected{border-color:var(--moss); background:#EEF3F0; font-weight:700;}
+  .cat-option.selected{border-color:var(--moss); background:var(--selected-bg); font-weight:700;}
   .modal-actions{display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-top:1.1rem;}
   .btn{border:none; border-radius:999px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:700; cursor:pointer;}
   .btn-primary{background:var(--moss); color:#fff;}
   .btn-primary:hover{background:var(--moss-deep);}
   .btn-ghost{background:transparent; color:var(--ink-soft);}
-  .btn-danger{background:transparent; color:#8B3A2B;}
+  .btn-danger{background:transparent; color:var(--danger);}
   .hint{font-size:0.72rem; color:var(--ink-soft); margin-top:0.3rem;}
 
   /* ---------- Auth (login/register) ---------- */
@@ -331,14 +396,14 @@
   .auth-brand .brand-mark{width:30px; height:30px; border-radius:8px;}
   .auth-brand .brand-mark svg{width:16px; height:16px;}
   .auth-brand-name{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.2rem; color:var(--ink);}
-  .auth-tabs{display:flex; gap:0.4rem; background:#F1EEE1; padding:4px; border-radius:999px; margin-bottom:1.1rem;}
+  .auth-tabs{display:flex; gap:0.4rem; background:var(--surface); padding:4px; border-radius:999px; margin-bottom:1.1rem;}
   .auth-tab{
     flex:1; border:none; background:transparent; padding:0.45rem 0.5rem; border-radius:999px; font-size:0.82rem;
     font-weight:700; color:var(--ink-soft); cursor:pointer;
   }
   .auth-tab.active{background:var(--paper-raised); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,0.12);}
   .auth-error{
-    display:none; background:#FBEAE5; border:1px solid rgba(139,58,43,0.3); color:#8B3A2B; font-size:0.8rem;
+    display:none; background:var(--danger-bg); border:1px solid var(--danger-border); color:var(--danger); font-size:0.8rem;
     padding:0.5rem 0.65rem; border-radius:8px; margin-bottom:0.8rem;
   }
   .auth-error.show{display:block;}
@@ -355,7 +420,7 @@
 
   .toast{
     position:fixed; bottom:1.1rem; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper);
-    padding:0.6rem 1rem; border-radius:999px; font-size:0.82rem; z-index:60; box-shadow:0 10px 26px -10px rgba(74,64,56,0.4);
+    padding:0.6rem 1rem; border-radius:999px; font-size:0.82rem; z-index:60; box-shadow:0 10px 26px -10px rgba(0,0,0,0.4);
     opacity:0; pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
@@ -430,7 +495,6 @@
         </span>
         <div>
           <div class="brand-name">EssentiaPath</div>
-          <div class="brand-tag">Kalender pengingat — sekali atau berulang</div>
         </div>
       </div>
       <div class="account-chip" id="accountChip" hidden>
@@ -473,7 +537,7 @@
   <div class="layout">
     <section class="panel calendar view-section" data-view="calendar" aria-label="Kalender">
       <div class="weekday-row">
-        <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+        <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span class="is-saturday">Sab</span><span class="is-sunday">Min</span>
       </div>
       <div class="day-grid" id="dayGrid"></div>
     </section>
@@ -497,6 +561,24 @@
   </div>
 
   <section class="panel view-section settings-panel" data-view="settings" aria-label="Pengaturan">
+    <div class="settings-block">
+      <h2>Tampilan</h2>
+      <div class="theme-tabs" id="themeTabs">
+        <button type="button" class="theme-tab" data-theme-choice="light">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Terang
+        </button>
+        <button type="button" class="theme-tab" data-theme-choice="dark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Gelap
+        </button>
+        <button type="button" class="theme-tab" data-theme-choice="system">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4.5" width="18" height="12" rx="1.8" stroke="currentColor" stroke-width="2"/><path d="M8.5 20h7M12 16.5V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Sistem
+        </button>
+      </div>
+      <p class="hint">"Sistem" mengikuti pengaturan terang/gelap perangkat Anda secara otomatis.</p>
+    </div>
     <div class="settings-block">
       <h2>Akun</h2>
       <p class="settings-account-email" id="settingsEmail">—</p>
@@ -668,6 +750,62 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     biweekly:"Dua mingguan", monthly:"Bulanan", quarterly:"Triwulanan", annually:"Tahunan"
   };
   var MONTH_NAMES = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+  // ---------- Hari libur nasional Indonesia ----------
+  // Tanggal tetap (berlaku tiap tahun, tidak berubah).
+  var FIXED_HOLIDAYS = [
+    { m:1,  d:1,  name:"Tahun Baru Masehi" },
+    { m:5,  d:1,  name:"Hari Buruh Internasional" },
+    { m:6,  d:1,  name:"Hari Lahir Pancasila" },
+    { m:8,  d:17, name:"Hari Kemerdekaan RI" },
+    { m:12, d:25, name:"Hari Raya Natal" }
+  ];
+  // Tanggal libur nasional yang mengikuti penanggalan Hijriah/Imlek/Saka
+  // sehingga berubah tiap tahun — diisi sesuai SKB 3 Menteri resmi.
+  // Perbarui/tambahkan tahun berikutnya di sini setiap SKB baru terbit.
+  var MOVABLE_HOLIDAYS_BY_YEAR = {
+    2025: [
+      { m:1, d:27, name:"Isra Mikraj Nabi Muhammad SAW" },
+      { m:1, d:29, name:"Tahun Baru Imlek 2576 Kongzili" },
+      { m:3, d:29, name:"Hari Suci Nyepi" },
+      { m:3, d:31, name:"Hari Raya Idul Fitri" },
+      { m:4, d:1,  name:"Hari Raya Idul Fitri" },
+      { m:4, d:18, name:"Wafat Yesus Kristus" },
+      { m:4, d:20, name:"Kebangkitan Yesus Kristus (Paskah)" },
+      { m:5, d:12, name:"Hari Raya Waisak" },
+      { m:5, d:29, name:"Kenaikan Yesus Kristus" },
+      { m:6, d:6,  name:"Hari Raya Idul Adha" },
+      { m:6, d:27, name:"1 Muharam (Tahun Baru Islam)" },
+      { m:9, d:5,  name:"Maulid Nabi Muhammad SAW" }
+    ],
+    2026: [
+      { m:1, d:16, name:"Isra Mikraj Nabi Muhammad SAW" },
+      { m:2, d:17, name:"Tahun Baru Imlek 2577 Kongzili" },
+      { m:3, d:19, name:"Hari Suci Nyepi" },
+      { m:3, d:21, name:"Hari Raya Idul Fitri" },
+      { m:3, d:22, name:"Hari Raya Idul Fitri" },
+      { m:4, d:3,  name:"Wafat Yesus Kristus" },
+      { m:4, d:5,  name:"Kebangkitan Yesus Kristus (Paskah)" },
+      { m:5, d:14, name:"Kenaikan Yesus Kristus" },
+      { m:5, d:27, name:"Hari Raya Idul Adha" },
+      { m:5, d:31, name:"Hari Raya Waisak" },
+      { m:6, d:16, name:"1 Muharam (Tahun Baru Islam)" },
+      { m:8, d:25, name:"Maulid Nabi Muhammad SAW" }
+    ]
+  };
+  function getHolidayName(date){
+    var m = date.getMonth()+1, d = date.getDate(), y = date.getFullYear();
+    for (var i=0; i<FIXED_HOLIDAYS.length; i++){
+      if (FIXED_HOLIDAYS[i].m === m && FIXED_HOLIDAYS[i].d === d) return FIXED_HOLIDAYS[i].name;
+    }
+    var list = MOVABLE_HOLIDAYS_BY_YEAR[y];
+    if (list){
+      for (var j=0; j<list.length; j++){
+        if (list[j].m === m && list[j].d === d) return list[j].name;
+      }
+    }
+    return null;
+  }
   var NOTIFIED_KEY = "essentiapath.notified.v1";
   var ACTIVE_FILTERS_KEY = "essentiapath.filters.v1";
 
@@ -827,9 +965,19 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       var isToday = dateStr === todayStr;
       var items = itemsForDate(dateStr);
       var cls = 'day-cell' + (inMonth?'':' muted') + (isToday?' today':'');
+      var dow = cellDate.getDay(); // 0 = Minggu, 6 = Sabtu
+      var holidayName = getHolidayName(cellDate);
+      var numCls = 'day-num';
+      var titleAttr = '';
+      if (holidayName || dow === 0){
+        numCls += ' is-sunday';
+        if (holidayName) titleAttr = ' title="'+escapeHTML(holidayName)+'"';
+      } else if (dow === 6){
+        numCls += ' is-saturday';
+      }
 
       html += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">';
-      html += '<div class="day-num-row"><span class="day-num">'+cellDate.getDate()+'</span>';
+      html += '<div class="day-num-row"><span class="'+numCls+'"'+titleAttr+'>'+cellDate.getDate()+'</span>';
       if (isToday) html += '<span class="pin" aria-hidden="true"></span>';
       html += '</div>';
       html += '<div class="day-items">';
@@ -1419,6 +1567,44 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       renderAll();
     }
   });
+
+  // ---------- Theme (Terang / Gelap / Sistem) ----------
+  var THEME_KEY = 'essentiapath.theme';
+  var themeMetaEl = document.querySelector('meta[name="theme-color"]');
+
+  function getThemePref(){
+    try { return localStorage.getItem(THEME_KEY) || 'system'; } catch(e){ return 'system'; }
+  }
+  function resolveTheme(pref){
+    if (pref === 'dark' || pref === 'light') return pref;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  function applyTheme(pref){
+    var resolved = resolveTheme(pref);
+    document.documentElement.setAttribute('data-theme', resolved);
+    if (themeMetaEl) themeMetaEl.setAttribute('content', resolved === 'dark' ? '#212E26' : '#D9E6D0');
+  }
+  function updateThemeTabs(pref){
+    Array.prototype.forEach.call(document.querySelectorAll('.theme-tab'), function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === pref);
+    });
+  }
+  function setThemePref(pref){
+    try { localStorage.setItem(THEME_KEY, pref); } catch(e){}
+    applyTheme(pref);
+    updateThemeTabs(pref);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.theme-tab'), function(btn){
+    btn.addEventListener('click', function(){ setThemePref(btn.getAttribute('data-theme-choice')); });
+  });
+  applyTheme(getThemePref());
+  updateThemeTabs(getThemePref());
+  if (window.matchMedia){
+    var darkMql = window.matchMedia('(prefers-color-scheme: dark)');
+    var onSystemChange = function(){ if (getThemePref() === 'system') applyTheme('system'); };
+    if (darkMql.addEventListener) darkMql.addEventListener('change', onSystemChange);
+    else if (darkMql.addListener) darkMql.addListener(onSystemChange);
+  }
 
   // ---------- View navigation (Dashboard / Kalender / Pengaturan) ----------
   function setView(view){
