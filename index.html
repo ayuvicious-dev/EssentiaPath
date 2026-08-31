@@ -118,6 +118,8 @@
   .brand-mark svg{width:18px; height:18px;}
   .brand-name{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.5rem; letter-spacing:0.01em; color:var(--ink);}
   .brand-tag{font-size:0.85rem; color:var(--ink-soft); margin-top:0.15rem;}
+  .sync-indicator{display:flex; align-items:center; gap:0.3rem; font-family:var(--font-mono); font-size:0.72rem;}
+  .sync-indicator svg{width:12px; height:12px; flex:none;}
 
   .account-chip{
     display:flex; align-items:center; gap:0.6rem; background:rgba(var(--tint-rgb),0.06);
@@ -337,9 +339,11 @@
 
   .cat-manage-list{display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.8rem;}
   .cat-manage-row{
-    display:flex; align-items:center; justify-content:space-between; gap:0.5rem;
-    padding:0.5rem 0.5rem 0.5rem 0.7rem; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft);
+    display:flex; align-items:center; justify-content:space-between; gap:0.35rem;
+    padding:0.5rem 0.5rem 0.5rem 0.35rem; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft);
+    touch-action:pan-y;
   }
+  .cat-manage-row.dragging{box-shadow:var(--shadow); background:var(--paper-raised); position:relative; z-index:5;}
   .cat-manage-toggle{
     display:flex; align-items:center; gap:0.55rem; border:none; background:transparent; padding:0;
     font-size:0.85rem; font-weight:700; color:var(--ink); cursor:pointer; opacity:0.4; text-align:left; min-width:0;
@@ -357,6 +361,28 @@
   #catColorPicker::-webkit-color-swatch{border-radius:50%; border:2px solid var(--line);}
   #catColorPicker::-moz-color-swatch{border-radius:50%; border:2px solid var(--line);}
 
+  /* ---------- Upgrade Aplikasi (roadmap checklist) ---------- */
+  .upgrade-progress-wrap{margin-bottom:0.9rem;}
+  .upgrade-progress-bar{width:100%; height:10px; border-radius:999px; background:var(--surface); border:1px solid var(--line-soft); overflow:hidden;}
+  .upgrade-progress-fill{height:100%; background:var(--moss); border-radius:999px; transition:width 0.25s ease;}
+  .upgrade-progress-text{display:flex; justify-content:space-between; font-size:0.78rem; color:var(--ink-soft); margin-top:0.35rem; font-family:var(--font-mono);}
+  .upgrade-list{display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.7rem;}
+  .upg-row{display:flex; align-items:flex-start; gap:0.5rem; padding:0.6rem 0.6rem 0.6rem 0.35rem; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft); touch-action:pan-y;}
+  .upg-row.dragging{box-shadow:var(--shadow); background:var(--paper-raised); position:relative; z-index:5;}
+  .upg-drag-handle{cursor:grab; color:var(--ink-soft); touch-action:none; padding:0.15rem 0.3rem; flex:none; user-select:none; font-size:1rem; line-height:1.4; margin-top:0.1rem;}
+  .upg-drag-handle:active{cursor:grabbing;}
+  .upg-check{flex:none; margin-top:0.2rem; width:18px; height:18px; accent-color:var(--moss); cursor:pointer;}
+  .upg-body{flex:1; min-width:0;}
+  .upg-title{font-weight:700; font-size:0.88rem; word-break:break-word;}
+  .upg-row.done .upg-title{text-decoration:line-through; color:var(--ink-soft);}
+  .upg-desc{font-size:0.78rem; color:var(--ink-soft); margin-top:0.2rem; word-break:break-word; white-space:pre-wrap;}
+  .upg-acts{display:flex; gap:0.2rem; flex:none;}
+  .upgrade-empty{font-size:0.82rem; color:var(--ink-soft); padding:0.4rem 0.1rem 0.8rem;}
+  .upgrade-pagination{display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-top:0.2rem;}
+  .upgrade-pagination button{border:1px solid rgba(var(--tint-rgb),0.2); background:transparent; color:var(--ink); padding:0.35rem 0.8rem; border-radius:999px; font-size:0.78rem; font-weight:700; cursor:pointer;}
+  .upgrade-pagination button:disabled{opacity:0.35; cursor:default;}
+  .upgrade-pagination .page-info{font-size:0.76rem; color:var(--ink-soft); font-family:var(--font-mono);}
+
   .theme-tabs{display:flex; gap:0.4rem; background:var(--surface); padding:4px; border-radius:999px; margin-bottom:0.2rem;}
   .theme-tab{
     flex:1; border:none; background:transparent; padding:0.45rem 0.5rem; border-radius:999px; font-size:0.82rem;
@@ -373,6 +399,8 @@
   body:not([data-view="dashboard"]) .add-btn{display:none;}
   body[data-view="settings"] .toolbar{display:none;}
   body[data-view="settings"] .layout{display:none;}
+  body[data-view="display"] .toolbar{display:none;}
+  body[data-view="display"] .layout{display:none;}
   .settings-panel{margin-top:1.25rem; position:relative; z-index:2;}
   .account-chip{display:none !important;}
 
@@ -524,6 +552,10 @@
         </span>
         <div>
           <div class="brand-name">EssentiaPath</div>
+          <div class="brand-tag sync-indicator" id="syncIndicator" hidden>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3v4h-4M7 21v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="syncIndicatorText">Tersinkron</span>
+          </div>
         </div>
       </div>
       <div class="account-chip" id="accountChip" hidden>
@@ -586,6 +618,35 @@
 
   <section class="panel view-section settings-panel" data-view="settings" aria-label="Pengaturan">
     <div class="settings-block">
+      <h2>Upgrade Aplikasi</h2>
+      <p class="hint">Daftar rencana/pembaruan aplikasi. Centang yang sudah selesai, seret ikon <span aria-hidden="true">⠿</span> untuk mengurutkan ulang prioritas.</p>
+      <button type="button" class="btn btn-ghost" id="addUpgradeBtn" style="margin-bottom:0.8rem;">+ Tambah item upgrade</button>
+      <div class="upgrade-progress-wrap">
+        <div class="upgrade-progress-bar"><div class="upgrade-progress-fill" id="upgradeProgressFill" style="width:0%;"></div></div>
+        <div class="upgrade-progress-text"><span id="upgradeProgressLabel">0 dari 0 selesai</span><span id="upgradeProgressPct">0%</span></div>
+      </div>
+      <div class="upgrade-list" id="upgradeList"></div>
+      <div class="upgrade-pagination" id="upgradePagination" hidden>
+        <button type="button" id="upgradePrev">‹ Sebelumnya</button>
+        <span class="page-info" id="upgradePageInfo"></span>
+        <button type="button" id="upgradeNext">Selanjutnya ›</button>
+      </div>
+    </div>
+    <div class="settings-block">
+      <h2>Kategori</h2>
+      <p class="hint">Ketuk kategori untuk menampilkan/menyembunyikannya di kalender dan daftar. Gunakan ✎ untuk mengubah, 🗑 untuk menghapus.</p>
+      <div class="cat-manage-list" id="catManageList"></div>
+      <div class="upgrade-pagination" id="catPagination" hidden>
+        <button type="button" id="catPrev">‹ Sebelumnya</button>
+        <span class="page-info" id="catPageInfo"></span>
+        <button type="button" id="catNext">Selanjutnya ›</button>
+      </div>
+      <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
+    </div>
+  </section>
+
+  <section class="panel view-section settings-panel" data-view="display" aria-label="Tampilan">
+    <div class="settings-block">
       <h2>Tampilan</h2>
       <div class="theme-tabs" id="themeTabs">
         <button type="button" class="theme-tab" data-theme-choice="light">
@@ -602,12 +663,6 @@
         </button>
       </div>
       <p class="hint">"Sistem" mengikuti pengaturan terang/gelap perangkat Anda secara otomatis.</p>
-    </div>
-    <div class="settings-block">
-      <h2>Kategori</h2>
-      <p class="hint">Ketuk kategori untuk menampilkan/menyembunyikannya di kalender dan daftar. Gunakan ✎ untuk mengubah, 🗑 untuk menghapus.</p>
-      <div class="cat-manage-list" id="catManageList"></div>
-      <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
     </div>
     <div class="settings-block">
       <h2>Akun</h2>
@@ -643,6 +698,10 @@
   <button type="button" class="nav-btn" data-view="settings">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.9 4.9l1.55 1.55M17.55 17.55l1.55 1.55M3 12h2.2M18.8 12H21M4.9 19.1l1.55-1.55M17.55 6.45l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <span>Pengaturan</span>
+  </button>
+  <button type="button" class="nav-btn" data-view="display">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="4.5" width="17" height="12" rx="1.8" stroke="currentColor" stroke-width="2"/><path d="M8.5 20h7M12 16.5V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>Tampilan</span>
     <span class="nav-dot" id="settingsNavDot"></span>
   </button>
 </nav>
@@ -745,6 +804,30 @@
       <div class="modal-actions">
         <div style="flex:1;"></div>
         <button type="button" class="btn btn-ghost" id="cancelCatForm">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add/Edit upgrade item -->
+<div class="overlay" id="upgradeFormOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="upgradeFormTitle">
+    <h2 id="upgradeFormTitle">Item upgrade baru</h2>
+    <form id="upgradeForm">
+      <input type="hidden" id="upgradeId">
+      <div class="field">
+        <label for="upgradeTitle">Judul</label>
+        <input type="text" id="upgradeTitle" required maxlength="80" placeholder="Contoh: Notifikasi push saat aplikasi tertutup">
+      </div>
+      <div class="field">
+        <label for="upgradeDesc">Keterangan (opsional)</label>
+        <textarea id="upgradeDesc" maxlength="240" placeholder="Detail rencana upgrade…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="deleteUpgradeBtn" style="display:none;">Hapus</button>
+        <div style="flex:1;"></div>
+        <button type="button" class="btn btn-ghost" id="cancelUpgradeForm">Batal</button>
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>
@@ -942,6 +1025,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       state.reminders = snapshot.docs.map(function(d){ return d.data(); });
       renderAll();
       checkDueReminders();
+      markSynced();
     }, function(err){
       console.error('Firestore sync error', err);
       showToast('Gagal memuat pengingat dari server');
@@ -971,6 +1055,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       syncFiltersWithCategories();
       renderAll();
       renderCategorySettings();
+      markSynced();
     }, function(err){
       console.error('Firestore categories sync error', err);
       showToast('Gagal memuat kategori dari server');
@@ -1011,6 +1096,22 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   function pad2(n){ return String(n).padStart(2,'0'); }
   function toISODate(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
   function parseISODate(s){ var p=s.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+
+  // ---------- Sync indicator (top header) ----------
+  var SYNC_MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  var syncIndicatorEl = document.getElementById('syncIndicator');
+  var syncIndicatorTextEl = document.getElementById('syncIndicatorText');
+  function formatSyncTime(date){
+    var now = new Date();
+    var sameDay = date.getFullYear()===now.getFullYear() && date.getMonth()===now.getMonth() && date.getDate()===now.getDate();
+    var time = pad2(date.getHours())+'.'+pad2(date.getMinutes());
+    return sameDay ? time : (date.getDate()+' '+SYNC_MONTHS[date.getMonth()]+', '+time);
+  }
+  function markSynced(){
+    if (!currentUser) return;
+    syncIndicatorTextEl.textContent = 'Tersinkron · ' + formatSyncTime(new Date());
+    syncIndicatorEl.hidden = false;
+  }
 
   // ---------- Recurrence engine ----------
   function occurrencesOnDate(r, dateStr){
@@ -1160,10 +1261,24 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
 
   // ---------- Category management (Pengaturan) ----------
   var catManageList = document.getElementById('catManageList');
+  var catPaginationEl = document.getElementById('catPagination');
+  var catPageInfoEl = document.getElementById('catPageInfo');
+  var catPage = 0;
+  var CAT_PAGE_SIZE = 5;
+
   function renderCategorySettings(){
-    catManageList.innerHTML = CATS.map(function(c){
+    var total = CATS.length;
+    var totalPages = Math.max(1, Math.ceil(total / CAT_PAGE_SIZE));
+    if (catPage >= totalPages) catPage = totalPages - 1;
+    if (catPage < 0) catPage = 0;
+    var start = catPage * CAT_PAGE_SIZE;
+    var pageItems = CATS.slice(start, start + CAT_PAGE_SIZE);
+
+    catManageList.innerHTML = pageItems.map(function(c, i){
+      var absIndex = start + i;
       var active = state.activeFilters.indexOf(c.id) !== -1;
-      return '<div class="cat-manage-row" data-id="'+c.id+'">' +
+      return '<div class="cat-manage-row" data-index="'+absIndex+'" data-id="'+c.id+'">' +
+        '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>' +
         '<button type="button" class="cat-manage-toggle'+(active?' active':'')+'" data-id="'+c.id+'" aria-label="Tampilkan/sembunyikan '+escapeHTML(c.label)+'">' +
           '<span class="dot" style="background:'+c.hex+'"></span><span class="label">'+escapeHTML(c.label)+'</span>' +
         '</button>' +
@@ -1173,6 +1288,12 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         '</div>' +
       '</div>';
     }).join('');
+
+    catPaginationEl.hidden = total <= CAT_PAGE_SIZE;
+    catPageInfoEl.textContent = 'Halaman ' + (catPage + 1) + ' dari ' + totalPages;
+    document.getElementById('catPrev').disabled = catPage <= 0;
+    document.getElementById('catNext').disabled = catPage >= totalPages - 1;
+
     Array.prototype.forEach.call(catManageList.querySelectorAll('.cat-manage-toggle'), function(btn){
       btn.addEventListener('click', function(){
         var id = btn.getAttribute('data-id');
@@ -1198,6 +1319,66 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         deleteCategory(btn.getAttribute('data-id'));
       });
     });
+    Array.prototype.forEach.call(catManageList.querySelectorAll('.upg-drag-handle'), function(handle){
+      handle.addEventListener('pointerdown', function(e){ startCategoryDrag(e, handle); });
+    });
+  }
+
+  document.getElementById('catPrev').addEventListener('click', function(){
+    if (catPage > 0){ catPage--; renderCategorySettings(); }
+  });
+  document.getElementById('catNext').addEventListener('click', function(){
+    var totalPages = Math.max(1, Math.ceil(CATS.length / CAT_PAGE_SIZE));
+    if (catPage < totalPages - 1){ catPage++; renderCategorySettings(); }
+  });
+
+  // Drag-to-reorder for categories — same pointer-based approach as the
+  // Upgrade Aplikasi list, restricted to the current page.
+  function startCategoryDrag(e, handle){
+    if (!currentUser) return;
+    e.preventDefault();
+    var row = handle.closest('.cat-manage-row');
+    if (!row) return;
+    var siblings = Array.prototype.slice.call(catManageList.querySelectorAll('.cat-manage-row'));
+    var startY = e.clientY;
+    row.classList.add('dragging');
+    try { handle.setPointerCapture(e.pointerId); } catch(err){}
+
+    function onMove(ev){
+      var dy = ev.clientY - startY;
+      row.style.transform = 'translateY(' + dy + 'px)';
+      for (var i=0; i<siblings.length; i++){
+        var sib = siblings[i];
+        if (sib === row) continue;
+        var r = sib.getBoundingClientRect();
+        if (ev.clientY > r.top && ev.clientY < r.bottom){
+          var curIndex = parseInt(row.getAttribute('data-index'), 10);
+          var sibIndex = parseInt(sib.getAttribute('data-index'), 10);
+          var tmp = CATS[curIndex];
+          CATS[curIndex] = CATS[sibIndex];
+          CATS[sibIndex] = tmp;
+          row.setAttribute('data-index', sibIndex);
+          sib.setAttribute('data-index', curIndex);
+          if (curIndex < sibIndex) catManageList.insertBefore(row, sib.nextSibling);
+          else catManageList.insertBefore(row, sib);
+          row.style.transform = 'translateY(0px)';
+          startY = ev.clientY;
+          break;
+        }
+      }
+    }
+    function onUp(){
+      row.classList.remove('dragging');
+      row.style.transform = '';
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      saveCategoriesToCloud(CATS).catch(function(err){
+        console.error(err);
+        showToast('Gagal menyimpan urutan kategori. Coba lagi.');
+      });
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
   }
 
   // ---------- Add/Edit category form ----------
@@ -1295,6 +1476,241 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     }).catch(function(err){
       console.error(err);
       showToast('Gagal menghapus kategori. Coba lagi.');
+    });
+  }
+
+  // ---------- Upgrade Aplikasi (roadmap checklist, Pengaturan) ----------
+  var UPGRADES = [];
+  var unsubscribeUpgrades = null;
+  var upgradePage = 0;
+  var UPGRADE_PAGE_SIZE = 5;
+  var upgradeListEl = document.getElementById('upgradeList');
+  var upgradePaginationEl = document.getElementById('upgradePagination');
+  var upgradePageInfoEl = document.getElementById('upgradePageInfo');
+  var upgradeProgressFillEl = document.getElementById('upgradeProgressFill');
+  var upgradeProgressLabelEl = document.getElementById('upgradeProgressLabel');
+  var upgradeProgressPctEl = document.getElementById('upgradeProgressPct');
+
+  function upgradesDocRef(){
+    return doc(db, 'users', currentUser.uid, 'settings', 'upgrades');
+  }
+  function subscribeUpgrades(){
+    if (unsubscribeUpgrades) unsubscribeUpgrades();
+    unsubscribeUpgrades = onSnapshot(upgradesDocRef(), function(snap){
+      UPGRADES = (snap.exists() && Array.isArray(snap.data().list)) ? snap.data().list : [];
+      if (upgradePage > 0 && upgradePage * UPGRADE_PAGE_SIZE >= UPGRADES.length){
+        upgradePage = Math.max(0, Math.ceil(UPGRADES.length / UPGRADE_PAGE_SIZE) - 1);
+      }
+      renderUpgradeSettings();
+      markSynced();
+    }, function(err){
+      console.error('Firestore upgrades sync error', err);
+      showToast('Gagal memuat daftar upgrade dari server');
+    });
+  }
+  function saveUpgradesToCloud(list){
+    return setDoc(upgradesDocRef(), { list: list });
+  }
+  function upgUid(){ return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+  function renderUpgradeSettings(){
+    var total = UPGRADES.length;
+    var done = UPGRADES.filter(function(it){ return it.done; }).length;
+    var pct = total ? Math.round((done / total) * 100) : 0;
+    upgradeProgressFillEl.style.width = pct + '%';
+    upgradeProgressLabelEl.textContent = done + ' dari ' + total + ' selesai';
+    upgradeProgressPctEl.textContent = pct + '%';
+
+    if (!total){
+      upgradeListEl.innerHTML = '<p class="upgrade-empty">Belum ada item upgrade. Tambahkan rencana pembaruan aplikasi di bawah.</p>';
+      upgradePaginationEl.hidden = true;
+      return;
+    }
+
+    var totalPages = Math.max(1, Math.ceil(total / UPGRADE_PAGE_SIZE));
+    if (upgradePage >= totalPages) upgradePage = totalPages - 1;
+    if (upgradePage < 0) upgradePage = 0;
+    var start = upgradePage * UPGRADE_PAGE_SIZE;
+    var pageItems = UPGRADES.slice(start, start + UPGRADE_PAGE_SIZE);
+
+    upgradeListEl.innerHTML = pageItems.map(function(it, i){
+      var absIndex = start + i;
+      return '<div class="upg-row'+(it.done?' done':'')+'" data-index="'+absIndex+'" data-id="'+it.id+'">' +
+        '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>' +
+        '<input type="checkbox" class="upg-check" data-id="'+it.id+'"'+(it.done?' checked':'')+' aria-label="Tandai selesai">' +
+        '<div class="upg-body">' +
+          '<div class="upg-title">'+escapeHTML(it.title)+'</div>' +
+          (it.desc ? '<div class="upg-desc">'+escapeHTML(it.desc)+'</div>' : '') +
+        '</div>' +
+        '<div class="upg-acts">' +
+          '<button type="button" class="icon-btn edit-upgrade" data-id="'+it.id+'" aria-label="Ubah item">✎</button>' +
+          '<button type="button" class="icon-btn delete-upgrade" data-id="'+it.id+'" aria-label="Hapus item">🗑</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    upgradePaginationEl.hidden = total <= UPGRADE_PAGE_SIZE;
+    upgradePageInfoEl.textContent = 'Halaman ' + (upgradePage + 1) + ' dari ' + totalPages;
+    document.getElementById('upgradePrev').disabled = upgradePage <= 0;
+    document.getElementById('upgradeNext').disabled = upgradePage >= totalPages - 1;
+
+    Array.prototype.forEach.call(upgradeListEl.querySelectorAll('.upg-check'), function(cb){
+      cb.addEventListener('change', function(){
+        var id = cb.getAttribute('data-id');
+        var newList = UPGRADES.map(function(it){ return it.id===id ? Object.assign({}, it, { done: cb.checked }) : it; });
+        saveUpgradesToCloud(newList).catch(function(err){
+          console.error(err);
+          showToast('Gagal memperbarui status. Coba lagi.');
+        });
+      });
+    });
+    Array.prototype.forEach.call(upgradeListEl.querySelectorAll('.edit-upgrade'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openEditUpgradeForm(btn.getAttribute('data-id'));
+      });
+    });
+    Array.prototype.forEach.call(upgradeListEl.querySelectorAll('.delete-upgrade'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        deleteUpgradeItem(btn.getAttribute('data-id'));
+      });
+    });
+    Array.prototype.forEach.call(upgradeListEl.querySelectorAll('.upg-drag-handle'), function(handle){
+      handle.addEventListener('pointerdown', function(e){ startUpgradeDrag(e, handle); });
+    });
+  }
+
+  document.getElementById('upgradePrev').addEventListener('click', function(){
+    if (upgradePage > 0){ upgradePage--; renderUpgradeSettings(); }
+  });
+  document.getElementById('upgradeNext').addEventListener('click', function(){
+    var totalPages = Math.max(1, Math.ceil(UPGRADES.length / UPGRADE_PAGE_SIZE));
+    if (upgradePage < totalPages - 1){ upgradePage++; renderUpgradeSettings(); }
+  });
+
+  // Drag-to-reorder: pointer-based (mouse + touch), swaps items whose
+  // vertical position the dragged row crosses, restricted to the current
+  // page (pages stay contiguous slices of the underlying UPGRADES array).
+  function startUpgradeDrag(e, handle){
+    if (!currentUser) return;
+    e.preventDefault();
+    var row = handle.closest('.upg-row');
+    if (!row) return;
+    var siblings = Array.prototype.slice.call(upgradeListEl.querySelectorAll('.upg-row'));
+    var startY = e.clientY;
+    row.classList.add('dragging');
+    try { handle.setPointerCapture(e.pointerId); } catch(err){}
+
+    function onMove(ev){
+      var dy = ev.clientY - startY;
+      row.style.transform = 'translateY(' + dy + 'px)';
+      for (var i=0; i<siblings.length; i++){
+        var sib = siblings[i];
+        if (sib === row) continue;
+        var r = sib.getBoundingClientRect();
+        if (ev.clientY > r.top && ev.clientY < r.bottom){
+          var curIndex = parseInt(row.getAttribute('data-index'), 10);
+          var sibIndex = parseInt(sib.getAttribute('data-index'), 10);
+          var tmp = UPGRADES[curIndex];
+          UPGRADES[curIndex] = UPGRADES[sibIndex];
+          UPGRADES[sibIndex] = tmp;
+          row.setAttribute('data-index', sibIndex);
+          sib.setAttribute('data-index', curIndex);
+          if (curIndex < sibIndex) upgradeListEl.insertBefore(row, sib.nextSibling);
+          else upgradeListEl.insertBefore(row, sib);
+          row.style.transform = 'translateY(0px)';
+          startY = ev.clientY;
+          break;
+        }
+      }
+    }
+    function onUp(){
+      row.classList.remove('dragging');
+      row.style.transform = '';
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      saveUpgradesToCloud(UPGRADES).catch(function(err){
+        console.error(err);
+        showToast('Gagal menyimpan urutan. Coba lagi.');
+      });
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  }
+
+  // ---------- Add/Edit upgrade item form ----------
+  var upgradeFormOverlay = document.getElementById('upgradeFormOverlay');
+  var upgradeForm = document.getElementById('upgradeForm');
+  var upgradeTitleEl = document.getElementById('upgradeTitle');
+  var upgradeDescEl = document.getElementById('upgradeDesc');
+  var deleteUpgradeBtn = document.getElementById('deleteUpgradeBtn');
+
+  function openAddUpgradeForm(){
+    document.getElementById('upgradeFormTitle').textContent = 'Item upgrade baru';
+    document.getElementById('upgradeId').value = '';
+    upgradeTitleEl.value = '';
+    upgradeDescEl.value = '';
+    deleteUpgradeBtn.style.display = 'none';
+    upgradeFormOverlay.hidden = false;
+    setTimeout(function(){ upgradeTitleEl.focus(); }, 30);
+  }
+  function openEditUpgradeForm(id){
+    var it = UPGRADES.find(function(x){ return x.id===id; });
+    if (!it) return;
+    document.getElementById('upgradeFormTitle').textContent = 'Ubah item upgrade';
+    document.getElementById('upgradeId').value = it.id;
+    upgradeTitleEl.value = it.title;
+    upgradeDescEl.value = it.desc || '';
+    deleteUpgradeBtn.style.display = '';
+    upgradeFormOverlay.hidden = false;
+    setTimeout(function(){ upgradeTitleEl.focus(); }, 30);
+  }
+  function closeUpgradeForm(){ upgradeFormOverlay.hidden = true; }
+  document.getElementById('addUpgradeBtn').addEventListener('click', openAddUpgradeForm);
+  document.getElementById('cancelUpgradeForm').addEventListener('click', closeUpgradeForm);
+  upgradeFormOverlay.addEventListener('click', function(e){ if (e.target===upgradeFormOverlay) closeUpgradeForm(); });
+
+  upgradeForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (!currentUser) return;
+    var id = document.getElementById('upgradeId').value;
+    var title = upgradeTitleEl.value.trim();
+    if (!title) return;
+    var desc = upgradeDescEl.value.trim();
+    var newList;
+    if (id){
+      newList = UPGRADES.map(function(it){ return it.id===id ? Object.assign({}, it, { title: title, desc: desc }) : it; });
+    } else {
+      newList = UPGRADES.concat([{ id: upgUid(), title: title, desc: desc, done: false }]);
+    }
+    closeUpgradeForm();
+    saveUpgradesToCloud(newList).then(function(){
+      showToast(id ? 'Item upgrade diperbarui' : 'Item upgrade ditambahkan');
+    }).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan item upgrade. Coba lagi.');
+    });
+  });
+
+  deleteUpgradeBtn.addEventListener('click', function(){
+    var id = document.getElementById('upgradeId').value;
+    if (!id) return;
+    closeUpgradeForm();
+    deleteUpgradeItem(id);
+  });
+
+  function deleteUpgradeItem(id){
+    if (!currentUser) return;
+    var it = UPGRADES.find(function(x){ return x.id===id; });
+    if (!it) return;
+    if (!confirm('Hapus item upgrade "'+it.title+'"?')) return;
+    var newList = UPGRADES.filter(function(x){ return x.id !== id; });
+    saveUpgradesToCloud(newList).then(function(){
+      showToast('Item upgrade dihapus');
+    }).catch(function(err){
+      console.error(err);
+      showToast('Gagal menghapus item upgrade. Coba lagi.');
     });
   }
 
@@ -1835,13 +2251,19 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       settingsEmailEl.textContent = user.email || '';
       subscribeReminders();
       subscribeCategories();
+      subscribeUpgrades();
       refreshNotifyBanner();
     } else {
       if (unsubscribeReminders){ unsubscribeReminders(); unsubscribeReminders = null; }
       if (unsubscribeCategories){ unsubscribeCategories(); unsubscribeCategories = null; }
+      if (unsubscribeUpgrades){ unsubscribeUpgrades(); unsubscribeUpgrades = null; }
       state.reminders = [];
       CATS = DEFAULT_CATS.slice();
+      UPGRADES = [];
+      upgradePage = 0;
+      renderUpgradeSettings();
       accountChip.hidden = true;
+      syncIndicatorEl.hidden = true;
       settingsEmailEl.textContent = '—';
       authOverlay.hidden = false;
       authCard.hidden = false;
@@ -1908,6 +2330,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   function renderAll(){
     renderCalendar();
     renderCategorySettings();
+    renderUpgradeSettings();
     renderUpcoming();
     renderFlexible();
   }
@@ -1919,6 +2342,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     if (e.key === 'Escape'){
       if (!formOverlay.hidden) closeForm();
       else if (!catFormOverlay.hidden) closeCatForm();
+      else if (!upgradeFormOverlay.hidden) closeUpgradeForm();
       else if (!dayOverlay.hidden) closeDayPanel();
     }
   });
