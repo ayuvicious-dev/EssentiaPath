@@ -291,6 +291,41 @@
   .empty-state{padding:1.5rem 1.1rem; text-align:center; color:var(--ink-soft); font-size:0.85rem;}
   .empty-state svg{width:40px; height:40px; margin-bottom:0.5rem; opacity:0.6;}
 
+  /* ---------- Filter kategori (fitur Fleksibel) ---------- */
+  .flex-filter-wrap{position:relative;}
+  .flex-filter-btn{position:relative;}
+  .flex-filter-btn svg{width:15px; height:15px;}
+  .flex-filter-btn.has-active{color:var(--moss-deep);}
+  .flex-filter-btn .filter-dot{
+    position:absolute; top:2px; right:2px; width:6px; height:6px; border-radius:50%; background:var(--amber);
+    display:none;
+  }
+  .flex-filter-btn.has-active .filter-dot{display:block;}
+  .flex-filter-popover{
+    position:absolute; top:calc(100% + 6px); right:0; z-index:20; width:220px; background:var(--paper-raised);
+    border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 30px -12px rgba(0,0,0,0.28); padding:0.65rem;
+  }
+  .flex-filter-popover-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;}
+  .flex-filter-popover-head span{font-size:0.72rem; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.03em;}
+  .flex-filter-bulk-acts{display:flex; align-items:center; gap:0.55rem; margin-bottom:0.5rem; padding-bottom:0.5rem; border-bottom:1px solid var(--line-soft);}
+  .flex-filter-all{background:none; border:none; color:var(--moss-deep); font-size:0.72rem; font-weight:700; cursor:pointer; padding:0;}
+  #flexFilterNone{color:var(--ink-soft);}
+  .flex-filter-options{display:flex; flex-direction:column; gap:0.3rem; max-height:220px; overflow:auto;}
+  .flex-filter-option{
+    display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; padding:0.32rem 0.4rem; border-radius:7px;
+    cursor:pointer; color:var(--ink-soft);
+  }
+  .flex-filter-option:hover{background:var(--surface);}
+  .flex-filter-option .dot{width:8px; height:8px; border-radius:50%; flex:none;}
+  .flex-filter-option .check{
+    width:15px; height:15px; border-radius:4px; border:1.5px solid var(--line); flex:none; margin-left:auto;
+    display:flex; align-items:center; justify-content:center; background:var(--surface);
+  }
+  .flex-filter-option .check svg{width:10px; height:10px; opacity:0;}
+  .flex-filter-option.active{color:var(--ink); font-weight:600;}
+  .flex-filter-option.active .check{background:var(--moss); border-color:var(--moss);}
+  .flex-filter-option.active .check svg{opacity:1;}
+
   /* ---------- "Saat Ini" (current activity) panel ---------- */
   .current-clock{font-family:var(--font-mono); font-size:0.8rem; color:var(--ink-soft); letter-spacing:0.02em;}
   .current-body{padding:0 0.9rem 1rem;}
@@ -329,6 +364,16 @@
   .flex-check svg{width:12px; height:12px; opacity:0; transition:opacity 0.1s ease;}
   .flex-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
   .flex-item.done .flex-check svg{opacity:1;}
+  .sub-checklist{list-style:none; margin:0.4rem 0 0 1.3rem; padding:0; display:flex; flex-direction:column; gap:0.28rem;}
+  .sub-check-item{display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.7rem; color:var(--ink-soft);}
+  .sub-check-box{
+    width:14px; height:14px; border-radius:4px; border:1.5px solid var(--line); flex:none;
+    display:flex; align-items:center; justify-content:center; background:var(--paper-raised);
+  }
+  .sub-check-box svg{width:9px; height:9px;}
+  .sub-check-item.checked .sub-check-box{background:var(--moss); border-color:var(--moss);}
+  .sub-check-item.checked .sub-check-label{text-decoration:line-through; color:var(--ink-soft);}
+  .sub-check-label{word-break:break-word;}
   .flex-item .body{flex:1; min-width:0;}
   .flex-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
   .flex-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
@@ -484,6 +529,15 @@
     .field input, .field select, .field textarea{ font-size:0.9rem; }
   }
   .field textarea{resize:vertical; min-height:60px;}
+  .notes-toolbar{display:flex; gap:0.35rem; margin-bottom:0.4rem; flex-wrap:wrap;}
+  .notes-fmt-btn{
+    display:flex; align-items:center; gap:0.3rem; border:1.5px solid var(--line); border-radius:999px;
+    background:var(--paper-raised); color:var(--ink-soft); font-size:0.74rem; font-weight:700;
+    padding:0.3rem 0.6rem; cursor:pointer; line-height:1;
+  }
+  .notes-fmt-btn svg{width:13px; height:13px; flex:none;}
+  .notes-fmt-btn:hover{border-color:var(--moss);}
+  .notes-fmt-btn.active{border-color:var(--moss); background:var(--selected-bg); color:var(--moss-deep);}
   #upgradeDesc{resize:vertical; min-height:80px; overflow-y:auto;}
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .cat-options{display:flex; flex-wrap:wrap; gap:0.4rem;}
@@ -670,7 +724,25 @@
       </section>
 
       <section class="panel" aria-label="Pengingat fleksibel">
-        <div class="sidebar-head"><h2>Fleksibel</h2></div>
+        <div class="sidebar-head">
+          <h2>Fleksibel</h2>
+          <div class="flex-filter-wrap">
+            <button type="button" class="icon-btn flex-filter-btn" id="flexFilterBtn" aria-label="Filter berdasarkan kategori" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10.5 18h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span class="filter-dot"></span>
+            </button>
+            <div class="flex-filter-popover" id="flexFilterPopover" hidden>
+              <div class="flex-filter-popover-head">
+                <span>Filter kategori</span>
+              </div>
+              <div class="flex-filter-bulk-acts">
+                <button type="button" class="flex-filter-all" id="flexFilterAll">Centang semua</button>
+                <button type="button" class="flex-filter-all" id="flexFilterNone">Hapus semua</button>
+              </div>
+              <div class="flex-filter-options" id="flexFilterOptions"></div>
+            </div>
+          </div>
+        </div>
         <ul class="flex-list" id="flexibleList"></ul>
       </section>
     </aside>
@@ -853,7 +925,23 @@
       </div>
       <div class="field">
         <label for="fNotes">Catatan (opsional)</label>
-        <textarea id="fNotes" maxlength="240" placeholder="Detail tambahan…"></textarea>
+        <div class="notes-toolbar" id="notesToolbar" role="group" aria-label="Format catatan">
+          <button type="button" class="notes-fmt-btn active" data-fmt="none">Teks biasa</button>
+          <button type="button" class="notes-fmt-btn" data-fmt="check">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="17" height="17" rx="4" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            List centang
+          </button>
+          <button type="button" class="notes-fmt-btn" data-fmt="number">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h1.6M4 6V4.5M4 18h1.6v-1.4H4M5.6 16.6H4M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            List angka
+          </button>
+          <button type="button" class="notes-fmt-btn" data-fmt="bullet">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="4.5" cy="6" r="1.7" fill="currentColor"/><circle cx="4.5" cy="12" r="1.7" fill="currentColor"/><circle cx="4.5" cy="18" r="1.7" fill="currentColor"/><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            List bullet
+          </button>
+        </div>
+        <textarea id="fNotes" maxlength="500" placeholder="Detail tambahan…"></textarea>
+        <p class="hint">Pilih format lalu ketik. Tekan Enter untuk baris baru dalam list, Enter dua kali untuk keluar dari list.</p>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger" id="deleteBtn" style="display:none;">Hapus</button>
@@ -1093,6 +1181,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
   var NOTIFIED_KEY = "essentiapath.notified.v1";
   var ACTIVE_FILTERS_KEY = "essentiapath.filters.v1";
+  var FLEX_FILTERS_KEY = "essentiapath.flexFilters.v1";
 
   var currentUser = null;
   var unsubscribeReminders = null;
@@ -1101,6 +1190,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     reminders: [],
     viewDate: new Date(),
     activeFilters: loadFilters(),
+    flexFilters: loadFlexFilters(),
     dayPanelDate: null,
     completions: {}
   };
@@ -1146,6 +1236,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         saveCategoriesToCloud(CATS).catch(function(){});
       }
       syncFiltersWithCategories();
+      syncFlexFiltersWithCategories();
       renderAll();
       renderCategorySettings();
       markSynced();
@@ -1191,11 +1282,11 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     return out;
   }
   function completionKey(reminderId, dateStr, time){ return reminderId + '|' + dateStr + '|' + time; }
-  function toggleCompletion(reminderId, dateStr, time){
+  function setCompletion(reminderId, dateStr, time, value){
     if (!currentUser) return;
     var key = completionKey(reminderId, dateStr, time);
     var next = Object.assign({}, state.completions);
-    if (next[key]) delete next[key]; else next[key] = true;
+    if (value) next[key] = true; else delete next[key];
     next = pruneOldCompletions(next);
     state.completions = next;
     renderCurrentActivity();
@@ -1205,6 +1296,11 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       console.error(err);
       showToast('Gagal menyimpan status. Coba lagi.');
     });
+  }
+  function toggleCompletion(reminderId, dateStr, time){
+    if (!currentUser) return;
+    var key = completionKey(reminderId, dateStr, time);
+    setCompletion(reminderId, dateStr, time, !state.completions[key]);
   }
   // Menjaga agar filter kategori aktif tetap konsisten dengan daftar kategori
   // yang ada saat ini (buang id yang sudah dihapus, tampilkan kategori baru
@@ -1228,6 +1324,27 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
   function saveFilters(){
     localStorage.setItem(ACTIVE_FILTERS_KEY, JSON.stringify(state.activeFilters));
+  }
+  // Filter kategori khusus untuk daftar "Fleksibel" — terpisah dari filter
+  // kalender/Mendatang di atas, supaya menyaring di sini tidak mengubah
+  // tampilan kalender maupun daftar Mendatang.
+  function syncFlexFiltersWithCategories(){
+    var validIds = CATS.map(function(c){ return c.id; });
+    state.flexFilters = state.flexFilters.filter(function(id){ return validIds.indexOf(id) !== -1; });
+    validIds.forEach(function(id){
+      if (state.flexFilters.indexOf(id) === -1) state.flexFilters.push(id);
+    });
+    saveFlexFilters();
+  }
+  function loadFlexFilters(){
+    try {
+      var f = JSON.parse(localStorage.getItem(FLEX_FILTERS_KEY));
+      if (f && f.length) return f;
+    } catch(e){}
+    return CATS.map(function(c){ return c.id; });
+  }
+  function saveFlexFilters(){
+    localStorage.setItem(FLEX_FILTERS_KEY, JSON.stringify(state.flexFilters));
   }
   function catInfo(id){
     for (var i=0;i<CATS.length;i++) if (CATS[i].id===id) return CATS[i];
@@ -1403,6 +1520,113 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     return String(s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
+  }
+  // ---------- Catatan: sub-checklist (☐/☑) ----------
+  var CHECK_UNCHECKED = '\u2610 ';
+  var CHECK_CHECKED = '\u2611 ';
+  function checklistLines(notes){
+    if (!notes) return [];
+    var lines = notes.split('\n');
+    var out = [];
+    lines.forEach(function(line, idx){
+      if (line.indexOf(CHECK_UNCHECKED) === 0){
+        out.push({ idx: idx, checked:false, text: line.slice(CHECK_UNCHECKED.length) });
+      } else if (line.indexOf(CHECK_CHECKED) === 0){
+        out.push({ idx: idx, checked:true, text: line.slice(CHECK_CHECKED.length) });
+      }
+    });
+    return out;
+  }
+  function checklistAllChecked(items){
+    return items.length>0 && items.every(function(it){ return it.checked; });
+  }
+  function toggleChecklistLine(notes, lineIdx, forceValue){
+    var lines = (notes||'').split('\n');
+    var line = lines[lineIdx];
+    if (line == null) return notes;
+    var isChecked = line.indexOf(CHECK_CHECKED)===0;
+    var isUnchecked = line.indexOf(CHECK_UNCHECKED)===0;
+    if (!isChecked && !isUnchecked) return notes;
+    var text = isChecked ? line.slice(CHECK_CHECKED.length) : line.slice(CHECK_UNCHECKED.length);
+    var newChecked = forceValue != null ? forceValue : !isChecked;
+    lines[lineIdx] = (newChecked ? CHECK_CHECKED : CHECK_UNCHECKED) + text;
+    return lines.join('\n');
+  }
+  function setAllChecklist(notes, value){
+    var lines = (notes||'').split('\n').map(function(line){
+      if (line.indexOf(CHECK_UNCHECKED)===0) return (value?CHECK_CHECKED:CHECK_UNCHECKED) + line.slice(CHECK_UNCHECKED.length);
+      if (line.indexOf(CHECK_CHECKED)===0) return (value?CHECK_CHECKED:CHECK_UNCHECKED) + line.slice(CHECK_CHECKED.length);
+      return line;
+    });
+    return lines.join('\n');
+  }
+  function renderChecklistHTML(notes){
+    var items = checklistLines(notes);
+    if (!items.length) return '';
+    return '<ul class="sub-checklist">' +
+      items.map(function(it){
+        return '<li class="sub-check-item'+(it.checked?' checked':'')+'" data-line="'+it.idx+'">' +
+          '<span class="sub-check-box">'+(it.checked?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>' +
+          '<span class="sub-check-label">'+escapeHTML(it.text)+'</span>' +
+        '</li>';
+      }).join('') +
+    '</ul>';
+  }
+  // Terapkan status centang dari checklist ke reminder (dan, bila relevan,
+  // ke status penyelesaian per-kejadian) lalu simpan.
+  function applyChecklistUpdate(reminderId, updatedNotes, ctx){
+    var r = state.reminders.find(function(x){ return x.id===reminderId; });
+    if (!r) return;
+    var allChecked = checklistAllChecked(checklistLines(updatedNotes));
+    var updated = Object.assign({}, r, { notes: updatedNotes });
+    if (ctx.type === 'flex') updated.done = allChecked;
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan status. Coba lagi.');
+    });
+    if (ctx.type === 'current' || ctx.type === 'missed'){
+      setCompletion(reminderId, ctx.date, ctx.time, allChecked);
+    }
+  }
+  function onChecklistItemToggle(reminderId, lineIdx, ctx){
+    var r = state.reminders.find(function(x){ return x.id===reminderId; });
+    if (!r || !r.notes) return;
+    var updatedNotes = toggleChecklistLine(r.notes, lineIdx);
+    applyChecklistUpdate(reminderId, updatedNotes, ctx);
+  }
+  function onChecklistToggleAll(reminderId, ctx){
+    var r = state.reminders.find(function(x){ return x.id===reminderId; });
+    if (!r || !r.notes) return;
+    var items = checklistLines(r.notes);
+    if (!items.length) return;
+    var updatedNotes = setAllChecklist(r.notes, !checklistAllChecked(items));
+    applyChecklistUpdate(reminderId, updatedNotes, ctx);
+  }
+  function bindChecklistClicks(container, ctxForItem){
+    Array.prototype.forEach.call(container.querySelectorAll('.sub-check-item'), function(li){
+      li.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = li.closest('[data-checklist-owner]');
+        if (!host) return;
+        var reminderId = host.getAttribute('data-checklist-owner');
+        var lineIdx = parseInt(li.getAttribute('data-line'), 10);
+        onChecklistItemToggle(reminderId, lineIdx, ctxForItem(host));
+      });
+    });
+  }
+  // Ringkasan satu baris untuk catatan yang berisi list (centang/angka/bullet),
+  // supaya beberapa baris list tetap terbaca ringkas di pratinjau.
+  function notesPreview(notes){
+    if (!notes) return '';
+    return notes.split('\n').map(function(l){ return l.trim(); }).filter(Boolean).join(' · ');
+  }
+  // Sama seperti notesPreview, tapi baris checklist disembunyikan karena
+  // sudah ditampilkan sebagai daftar centang interaktif di bawah judul.
+  function notesFreeTextPreview(notes){
+    if (!notes) return '';
+    return notes.split('\n').map(function(l){ return l.trim(); }).filter(function(l){
+      return l && l.indexOf(CHECK_UNCHECKED)!==0 && l.indexOf(CHECK_CHECKED)!==0;
+    }).join(' · ');
   }
 
   // ---------- Category management (Pengaturan) ----------
@@ -1989,9 +2213,11 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     var it = res.current;
     var c = catInfo(it.reminder.category);
     var key = completionKey(it.reminder.id, it.date, it.time);
-    var done = !!state.completions[key];
+    var checklistItemsCur = checklistLines(it.reminder.notes);
+    var hasChecklistCur = checklistItemsCur.length > 0;
+    var done = hasChecklistCur ? checklistAllChecked(checklistItemsCur) : !!state.completions[key];
     currentActivityEl.innerHTML =
-      '<div class="current-item'+(done?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+      '<div class="current-item'+(done?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
         '<button type="button" class="current-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" aria-label="Tandai sudah dilakukan">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
@@ -1999,14 +2225,22 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
           '<div class="cat-line"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</div>' +
           '<div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
           '<div class="meta">Mulai '+it.time+' · '+repeatLabel(it.reminder)+(res.next ? ' · berikutnya '+res.next.time : '')+'</div>' +
+          renderChecklistHTML(it.reminder.notes) +
         '</div>' +
       '</div>';
     var checkBtn = currentActivityEl.querySelector('.current-check');
     if (checkBtn){
       checkBtn.addEventListener('click', function(){
-        toggleCompletion(checkBtn.getAttribute('data-id'), checkBtn.getAttribute('data-date'), checkBtn.getAttribute('data-time'));
+        if (hasChecklistCur){
+          onChecklistToggleAll(checkBtn.getAttribute('data-id'), { type:'current', date: checkBtn.getAttribute('data-date'), time: checkBtn.getAttribute('data-time') });
+        } else {
+          toggleCompletion(checkBtn.getAttribute('data-id'), checkBtn.getAttribute('data-date'), checkBtn.getAttribute('data-time'));
+        }
       });
     }
+    bindChecklistClicks(currentActivityEl, function(host){
+      return { type:'current', date: host.getAttribute('data-date'), time: it.time };
+    });
   }
   setInterval(renderCurrentActivity, 15000);
 
@@ -2102,7 +2336,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
       var dateStr = toISODate(dt);
       state.reminders.forEach(function(r){
         if (r.flexible || r.repeat === 'daily') return;
-        if (state.activeFilters.indexOf(r.category) === -1) return;
+        if (state.flexFilters.indexOf(r.category) === -1) return;
         var times = occurrencesOnDate(r, dateStr);
         times.forEach(function(t){
           var key = completionKey(r.id, dateStr, t);
@@ -2116,13 +2350,75 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
 
   // ---------- Flexible (no-date) reminders ----------
   var flexibleList = document.getElementById('flexibleList');
+  // ---------- Filter kategori untuk daftar "Fleksibel" ----------
+  var flexFilterBtn = document.getElementById('flexFilterBtn');
+  var flexFilterPopover = document.getElementById('flexFilterPopover');
+  var flexFilterOptions = document.getElementById('flexFilterOptions');
+  function openFlexFilterPopover(){
+    flexFilterPopover.hidden = false;
+    flexFilterBtn.setAttribute('aria-expanded', 'true');
+  }
+  function closeFlexFilterPopover(){
+    flexFilterPopover.hidden = true;
+    flexFilterBtn.setAttribute('aria-expanded', 'false');
+  }
+  if (flexFilterBtn){
+    flexFilterBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (flexFilterPopover.hidden) openFlexFilterPopover(); else closeFlexFilterPopover();
+    });
+    document.addEventListener('click', function(e){
+      if (!flexFilterPopover.hidden && !flexFilterPopover.contains(e.target) && e.target !== flexFilterBtn){
+        closeFlexFilterPopover();
+      }
+    });
+    document.getElementById('flexFilterAll').addEventListener('click', function(){
+      state.flexFilters = CATS.map(function(c){ return c.id; });
+      saveFlexFilters();
+      renderFlexible();
+    });
+    document.getElementById('flexFilterNone').addEventListener('click', function(){
+      state.flexFilters = [];
+      saveFlexFilters();
+      renderFlexible();
+    });
+  }
+  function renderFlexFilterUI(){
+    if (!flexFilterBtn) return;
+    var allSelected = CATS.length > 0 && CATS.every(function(c){ return state.flexFilters.indexOf(c.id) !== -1; });
+    flexFilterBtn.classList.toggle('has-active', !allSelected);
+    flexFilterOptions.innerHTML = CATS.map(function(c){
+      var active = state.flexFilters.indexOf(c.id) !== -1;
+      return '<div class="flex-filter-option'+(active?' active':'')+'" data-id="'+c.id+'">' +
+        '<span class="dot" style="background:'+c.hex+'"></span><span>'+escapeHTML(c.label)+'</span>' +
+        '<span class="check"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(flexFilterOptions.querySelectorAll('.flex-filter-option'), function(opt){
+      opt.addEventListener('click', function(){
+        var id = opt.getAttribute('data-id');
+        var idx = state.flexFilters.indexOf(id);
+        if (idx===-1) state.flexFilters.push(id); else state.flexFilters.splice(idx,1);
+        if (state.flexFilters.length===0) state.flexFilters = [id]; // minimal satu kategori tetap tampil
+        saveFlexFilters();
+        renderFlexible();
+      });
+    });
+  }
+
   function renderFlexible(){
+    renderFlexFilterUI();
     var items = state.reminders.filter(function(r){
-      return r.flexible && state.activeFilters.indexOf(r.category) !== -1;
+      return r.flexible && state.flexFilters.indexOf(r.category) !== -1;
     });
     var missed = getMissedItems();
     if (!items.length && !missed.length){
-      flexibleList.innerHTML = '<div class="empty-state">Belum ada pengingat fleksibel. Cocok untuk hal yang tidak terikat tanggal.</div>';
+      var hasAnyFlexible = state.reminders.some(function(r){ return r.flexible; });
+      flexibleList.innerHTML = state.flexFilters.length === 0
+        ? '<div class="empty-state">Tidak ada kategori yang dicentang. Centang kategori di filter untuk menampilkan pengingat fleksibel.</div>'
+        : (hasAnyFlexible
+          ? '<div class="empty-state">Tidak ada pengingat fleksibel untuk kategori yang dicentang.</div>'
+          : '<div class="empty-state">Belum ada pengingat fleksibel. Cocok untuk hal yang tidak terikat tanggal.</div>');
       return;
     }
     // Belum selesai dulu, lalu yang sudah selesai di bawah.
@@ -2132,35 +2428,62 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     var missedHtml = missed.map(function(it){
       var c = catInfo(it.reminder.category);
       var dtLabel = dayLabel(parseISODate(it.date));
-      return '<li class="flex-item missed-item" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
-        '<button type="button" class="flex-check missed-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" aria-label="Tandai selesai">' +
+      var checklistItemsM = checklistLines(it.reminder.notes);
+      var hasChecklistM = checklistItemsM.length > 0;
+      var doneM = hasChecklistM && checklistAllChecked(checklistItemsM);
+      return '<li class="flex-item missed-item'+(doneM?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
+        '<button type="button" class="flex-check missed-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistM?'1':'0')+'" aria-label="Tandai selesai">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
         '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
-        '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div></div>' +
+        '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
+        renderChecklistHTML(it.reminder.notes) +
+        '</div>' +
         '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
     }).join('');
     var regularHtml = items.map(function(r){
       var c = catInfo(r.category);
-      return '<li class="flex-item'+(r.done?' done':'')+'" data-id="'+r.id+'">' +
-        '<button type="button" class="flex-check" data-id="'+r.id+'" aria-label="Tandai selesai">' +
+      var checklistItemsR = checklistLines(r.notes);
+      var hasChecklistR = checklistItemsR.length > 0;
+      var doneR = hasChecklistR ? checklistAllChecked(checklistItemsR) : !!r.done;
+      var freeText = notesFreeTextPreview(r.notes);
+      return '<li class="flex-item'+(doneR?' done':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
+        '<button type="button" class="flex-check" data-id="'+r.id+'" data-has-checklist="'+(hasChecklistR?'1':'0')+'" aria-label="Tandai selesai">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
         '<div class="body"><div class="title">'+escapeHTML(r.title)+'</div>' +
-        '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+(r.notes?' · '+escapeHTML(r.notes):'')+'</div></div>' +
+        '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+(freeText?' · '+escapeHTML(freeText):'')+'</div>' +
+        renderChecklistHTML(r.notes) +
+        '</div>' +
         '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button></div></li>';
     }).join('');
     flexibleList.innerHTML = missedHtml + regularHtml;
     Array.prototype.forEach.call(flexibleList.querySelectorAll('.flex-check:not(.missed-check)'), function(btn){
-      btn.addEventListener('click', function(){ toggleFlexDone(btn.getAttribute('data-id')); });
+      btn.addEventListener('click', function(){
+        if (btn.getAttribute('data-has-checklist') === '1'){
+          onChecklistToggleAll(btn.getAttribute('data-id'), { type:'flex' });
+        } else {
+          toggleFlexDone(btn.getAttribute('data-id'));
+        }
+      });
     });
     Array.prototype.forEach.call(flexibleList.querySelectorAll('.missed-check'), function(btn){
       btn.addEventListener('click', function(){
-        toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+        if (btn.getAttribute('data-has-checklist') === '1'){
+          onChecklistToggleAll(btn.getAttribute('data-id'), { type:'missed', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
+        } else {
+          toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+        }
       });
     });
     Array.prototype.forEach.call(flexibleList.querySelectorAll('.edit-flex'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+    });
+    bindChecklistClicks(flexibleList, function(host){
+      if (host.classList.contains('missed-item')){
+        return { type:'missed', date: host.getAttribute('data-date'), time: host.querySelector('.missed-check').getAttribute('data-time') };
+      }
+      return { type:'flex' };
     });
   }
   function toggleFlexDone(id){
@@ -2223,6 +2546,84 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     everyNDaysRow.style.display = fRepeat.value === 'everyNDays' ? 'grid' : 'none';
   });
 
+  // ---------- Catatan: format list (teks biasa / centang / angka / bullet) ----------
+  var fNotesEl = document.getElementById('fNotes');
+  var notesToolbar = document.getElementById('notesToolbar');
+  var notesFmtBtns = notesToolbar ? Array.prototype.slice.call(notesToolbar.querySelectorAll('.notes-fmt-btn')) : [];
+  var NOTES_MARK = { check:CHECK_UNCHECKED, bullet:'\u2022 ' };
+  var notesFmtMode = 'none';
+
+  function setNotesFmtMode(mode){
+    notesFmtMode = mode;
+    notesFmtBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-fmt')===mode); });
+  }
+  function lineBounds(text, pos){
+    var start = text.lastIndexOf('\n', pos-1) + 1;
+    var end = text.indexOf('\n', pos);
+    if (end === -1) end = text.length;
+    return { start: start, end: end };
+  }
+  function lineMarkerInfo(line){
+    var mNum = line.match(/^(\d+)\.\s/);
+    if (mNum) return { type:'number', markerLen: mNum[0].length, num: parseInt(mNum[1],10) };
+    if (line.indexOf(NOTES_MARK.check) === 0) return { type:'check', markerLen: NOTES_MARK.check.length };
+    if (line.indexOf(NOTES_MARK.bullet) === 0) return { type:'bullet', markerLen: NOTES_MARK.bullet.length };
+    return { type:'none', markerLen: 0 };
+  }
+  function markerFor(type, num){
+    if (type==='check') return NOTES_MARK.check;
+    if (type==='bullet') return NOTES_MARK.bullet;
+    if (type==='number') return num + '. ';
+    return '';
+  }
+  if (notesFmtBtns.length){
+    notesFmtBtns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var mode = btn.getAttribute('data-fmt');
+        setNotesFmtMode(mode);
+        var text = fNotesEl.value;
+        var pos = fNotesEl.selectionStart || 0;
+        var b = lineBounds(text, pos);
+        var line = text.slice(b.start, b.end);
+        var info = lineMarkerInfo(line);
+        var bare = line.slice(info.markerLen);
+        var newMarker = mode==='none' ? '' : markerFor(mode, 1);
+        var newLine = newMarker + bare;
+        fNotesEl.value = text.slice(0, b.start) + newLine + text.slice(b.end);
+        var newPos = b.start + newLine.length;
+        fNotesEl.focus();
+        fNotesEl.setSelectionRange(newPos, newPos);
+      });
+    });
+    fNotesEl.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter') return;
+      if (notesFmtMode === 'none') return;
+      var text = fNotesEl.value;
+      var pos = fNotesEl.selectionStart || 0;
+      if (pos !== (fNotesEl.selectionEnd||0)) return; // biarkan default kalau ada seleksi
+      var b = lineBounds(text, pos);
+      var line = text.slice(b.start, pos);
+      var info = lineMarkerInfo(line);
+      if (info.type === 'none') return; // baris tanpa marker, biarkan default
+      var bareContent = line.slice(info.markerLen);
+      e.preventDefault();
+      if (bareContent.trim() === ''){
+        // baris list kosong -> keluar dari list (hapus marker, jangan lanjutkan)
+        fNotesEl.value = text.slice(0, b.start) + text.slice(pos);
+        var p2 = b.start;
+        fNotesEl.setSelectionRange(p2, p2);
+        return;
+      }
+      var nextNum = info.type==='number' ? info.num + 1 : 1;
+      var nextMarker = markerFor(info.type, nextNum);
+      var insert = '\n' + nextMarker;
+      fNotesEl.value = text.slice(0, pos) + insert + text.slice(pos);
+      var p3 = pos + insert.length;
+      fNotesEl.setSelectionRange(p3, p3);
+    });
+  }
+  function resetNotesToolbar(){ setNotesFmtMode('none'); }
+
   function openAddForm(prefillDate){
     document.getElementById('formTitle').textContent = 'Pengingat baru';
     document.getElementById('reminderId').value = '';
@@ -2239,6 +2640,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     document.getElementById('fEveryNDays').value = 3;
     fFlexible.checked = false;
     toggleFlexibleUI(false);
+    resetNotesToolbar();
     formOverlay.hidden = false;
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
   }
@@ -2262,6 +2664,11 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     document.getElementById('fEveryNDays').value = r.everyNDaysInterval || 3;
     document.getElementById('fUntil').value = r.until || '';
     document.getElementById('fNotes').value = r.notes || '';
+    (function(){
+      var lastLine = (r.notes || '').split('\n').slice(-1)[0] || '';
+      var info = lineMarkerInfo(lastLine);
+      setNotesFmtMode(info.type === 'none' ? 'none' : info.type);
+    })();
     fFlexible.checked = !!r.flexible;
     toggleFlexibleUI(!!r.flexible);
     formOverlay.hidden = false;
@@ -2363,7 +2770,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         var c = catInfo(it.reminder.category);
         return '<div class="up-item"><span class="dot" style="background:'+c.hex+'"></span>' +
           '<div class="body"><div class="title">'+escapeHTML(it.reminder.title)+'</div>' +
-          '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+(it.reminder.notes?' · '+escapeHTML(it.reminder.notes):'')+'</div></div>' +
+          '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+(it.reminder.notes?' · '+escapeHTML(notesPreview(it.reminder.notes)):'')+'</div></div>' +
           '<div class="acts"><button type="button" class="icon-btn edit-day" data-id="'+it.reminder.id+'" aria-label="Ubah">✎</button></div></div>';
       }).join('');
       Array.prototype.forEach.call(dayPanelList.querySelectorAll('.edit-day'), function(btn){
@@ -2480,7 +2887,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
 
   function fireNotification(r, time){
-    var body = time + ' · ' + repeatLabel(r) + (r.notes ? ' — ' + r.notes : '');
+    var body = time + ' · ' + repeatLabel(r) + (r.notes ? ' — ' + notesPreview(r.notes) : '');
     if (navigator.serviceWorker && navigator.serviceWorker.ready){
       navigator.serviceWorker.ready.then(function(reg){
         reg.showNotification('EssentiaPath: ' + r.title, {
