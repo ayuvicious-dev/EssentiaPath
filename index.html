@@ -55,6 +55,10 @@
     --danger-border:rgba(139,58,43,0.3);
     --sunday:#B23A2E;
     --saturday:#2E7D4F;
+    --saturday-bg:#E4F1E1;
+    --sunday-bg:#FBE6E2;
+    --today-num:#3E7CB1;
+    --today-bg:#FBE8D6;
     --cat-kerja:#93AF9E;
     --cat-pribadi:#E3A97C;
     --cat-kesehatan:#C6A6C4;
@@ -89,6 +93,10 @@
     --danger-border:rgba(232,137,122,0.3);
     --sunday:#E8776A;
     --saturday:#5FC98A;
+    --saturday-bg:#20362A;
+    --sunday-bg:#3A2420;
+    --today-num:#7FBEE8;
+    --today-bg:#3A2A18;
   }
   /* Ukuran font aplikasi (Tampilan → Ukuran Font): mengubah font-size akar
      (html), yang otomatis menyesuaikan hampir semua ukuran di aplikasi
@@ -272,12 +280,30 @@
   }
   .day-cell:hover{border-color:var(--moss); box-shadow:0 0 0 1px var(--moss) inset;}
   .day-cell.muted{opacity:0.38;}
-  .day-cell.today{border-color:var(--amber); background:var(--surface);}
+  /* Latar kotak akhir pekan/libur: Sabtu hijau pastel; Minggu atau hari
+     libur nasional/cuti bersama merah pastel. Diterapkan ke .day-cell
+     itu sendiri (bukan cuma teks tanggalnya) supaya seluruh kotak
+     kelihatan bedanya sekilas dari tampilan bulan. */
+  .day-cell.is-saturday{background:var(--saturday-bg);}
+  .day-cell.is-sunday{background:var(--sunday-bg);}
+  /* .day-cell.today ditaruh PALING BELAKANG (setelah is-saturday/is-sunday)
+     supaya, kalau hari ini kebetulan jatuh di akhir pekan/hari libur, latar
+     biru pastel "hari ini" ini yang menang — bukan hijau/merah pastelnya. */
+  .day-cell.today{border-color:var(--amber); background:var(--today-bg);}
   .day-num-row{display:flex; align-items:center; justify-content:space-between;}
   .day-num{font-size:0.82rem; font-weight:700; font-family:var(--font-mono); color:var(--ink);}
   .day-num.is-sunday{color:var(--sunday);}
   .day-num.is-saturday{color:var(--saturday);}
   .day-num.is-cuti{color:var(--amber-deep);}
+  /* Tanggal yang sudah lewat (sebelum hari ini) ditampilkan abu-abu,
+     menimpa warna Sabtu/Minggu/cuti di atas — supaya sekilas kelihatan
+     hari-hari yang sudah berlalu. Diletakkan setelah aturan-aturan di
+     atas supaya menang. */
+  .day-num.is-past{color:var(--ink-soft);}
+  /* Angka tanggal "hari ini" selalu biru pastel, menimpa warna Sabtu/
+     Minggu/cuti di atas — makanya aturan ini sengaja ditaruh belakangan
+     dan menyasar kombinasi .day-num.is-today secara spesifik. */
+  .day-num.is-today{color:var(--today-num);}
   .weekday-row span.is-sunday{color:var(--sunday);}
   .weekday-row span.is-saturday{color:var(--saturday);}
   .day-holiday-tag{
@@ -299,7 +325,7 @@
   .day-items{display:flex; flex-direction:column; gap:3px; min-width:0;}
   .chip{
     display:flex; align-items:center; gap:0.3rem; font-size:0.66rem; line-height:1.5; padding:3px 5px 4px; border-radius:6px;
-    background:var(--line-soft); white-space:nowrap; min-width:0;
+    background:var(--line-soft); min-width:0; max-width:100%; overflow:hidden; box-sizing:border-box;
   }
   @media (min-width:480px){
     .chip{font-size:0.7rem; padding:3px 6px 4px;}
@@ -309,6 +335,7 @@
   }
   .chip .dot{width:6px; height:6px; border-radius:50%; flex:none;}
   .chip .t{font-family:var(--font-mono); color:var(--ink-soft); flex:none;}
+  .chip .title{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto;}
   .more-link{font-size:0.68rem; color:var(--moss-deep); font-weight:700; padding-left:2px;}
   @media (min-width:860px){ .more-link{font-size:0.74rem;} }
 
@@ -2004,17 +2031,88 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var dayGrid = document.getElementById('dayGrid');
   var weekdayRow = document.getElementById('weekdayRow');
 
-  // Lebar kolom day-grid dihitung otomatis oleh browser lewat
-  // grid-template-columns:repeat(7,minmax(84px,max-content)) — mengikuti
-  // judul pengingat terpanjang di kolom itu. Supaya baris header hari
-  // (Sen/Sel/.../Min) tetap sejajar persis dengan kolom-kolom itu, salin
-  // lebar kolom yang sudah dihitung (dari getComputedStyle, sudah berupa
-  // nilai px final) ke weekday-row sebagai grid-template-columns eksplisit.
-  function syncWeekdayRowColumns(){
-    if (!weekdayRow || !dayGrid) return;
-    var cols = getComputedStyle(dayGrid).gridTemplateColumns;
-    if (cols) weekdayRow.style.gridTemplateColumns = cols;
+  // Lebar tiap kolom day-grid TIDAK lagi diserahkan ke perhitungan intrinsik
+  // grid-template-columns:minmax(84px,max-content) bawaan browser — nilai
+  // itu ternyata tidak konsisten dihitung di sejumlah browser HP saat
+  // kontennya berlapis flex-di-dalam-flex-di-dalam-grid (angka lebar yang
+  // dihasilkan browser bisa lebih sempit dari kebutuhan asli chip pengingat,
+  // sehingga judul terpotong keluar dari kotak). Sebagai gantinya, lebar
+  // tiap kolom diukur langsung lewat JS, lalu diterapkan sebagai
+  // grid-template-columns eksplisit dalam px — ke day-grid maupun
+  // weekday-row sekaligus, supaya header hari tetap sejajar persis.
+  //
+  // PENTING soal cara mengukurnya: chip TIDAK diukur langsung di tempatnya
+  // (scrollWidth elemen yang sedang tampil), karena chip itu berada dalam
+  // kolom yang lebarnya saat ini masih mengikuti hasil render SEBELUMNYA
+  // (sempit). Karena .title punya flex-shrink aktif (lewat flex:1 1 auto +
+  // min-width:0, supaya bisa terpotong ellipsis kalau memang kepanjangan),
+  // browser akan memeras dulu lebar .title sampai pas dengan kolom sempit
+  // itu SEBELUM sempat diukur — hasilnya judul dianggap nyaris 0px dan jadi
+  // tidak pernah tampil (ini bug yang sempat muncul). Untuk menghindarinya,
+  // tiap chip di-clone ke sebuah wadah "probe" di luar layar yang lebarnya
+  // tidak dibatasi sama sekali, supaya .title mengambil lebar alaminya
+  // (tanpa tertekan flex-shrink), baru diukur dari sana.
+  var DAY_COL_MIN = 84;   // px — sama dengan batas bawah minmax() di CSS
+  var DAY_COL_MAX = 240;  // px — batas atas supaya satu judul sangat panjang
+                           // tidak melebarkan seluruh minggu; sisanya dipotong
+                           // dengan ellipsis (lihat .chip .title di CSS).
+  function measureNaturalWidth(el, probe){
+    var clone = el.cloneNode(true);
+    clone.style.display = 'inline-flex';
+    clone.style.width = 'auto';
+    clone.style.maxWidth = 'none';
+    probe.appendChild(clone);
+    var w = clone.getBoundingClientRect().width;
+    probe.removeChild(clone);
+    return w;
   }
+  function autoSizeDayColumns(){
+    if (!dayGrid) return;
+    var cells = dayGrid.querySelectorAll('.day-cell');
+    if (!cells.length) return;
+
+    var probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute; visibility:hidden; left:-9999px; top:0; ' +
+      'white-space:nowrap; pointer-events:none;';
+    document.body.appendChild(probe);
+
+    var colWidths = [0,0,0,0,0,0,0];
+    Array.prototype.forEach.call(cells, function(cell, idx){
+      var col = idx % 7;
+      var needed = 0;
+      Array.prototype.forEach.call(cell.querySelectorAll('.chip'), function(chip){
+        var w = measureNaturalWidth(chip, probe);
+        if (w > needed) needed = w;
+      });
+      var holidayTag = cell.querySelector('.day-holiday-tag');
+      if (holidayTag){
+        var wH = measureNaturalWidth(holidayTag, probe);
+        if (wH > needed) needed = wH;
+      }
+      var moreLink = cell.querySelector('.more-link');
+      if (moreLink){
+        var wM = measureNaturalWidth(moreLink, probe);
+        if (wM > needed) needed = wM;
+      }
+      if (needed > 0){
+        var cs = getComputedStyle(cell);
+        needed += (parseFloat(cs.paddingLeft)||0) + (parseFloat(cs.paddingRight)||0);
+      }
+      if (needed > colWidths[col]) colWidths[col] = needed;
+    });
+
+    document.body.removeChild(probe);
+
+    var template = colWidths.map(function(w){
+      var px = w > 0 ? Math.min(DAY_COL_MAX, Math.max(DAY_COL_MIN, Math.ceil(w))) : DAY_COL_MIN;
+      return px + 'px';
+    }).join(' ');
+    dayGrid.style.gridTemplateColumns = template;
+    if (weekdayRow) weekdayRow.style.gridTemplateColumns = template;
+  }
+  // Nama lama dipertahankan sebagai alias supaya pemanggil lain (kalau ada)
+  // tetap berfungsi tanpa perlu diubah satu-satu.
+  function syncWeekdayRowColumns(){ autoSizeDayColumns(); }
 
   function renderCalendar(){
     var y = state.viewDate.getFullYear(), m = state.viewDate.getMonth();
@@ -2032,9 +2130,20 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var inMonth = cellDate.getMonth() === m;
       var isToday = dateStr === todayStr;
       var items = itemsForDate(dateStr);
-      var cls = 'day-cell' + (inMonth?'':' muted') + (isToday?' today':'');
       var dow = cellDate.getDay(); // 0 = Minggu, 6 = Sabtu
       var holidayInfo = getHolidayInfo(cellDate);
+      // Latar kotak: Sabtu → hijau pastel. Minggu ATAU hari libur nasional/
+      // cuti bersama (apa pun harinya) → merah pastel. Beda dari numCls di
+      // bawah (yang membedakan warna TEKS cuti/amber vs libur-minggu/merah) —
+      // untuk latar kotak, cuti bersama disamakan dengan merah sesuai
+      // permintaan, supaya sekilas terlihat sebagai "hari libur".
+      var cellBgCls = '';
+      if ((holidayInfo && (holidayInfo.type === 'libur' || holidayInfo.type === 'cuti')) || dow === 0){
+        cellBgCls = ' is-sunday';
+      } else if (dow === 6){
+        cellBgCls = ' is-saturday';
+      }
+      var cls = 'day-cell' + (inMonth?'':' muted') + (isToday?' today':'') + cellBgCls;
       var numCls = 'day-num';
       var titleAttr = '';
       if ((holidayInfo && holidayInfo.type === 'libur') || dow === 0){
@@ -2044,6 +2153,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       } else if (dow === 6){
         numCls += ' is-saturday';
       }
+      // is-past & is-today ditaruh terakhir supaya urutan classList-nya
+      // konsisten, tapi warna yang menang ditentukan lewat urutan aturan
+      // CSS (.day-num.is-past lalu .day-num.is-today ditulis paling
+      // belakang di stylesheet). Tanggal "lewat" = sebelum hari ini,
+      // dibandingkan sebagai string ISO (yyyy-mm-dd) supaya urutannya
+      // otomatis benar secara kronologis.
+      if (dateStr < todayStr) numCls += ' is-past';
+      if (isToday) numCls += ' is-today';
       if (holidayInfo) titleAttr = ' title="'+escapeHTML(holidayLabel(holidayInfo))+'"';
 
       html += '<button type="button" class="'+cls+'" data-date="'+dateStr+'">';
@@ -2055,13 +2172,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       }
       html += '<div class="day-items">';
       var DAY_ITEMS_LIMIT = 5;
-      var shown = items.slice(0, DAY_ITEMS_LIMIT);
-      shown.forEach(function(it){
-        var c = catInfo(it.reminder.category);
-        html += '<span class="chip"><span class="dot" style="background:'+c.hex+'"></span><span class="t">'+it.time+'</span>'+escapeHTML(it.reminder.title)+'</span>';
-      });
-      if (items.length > DAY_ITEMS_LIMIT){
-        html += '<span class="more-link">+'+(items.length-DAY_ITEMS_LIMIT)+' lainnya</span>';
+      // Chip pengingat hanya ditampilkan untuk tanggal yang ada di bulan
+      // yang sedang dilihat (inMonth). Sel dari bulan sebelumnya/berikutnya
+      // (yang tampil pudar di ujung grid) tetap menunjukkan angka tanggalnya
+      // supaya kalender tidak bolong, tapi tidak lagi menampilkan
+      // pengingat — pengingatnya baru muncul saat pengguna berpindah ke
+      // bulan tersebut.
+      if (inMonth){
+        var shown = items.slice(0, DAY_ITEMS_LIMIT);
+        shown.forEach(function(it){
+          var c = catInfo(it.reminder.category);
+          html += '<span class="chip"><span class="dot" style="background:'+c.hex+'"></span><span class="t">'+it.time+'</span><span class="title">'+escapeHTML(it.reminder.title)+'</span></span>';
+        });
+        if (items.length > DAY_ITEMS_LIMIT){
+          html += '<span class="more-link">+'+(items.length-DAY_ITEMS_LIMIT)+' lainnya</span>';
+        }
       }
       html += '</div></button>';
     }
@@ -2095,6 +2220,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   if (calScroll){
     calScroll.addEventListener('scroll', updateCalScrollButtons);
     window.addEventListener('resize', updateCalScrollButtons);
+    // Ukuran font chip berubah di breakpoint 480px & 860px (lihat CSS),
+    // jadi lebar kolom perlu dihitung ulang saat jendela di-resize/rotasi
+    // supaya tetap pas dengan panjang huruf judul pada breakpoint yang aktif.
+    var resizeColResizeTimer = null;
+    window.addEventListener('resize', function(){
+      clearTimeout(resizeColResizeTimer);
+      resizeColResizeTimer = setTimeout(autoSizeDayColumns, 150);
+    });
   }
   if (calScrollLeft){
     calScrollLeft.addEventListener('click', function(){
