@@ -1763,6 +1763,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function setCompletion(reminderId, dateStr, time, value){
     if (!currentUser) return;
     var key = completionKey(reminderId, dateStr, time);
+    var previous = state.completions;
     // Perbarui tampilan lokal langsung supaya terasa responsif, tapi tetap
     // kirim ke cloud sebagai patch satu field saja.
     var next = Object.assign({}, state.completions);
@@ -1775,13 +1776,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     patch['map.' + key] = value ? true : deleteField();
     setDoc(completionsDocRef(), patch, { merge: true }).catch(function(err){
       console.error(err);
+      // PENTING: kembalikan status lokal ke sebelum diklik, bukan
+      // dibiarkan tetap tampak tercentang/hilang dari daftar. Kalau tidak
+      // dikembalikan di sini, kegagalan penyimpanan baru terlihat NANTI
+      // (item "balik lagi" begitu halaman di-refresh atau dibuka di
+      // perangkat lain) — membingungkan karena penggunanya sudah yakin
+      // sudah dicentang. Mengembalikannya sekarang juga sekaligus membuat
+      // toast di bawah ini akurat: kalau tombolnya balik ke posisi semula
+      // SAAT ITU JUGA, penggunanya tahu penyimpanannya memang gagal,
+      // bukan cuma keterlambatan jaringan biasa.
+      state.completions = previous;
+      renderCurrentActivity();
+      renderUpcoming();
+      renderFlexible();
       // Ditampilkan lebih lama (bukan 2.2 detik biasa) karena ini kegagalan
-      // penting: kalau tidak disadari, tanda centang terlihat berhasil di
-      // layar tapi sebenarnya tidak tersimpan ke cloud, sehingga akan
-      // "balik lagi" begitu halaman di-refresh atau dibuka di perangkat
-      // lain. Penyebab paling umum: aturan keamanan Firestore belum
+      // penting. Penyebab paling umum: aturan keamanan Firestore belum
       // meng-cover users/{uid}/settings/{docId}, atau koneksi terputus.
-      showToast('Gagal menyimpan status centang ke cloud — akan muncul lagi setelah refresh. Cek koneksi internet / aturan Firestore.', 6000);
+      showToast('Gagal menyimpan status centang ke cloud — dikembalikan seperti semula. Cek koneksi internet / aturan Firestore.', 6000);
     });
   }
   function toggleCompletion(reminderId, dateStr, time){
@@ -1836,6 +1847,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function setChecklistProgress(reminderId, dateStr, lineIdx, value){
     if (!currentUser) return;
     var key = checklistProgressKey(reminderId, dateStr, lineIdx);
+    var previous = state.checklistProgress;
     var next = Object.assign({}, state.checklistProgress);
     if (value) next[key] = true; else delete next[key];
     state.checklistProgress = next;
@@ -1843,13 +1855,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     patch['map.' + key] = value ? true : deleteField();
     setDoc(checklistProgressDocRef(), patch, { merge: true }).catch(function(err){
       console.error(err);
-      showToast('Gagal menyimpan status centang ke cloud — akan muncul lagi setelah refresh. Cek koneksi internet / aturan Firestore.', 6000);
+      state.checklistProgress = previous;
+      renderCurrentActivity();
+      renderUpcoming();
+      renderFlexible();
+      if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+      showToast('Gagal menyimpan status centang ke cloud — dikembalikan seperti semula. Cek koneksi internet / aturan Firestore.', 6000);
     });
   }
   // Menulis status centang beberapa item checklist sekaligus (untuk satu
   // tanggal) dalam satu panggilan setDoc.
   function setAllChecklistProgress(reminderId, dateStr, lineIdxList, value){
     if (!currentUser) return;
+    var previous = state.checklistProgress;
     var next = Object.assign({}, state.checklistProgress);
     var patch = {};
     lineIdxList.forEach(function(lineIdx){
@@ -1860,7 +1878,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     state.checklistProgress = next;
     setDoc(checklistProgressDocRef(), patch, { merge: true }).catch(function(err){
       console.error(err);
-      showToast('Gagal menyimpan status centang ke cloud — akan muncul lagi setelah refresh. Cek koneksi internet / aturan Firestore.', 6000);
+      state.checklistProgress = previous;
+      renderCurrentActivity();
+      renderUpcoming();
+      renderFlexible();
+      if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+      showToast('Gagal menyimpan status centang ke cloud — dikembalikan seperti semula. Cek koneksi internet / aturan Firestore.', 6000);
     });
   }
   // Membungkus handler klik tombol centang supaya kalau satu ketukan/klik
