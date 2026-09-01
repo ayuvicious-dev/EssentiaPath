@@ -1752,6 +1752,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       // centangan terlihat "balik lagi" setelah refresh. Di sini kita
       // deteksi field nyasar tsb, langsung anggap sudah tercentang di
       // tampilan, dan bersihkan/pindahkan ke tempat yang benar di cloud.
+      // (Bug yang sama juga terjadi di dokumen `checklistProgress` —
+      // lihat repairStrayMapFields/writeDotPatch di bawah, dipakai bersama.)
       var strayKeys = Object.keys(raw).filter(function(k){ return k !== 'map' && k.indexOf('map.') === 0; });
       strayKeys.forEach(function(k){
         var realKey = k.slice(4); // buang prefix literal "map."
@@ -1762,48 +1764,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       renderUpcoming();
       renderFlexible();
       pruneStaleCompletionsFromCloud(state.completions);
-      if (strayKeys.length) repairStrayCompletionFields(strayKeys, raw);
+      if (strayKeys.length) repairStrayMapFields(completionsDocRef(), strayKeys, raw);
     }, function(err){
       console.error('Firestore completions sync error', err);
     });
-  }
-  // Menulis patch ke dokumen completions lewat updateDoc(), yang menurut
-  // dokumentasi resmi Firestore SELALU menafsirkan string "a.b" sebagai
-  // path ke field nested — beda dari setDoc(...,{merge:true}) yang untuk
-  // kasus ini perilakunya tidak konsisten (lihat catatan di atas). Kalau
-  // dokumennya belum pernah ada (pengguna baru), updateDoc akan gagal
-  // dengan kode 'not-found'; di situ kita buat dulu dokumen kosongnya lalu
-  // coba updateDoc lagi.
-  // fieldArgs: array datar [pathString1, value1, pathString2, value2, ...]
-  function writeCompletionsPatch(fieldArgs){
-    var ref = completionsDocRef();
-    return updateDoc.apply(null, [ref].concat(fieldArgs)).catch(function(err){
-      if (err && err.code === 'not-found') {
-        return setDoc(ref, {}, { merge: true }).then(function(){
-          return updateDoc.apply(null, [ref].concat(fieldArgs));
-        });
-      }
-      throw err;
-    });
-  }
-  var completionsRepairInFlight = false;
-  function repairStrayCompletionFields(strayKeys, raw){
-    if (!currentUser || completionsRepairInFlight) return;
-    completionsRepairInFlight = true;
-    var fieldArgs = [];
-    strayKeys.forEach(function(k){
-      var realKey = k.slice(4);
-      // Pindahkan nilainya ke tempat yang benar (nested di dalam `map`)...
-      fieldArgs.push('map.' + realKey, raw[k]);
-      // ...lalu hapus field literal yang nyasar. Karena NAMA field ini
-      // sendiri mengandung titik secara harfiah, satu-satunya cara
-      // menunjuknya dengan tepat (bukan sebagai path nested) adalah lewat
-      // FieldPath dengan SATU segmen berisi seluruh nama field tsb.
-      fieldArgs.push(new FieldPath(k), deleteField());
-    });
-    writeCompletionsPatch(fieldArgs)
-      .catch(function(err){ console.error('Gagal membersihkan field completions yang nyasar', err); })
-      .finally(function(){ completionsRepairInFlight = false; });
   }
   function completionKey(reminderId, dateStr, time){ return reminderId + '|' + dateStr + '|' + time; }
   function isStaleCompletionKey(key){
@@ -1824,7 +1788,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var fieldArgs = [];
     staleKeys.forEach(function(k){ fieldArgs.push('map.' + k, deleteField()); });
     completionsPruneInFlight = true;
-    writeCompletionsPatch(fieldArgs)
+    writeDotPatch(completionsDocRef(), fieldArgs)
       .catch(function(err){ console.error('Gagal membersihkan status lama', err); })
       .finally(function(){ completionsPruneInFlight = false; });
   }
@@ -1840,7 +1804,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderCurrentActivity();
     renderUpcoming();
     renderFlexible();
-    writeCompletionsPatch(['map.' + key, value ? true : deleteField()]).catch(function(err){
+    writeDotPatch(completionsDocRef(), ['map.' + key, value ? true : deleteField()]).catch(function(err){
       console.error('Gagal menyimpan status centang', key, err);
       // PENTING: kembalikan status lokal ke sebelum diklik, bukan
       // dibiarkan tetap tampak tercentang/hilang dari daftar. Kalau tidak
@@ -1897,17 +1861,67 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function subscribeChecklistProgress(){
     if (unsubscribeChecklistProgress) unsubscribeChecklistProgress();
     unsubscribeChecklistProgress = onSnapshot(checklistProgressDocRef(), function(snap){
-      state.checklistProgress = (snap.exists() && snap.data().map) ? snap.data().map : {};
+      var raw = snap.exists() ? snap.data() : {};
+      var map = Object.assign({}, raw.map || {});
+      // Bug yang sama seperti pada dokumen `completions` (lihat catatan di
+      // sana): setDoc(ref, {'map.'+key: value}, {merge:true}) kadang
+      // menyimpan field literal bernama persis "map.xxx" alih-alih nested
+      // di dalam `map`, sehingga centang sub-checklist "balik lagi" setelah
+      // refresh. Deteksi & perbaiki dengan cara yang sama di sini.
+      var strayKeys = Object.keys(raw).filter(function(k){ return k !== 'map' && k.indexOf('map.') === 0; });
+      strayKeys.forEach(function(k){
+        var realKey = k.slice(4);
+        if (raw[k] === true) map[realKey] = true;
+      });
+      state.checklistProgress = map;
       renderCurrentActivity();
       renderUpcoming();
       renderFlexible();
       if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+      if (strayKeys.length) repairStrayMapFields(checklistProgressDocRef(), strayKeys, raw);
     }, function(err){
       console.error('Firestore checklist progress sync error', err);
     });
   }
   function checklistProgressKey(reminderId, dateStr, lineIdx){
     return reminderId + '|' + dateStr + '|' + lineIdx;
+  }
+  // Menulis patch ke sebuah dokumen ("completions" atau "checklistProgress")
+  // lewat updateDoc(), yang menurut dokumentasi resmi Firestore SELALU
+  // menafsirkan string "a.b" sebagai path ke field nested — beda dari
+  // setDoc(...,{merge:true}) yang perilakunya tidak konsisten untuk kasus
+  // ini (lihat catatan panjang di dekat completionsDocRef). Kalau
+  // dokumennya belum pernah ada (pengguna baru), updateDoc akan gagal
+  // dengan kode 'not-found'; di situ kita buat dulu dokumen kosongnya lalu
+  // coba updateDoc lagi.
+  // fieldArgs: array datar [pathString1, value1, pathString2, value2, ...]
+  function writeDotPatch(ref, fieldArgs){
+    return updateDoc.apply(null, [ref].concat(fieldArgs)).catch(function(err){
+      if (err && err.code === 'not-found') {
+        return setDoc(ref, {}, { merge: true }).then(function(){
+          return updateDoc.apply(null, [ref].concat(fieldArgs));
+        });
+      }
+      throw err;
+    });
+  }
+  var strayMapRepairInFlight = {};
+  function repairStrayMapFields(ref, strayKeys, raw){
+    if (!currentUser || strayMapRepairInFlight[ref.path]) return;
+    strayMapRepairInFlight[ref.path] = true;
+    var fieldArgs = [];
+    strayKeys.forEach(function(k){
+      var realKey = k.slice(4);
+      fieldArgs.push('map.' + realKey, raw[k]);
+      // NAMA field ini sendiri mengandung titik secara harfiah, jadi
+      // satu-satunya cara menunjuknya dengan tepat (bukan sebagai path
+      // nested) adalah lewat FieldPath dengan SATU segmen berisi seluruh
+      // nama field tsb.
+      fieldArgs.push(new FieldPath(k), deleteField());
+    });
+    writeDotPatch(ref, fieldArgs)
+      .catch(function(err){ console.error('Gagal membersihkan field yang nyasar', ref.path, err); })
+      .finally(function(){ strayMapRepairInFlight[ref.path] = false; });
   }
   // Menulis status centang satu item checklist untuk satu tanggal tertentu.
   function setChecklistProgress(reminderId, dateStr, lineIdx, value){
@@ -1917,9 +1931,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var next = Object.assign({}, state.checklistProgress);
     if (value) next[key] = true; else delete next[key];
     state.checklistProgress = next;
-    var patch = {};
-    patch['map.' + key] = value ? true : deleteField();
-    setDoc(checklistProgressDocRef(), patch, { merge: true }).catch(function(err){
+    writeDotPatch(checklistProgressDocRef(), ['map.' + key, value ? true : deleteField()]).catch(function(err){
       console.error(err);
       state.checklistProgress = previous;
       renderCurrentActivity();
@@ -1930,19 +1942,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
   // Menulis status centang beberapa item checklist sekaligus (untuk satu
-  // tanggal) dalam satu panggilan setDoc.
+  // tanggal) dalam satu panggilan.
   function setAllChecklistProgress(reminderId, dateStr, lineIdxList, value){
     if (!currentUser) return;
     var previous = state.checklistProgress;
     var next = Object.assign({}, state.checklistProgress);
-    var patch = {};
+    var fieldArgs = [];
     lineIdxList.forEach(function(lineIdx){
       var key = checklistProgressKey(reminderId, dateStr, lineIdx);
       if (value) next[key] = true; else delete next[key];
-      patch['map.' + key] = value ? true : deleteField();
+      fieldArgs.push('map.' + key, value ? true : deleteField());
     });
     state.checklistProgress = next;
-    setDoc(checklistProgressDocRef(), patch, { merge: true }).catch(function(err){
+    writeDotPatch(checklistProgressDocRef(), fieldArgs).catch(function(err){
       console.error(err);
       state.checklistProgress = previous;
       renderCurrentActivity();
