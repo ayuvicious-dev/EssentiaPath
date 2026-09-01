@@ -152,11 +152,23 @@
   }
   .today-btn:hover{background:rgba(var(--tint-rgb),0.08);}
   .add-btn{
-    background:var(--amber); color:#3E2A18; border:none; padding:0.65rem 1.15rem; border-radius:999px;
-    font-weight:700; font-size:0.92rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.45rem;
-    box-shadow:0 6px 16px -6px rgba(227,169,124,0.6); transition:transform 0.12s ease, background 0.15s ease;
+    position:fixed; right:1.1rem; bottom:calc(4.7rem + env(safe-area-inset-bottom)); z-index:45;
+    width:56px; height:56px; padding:0; border-radius:50%;
+    background:var(--amber); color:#3E2A18; border:none;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 24px -8px rgba(227,169,124,0.75), 0 4px 14px rgba(0,0,0,0.18);
+    transition:transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
   }
-  .add-btn:hover{background:var(--amber-deep); transform:translateY(-1px);}
+  .add-btn:hover{background:var(--amber-deep); transform:translateY(-2px);}
+  .add-btn:active{transform:translateY(0) scale(0.94);}
+  .add-btn svg{width:24px; height:24px;}
+  .add-btn-label{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  @media (min-width:640px){
+    .add-btn{ bottom:calc(5.9rem + env(safe-area-inset-bottom)); right:1.6rem; }
+  }
 
   /* ---------- Layout ---------- */
   .layout{
@@ -410,10 +422,15 @@
     border:1px solid var(--line-soft);
   }
   .flex-check{
-    width:19px; height:19px; border-radius:6px; border:1.5px solid var(--line); background:var(--paper-raised); flex:none;
+    width:26px; height:26px; border-radius:7px; border:1.5px solid var(--line); background:var(--paper-raised); flex:none;
     margin-top:1px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
+    position:relative; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
   }
-  .flex-check svg{width:12px; height:12px; opacity:0; transition:opacity 0.1s ease;}
+  /* Perluas area sentuh tanpa mengubah ukuran visual kotaknya, supaya lebih
+     mudah dicentang di layar sentuh (kotak asli terasa terlalu kecil/sulit
+     kena saat disentuh). */
+  .flex-check::before{content:''; position:absolute; inset:-9px;}
+  .flex-check svg{width:15px; height:15px; opacity:0; transition:opacity 0.1s ease;}
   .flex-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
   .flex-item.done .flex-check svg{opacity:1;}
   .sub-checklist{list-style:none; margin:0.4rem 0 0 1.3rem; padding:0; display:flex; flex-direction:column; gap:0.28rem;}
@@ -430,6 +447,10 @@
   .notes-plain-item{display:flex; align-items:baseline; gap:0.4rem; font-size:0.7rem; color:var(--ink-soft);}
   .notes-plain-marker{flex:none; color:var(--moss-deep); font-variant-numeric:tabular-nums;}
   .notes-plain-text{word-break:break-word;}
+  .notes-freetext{
+    margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed var(--line-soft);
+    font-size:0.76rem; line-height:1.45; color:var(--ink-soft); word-break:break-word; white-space:pre-line;
+  }
   .flex-item .body{flex:1; min-width:0;}
   .flex-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
   .flex-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
@@ -800,10 +821,6 @@
         <button id="nextMonth" aria-label="Bulan berikutnya">›</button>
         <button class="today-btn" id="gotoToday">Hari ini</button>
       </div>
-      <button class="add-btn" id="openAdd">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-        Pengingat baru
-      </button>
     </div>
   </div>
 </header>
@@ -1028,6 +1045,11 @@
     <span class="nav-dot" id="settingsNavDot"></span>
   </button>
 </nav>
+
+<button class="add-btn" id="openAdd" aria-label="Pengingat baru">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+  <span class="add-btn-label">Pengingat baru</span>
+</button>
 
 <footer>Pengingat Anda tersimpan di akun Firebase Anda dan hanya bisa diakses setelah masuk dengan email &amp; kata sandi.</footer>
 
@@ -1522,7 +1544,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (unsubscribeCompletions) unsubscribeCompletions();
     unsubscribeCompletions = onSnapshot(completionsDocRef(), function(snap){
       state.completions = (snap.exists() && snap.data().map) ? snap.data().map : {};
+      // PENTING: status centang (state.completions) dipakai juga oleh
+      // "Mendatang" dan "Fleksibel" (lewat isOccurrenceDone/getMissedItems),
+      // bukan cuma "Saat Ini". Sebelumnya hanya renderCurrentActivity() yang
+      // dipanggil di sini, jadi kalau data completions ini datang belakangan
+      // (race dengan data pengingat yang dimuat lewat listener terpisah),
+      // atau ada centang baru masuk dari perangkat lain, daftar Fleksibel
+      // tetap memakai status lama — item yang sudah dicentang terlihat
+      // "tidak mau hilang" atau muncul lagi sampai ada pemicu render lain.
       renderCurrentActivity();
+      renderUpcoming();
+      renderFlexible();
       pruneStaleCompletionsFromCloud(state.completions);
     }, function(err){
       console.error('Firestore completions sync error', err);
@@ -1579,6 +1611,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!currentUser) return;
     var key = completionKey(reminderId, dateStr, time);
     setCompletion(reminderId, dateStr, time, !state.completions[key]);
+  }
+  // Membungkus handler klik tombol centang supaya kalau satu ketukan/klik
+  // sempat terdaftar dua kali (umum terjadi di layar sentuh tanpa
+  // touch-action, browser mengirim event "touch" lalu "click" susulan untuk
+  // ketukan yang sama), pendaftaran kedua diabaikan alih-alih membalik lagi
+  // status yang baru saja diubah oleh pendaftaran pertama. Tanpa ini,
+  // centang terasa "harus diklik beberapa kali" karena tiap ketukan kadang
+  // menyalakan lalu langsung mematikannya lagi.
+  function guardedToggle(btn, fn){
+    if (btn.dataset.toggling === '1') return;
+    btn.dataset.toggling = '1';
+    fn();
+    setTimeout(function(){ btn.dataset.toggling = '0'; }, 450);
   }
   // Menjaga agar filter kategori aktif tetap konsisten dengan daftar kategori
   // yang ada saat ini (buang id yang sudah dihapus, tampilkan kategori baru
@@ -2010,6 +2055,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return notes.split('\n').map(function(l){ return l.trim(); }).filter(function(l){
       return l && lineMarkerInfo(l).type === 'none';
     }).join(' · ');
+  }
+  // Tampilkan baris catatan bebas (bukan checklist ☐/☑, bukan list
+  // bullet/angka) sebagai blok tersendiri di bawah judul — dipakai di
+  // panel "Saat Ini" (kartu aktif & daftar "Lewat") supaya isi kolom
+  // "Catatan (opsional)" dari form ikut terlihat, bukan cuma checklist/list.
+  function renderFreeTextNotesHTML(notes){
+    var text = notesFreeTextPreview(notes);
+    if (!text) return '';
+    return '<div class="notes-freetext">'+escapeHTML(text).replace(/ · /g, '<br>')+'</div>';
   }
 
   // ---------- Category management (Pengaturan) ----------
@@ -2668,6 +2722,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · '+it.time+'</div>' +
       renderChecklistHTML(it.reminder.notes) +
       renderNotesListHTML(it.reminder.notes) +
+      renderFreeTextNotesHTML(it.reminder.notes) +
       '</div>' +
       '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
   }
@@ -2693,11 +2748,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     currentOverdueList.innerHTML = overdue.map(currentOverdueItemHtml).join('');
     Array.prototype.forEach.call(currentOverdueList.querySelectorAll('.flex-check'), function(btn){
       btn.addEventListener('click', function(){
-        if (btn.getAttribute('data-has-checklist') === '1'){
-          onChecklistToggleAll(btn.getAttribute('data-id'), { type:'current', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
-        } else {
-          toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
-        }
+        guardedToggle(btn, function(){
+          if (btn.getAttribute('data-has-checklist') === '1'){
+            onChecklistToggleAll(btn.getAttribute('data-id'), { type:'current', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
+          } else {
+            toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+          }
+        });
       });
     });
     Array.prototype.forEach.call(currentOverdueList.querySelectorAll('.edit-flex'), function(btn){
@@ -2748,6 +2805,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<div class="meta">Mulai '+it.time+' · '+repeatLabel(it.reminder)+(res.next ? ' · berikutnya '+res.next.time : '')+'</div>' +
           renderChecklistHTML(it.reminder.notes) +
           renderNotesListHTML(it.reminder.notes) +
+          renderFreeTextNotesHTML(it.reminder.notes) +
         '</div>' +
       '</div>';
     var checkBtn = currentActivityEl.querySelector('.current-check');
@@ -3078,11 +3136,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function bindFlexItemEvents(listEl){
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-check'), function(btn){
       btn.addEventListener('click', function(){
-        if (btn.getAttribute('data-has-checklist') === '1'){
-          onChecklistToggleAll(btn.getAttribute('data-id'), { type:'flex' });
-        } else {
-          toggleFlexDone(btn.getAttribute('data-id'));
-        }
+        guardedToggle(btn, function(){
+          if (btn.getAttribute('data-has-checklist') === '1'){
+            onChecklistToggleAll(btn.getAttribute('data-id'), { type:'flex' });
+          } else {
+            toggleFlexDone(btn.getAttribute('data-id'));
+          }
+        });
       });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-priority'), function(btn){
@@ -3153,11 +3213,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       }).join('');
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.missed-check'), function(btn){
         btn.addEventListener('click', function(){
-          if (btn.getAttribute('data-has-checklist') === '1'){
-            onChecklistToggleAll(btn.getAttribute('data-id'), { type:'missed', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
-          } else {
-            toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
-          }
+          guardedToggle(btn, function(){
+            if (btn.getAttribute('data-has-checklist') === '1'){
+              onChecklistToggleAll(btn.getAttribute('data-id'), { type:'missed', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
+            } else {
+              toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+            }
+          });
         });
       });
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.edit-flex'), function(btn){
