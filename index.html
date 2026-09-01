@@ -223,6 +223,34 @@
   /* ---------- Calendar ---------- */
   .calendar{padding:0.6rem 0.45rem;}
   @media (min-width:480px){ .calendar{padding:1.1rem;} }
+  /* Di layar sempit (hp), grid 7 kolom kalau dipaksa muat ke lebar layar
+     jadi terlalu sempit per harinya (judul pengingat kepotong). Jadi di hp
+     kalender sengaja dibuat LEBIH LEBAR dari layar (lewat min-width pada
+     .cal-scroll-inner) supaya tiap sel harian lebih lega, lalu dibungkus
+     wadah yang bisa digeser mendatar (.cal-scroll) dengan tombol navigasi
+     kiri/kanan di bawahnya. Di layar lebih lebar (≥640px) sudah cukup
+     lega tanpa perlu digeser, jadi constraint ini dilepas lagi. */
+  .cal-scroll{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; margin:0 -0.45rem; padding:0 0.45rem;}
+  .cal-scroll::-webkit-scrollbar{display:none;}
+  .cal-scroll-inner{min-width:640px;}
+  @media (min-width:480px){
+    .cal-scroll{margin:0 -1.1rem; padding:0 1.1rem;}
+    .cal-scroll-inner{min-width:720px;}
+  }
+  @media (min-width:640px){
+    .cal-scroll{overflow-x:visible; margin:0; padding:0;}
+    .cal-scroll-inner{min-width:0;}
+  }
+  .cal-scroll-nav{display:flex; justify-content:center; gap:0.6rem; margin-top:0.6rem;}
+  @media (min-width:640px){ .cal-scroll-nav{display:none;} }
+  .cal-scroll-btn{
+    width:38px; height:38px; border-radius:50%; border:1px solid rgba(var(--tint-rgb),0.18);
+    background:rgba(var(--tint-rgb),0.05); color:var(--ink); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:background 0.15s ease, opacity 0.15s ease;
+  }
+  .cal-scroll-btn svg{width:20px; height:20px;}
+  .cal-scroll-btn:hover:not(:disabled){background:rgba(var(--tint-rgb),0.12);}
+  .cal-scroll-btn:disabled{opacity:0.35; cursor:default;}
   .weekday-row{display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:6px;}
   @media (min-width:480px){ .weekday-row{gap:6px;} }
   .weekday-row span{
@@ -901,10 +929,22 @@
         </div>
         <div class="cal-search-results" id="calSearchResults" hidden></div>
       </div>
-      <div class="weekday-row">
-        <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span class="is-saturday">Sab</span><span class="is-sunday">Min</span>
+      <div class="cal-scroll" id="calScroll">
+        <div class="cal-scroll-inner">
+          <div class="weekday-row">
+            <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span class="is-saturday">Sab</span><span class="is-sunday">Min</span>
+          </div>
+          <div class="day-grid" id="dayGrid"></div>
+        </div>
       </div>
-      <div class="day-grid" id="dayGrid"></div>
+      <div class="cal-scroll-nav" id="calScrollNav">
+        <button type="button" class="cal-scroll-btn" id="calScrollLeft" aria-label="Geser kalender ke kiri">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="cal-scroll-btn" id="calScrollRight" aria-label="Geser kalender ke kanan">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
     </section>
 
     <aside class="sidebar view-section" data-view="dashboard" aria-label="Dashboard">
@@ -1308,7 +1348,12 @@
 <!-- Day detail popover -->
 <div class="overlay day-panel" id="dayOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dayPanelTitle">
-    <h2 id="dayPanelTitle">Tanggal</h2>
+    <div class="modal-head">
+      <h2 id="dayPanelTitle">Tanggal</h2>
+      <button type="button" class="modal-close" id="dayPanelClose" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
     <div class="day-panel-holiday" id="dayPanelHoliday" hidden></div>
     <div class="day-panel-list" id="dayPanelList"></div>
     <div class="modal-actions">
@@ -1522,7 +1567,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     activeFilters: loadFilters(),
     flexFilters: loadFlexFilters(),
     dayPanelDate: null,
-    completions: {}
+    completions: {},
+    checklistProgress: {}
   };
 
   // ---------- Firestore-backed reminder storage (per signed-in user) ----------
@@ -1536,6 +1582,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (unsubscribeReminders) unsubscribeReminders();
     unsubscribeReminders = onSnapshot(remindersCollectionRef(), function(snapshot){
       state.reminders = snapshot.docs.map(function(d){ return d.data(); });
+      migrateLegacyChecklistState();
       renderAll();
       checkDueReminders();
       markSynced();
@@ -1679,6 +1726,80 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!currentUser) return;
     var key = completionKey(reminderId, dateStr, time);
     setCompletion(reminderId, dateStr, time, !state.completions[key]);
+  }
+
+  // ---------- Firestore-backed per-tanggal status centang sub-checklist ----------
+  // Dulu status centang sub-checklist (☐/☑) disimpan langsung di dalam teks
+  // `notes` reminder itu sendiri — satu status global yang dipakai ulang oleh
+  // SEMUA kemunculan pengingat berulang. Akibatnya, pengingat harian yang
+  // checklist-nya sudah dicentang penuh hari ini akan tetap terlihat penuh
+  // tercentang besok, karena `notes` sama persis dipakai lagi.
+  //
+  // Sekarang status centang per-item disimpan terpisah per (pengingat +
+  // tanggal + baris), mirip pola `state.completions` di atas: satu dokumen
+  // berisi map kecil, dan setiap centang/hapus-centang hanya menulis satu
+  // field ("map.<key>") lewat setDoc(..., {merge:true}) supaya aman dipakai
+  // dari beberapa perangkat sekaligus. Berbeda dari `state.completions`,
+  // entri di sini SENGAJA TIDAK dibersihkan otomatis (tidak ada pruning
+  // berdasarkan umur) karena dipakai juga sebagai riwayat centang per
+  // tanggal (misalnya untuk statistik ke depannya).
+  //
+  // `notes` sendiri sekarang selalu memuat teks checklist dalam status
+  // "kosong" (☐) sebagai templat baku — status tercentang tidak lagi ditulis
+  // balik ke `notes`. Untuk item lama yang sudah pernah dicentang lewat
+  // sistem lama (masih tersimpan sebagai ☑ di dalam notes) dan belum punya
+  // entri di map ini untuk tanggal tertentu, checklistItemsForDate() akan
+  // memakai status ☑/☐ di notes sebagai status awal (migrasi otomatis,
+  // lihat komentar di checklistItemsForDate).
+  var unsubscribeChecklistProgress = null;
+  function checklistProgressDocRef(){
+    return doc(db, 'users', currentUser.uid, 'settings', 'checklistProgress');
+  }
+  function subscribeChecklistProgress(){
+    if (unsubscribeChecklistProgress) unsubscribeChecklistProgress();
+    unsubscribeChecklistProgress = onSnapshot(checklistProgressDocRef(), function(snap){
+      state.checklistProgress = (snap.exists() && snap.data().map) ? snap.data().map : {};
+      renderCurrentActivity();
+      renderUpcoming();
+      renderFlexible();
+      if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+    }, function(err){
+      console.error('Firestore checklist progress sync error', err);
+    });
+  }
+  function checklistProgressKey(reminderId, dateStr, lineIdx){
+    return reminderId + '|' + dateStr + '|' + lineIdx;
+  }
+  // Menulis status centang satu item checklist untuk satu tanggal tertentu.
+  function setChecklistProgress(reminderId, dateStr, lineIdx, value){
+    if (!currentUser) return;
+    var key = checklistProgressKey(reminderId, dateStr, lineIdx);
+    var next = Object.assign({}, state.checklistProgress);
+    if (value) next[key] = true; else delete next[key];
+    state.checklistProgress = next;
+    var patch = {};
+    patch['map.' + key] = value ? true : deleteField();
+    setDoc(checklistProgressDocRef(), patch, { merge: true }).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan status centang ke cloud — akan muncul lagi setelah refresh. Cek koneksi internet / aturan Firestore.', 6000);
+    });
+  }
+  // Menulis status centang beberapa item checklist sekaligus (untuk satu
+  // tanggal) dalam satu panggilan setDoc.
+  function setAllChecklistProgress(reminderId, dateStr, lineIdxList, value){
+    if (!currentUser) return;
+    var next = Object.assign({}, state.checklistProgress);
+    var patch = {};
+    lineIdxList.forEach(function(lineIdx){
+      var key = checklistProgressKey(reminderId, dateStr, lineIdx);
+      if (value) next[key] = true; else delete next[key];
+      patch['map.' + key] = value ? true : deleteField();
+    });
+    state.checklistProgress = next;
+    setDoc(checklistProgressDocRef(), patch, { merge: true }).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan status centang ke cloud — akan muncul lagi setelah refresh. Cek koneksi internet / aturan Firestore.', 6000);
+    });
   }
   // Membungkus handler klik tombol centang supaya kalau satu ketukan/klik
   // sempat terdaftar dua kali (umum terjadi di layar sentuh tanpa
@@ -1919,13 +2040,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         html += '<div class="day-holiday-tag'+(holidayInfo.type==='cuti'?' cuti':'')+'">'+escapeHTML(holidayInfo.name)+'</div>';
       }
       html += '<div class="day-items">';
-      var shown = items.slice(0,3);
+      var DAY_ITEMS_LIMIT = 5;
+      var shown = items.slice(0, DAY_ITEMS_LIMIT);
       shown.forEach(function(it){
         var c = catInfo(it.reminder.category);
         html += '<span class="chip"><span class="dot" style="background:'+c.hex+'"></span><span class="t">'+it.time+'</span>'+escapeHTML(it.reminder.title)+'</span>';
       });
-      if (items.length > 3){
-        html += '<span class="more-link">+'+(items.length-3)+' lainnya</span>';
+      if (items.length > DAY_ITEMS_LIMIT){
+        html += '<span class="more-link">+'+(items.length-DAY_ITEMS_LIMIT)+' lainnya</span>';
       }
       html += '</div></button>';
     }
@@ -1933,6 +2055,40 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
     Array.prototype.forEach.call(dayGrid.querySelectorAll('.day-cell'), function(cell){
       cell.addEventListener('click', function(){ openDayPanel(cell.getAttribute('data-date')); });
+    });
+    resetCalScroll();
+  }
+
+  // ---------- Navigasi geser kalender mendatar (khusus tampilan hp) ----------
+  var calScroll = document.getElementById('calScroll');
+  var calScrollLeft = document.getElementById('calScrollLeft');
+  var calScrollRight = document.getElementById('calScrollRight');
+  function updateCalScrollButtons(){
+    if (!calScroll || !calScrollLeft || !calScrollRight) return;
+    var max = calScroll.scrollWidth - calScroll.clientWidth;
+    calScrollLeft.disabled = calScroll.scrollLeft <= 2;
+    calScrollRight.disabled = calScroll.scrollLeft >= max - 2;
+  }
+  // Dipanggil tiap kali kalender digambar ulang (ganti bulan, dsb.) supaya
+  // posisi geser selalu kembali ke awal (mulai dari Senin minggu pertama),
+  // bukan melanjutkan posisi geser bulan sebelumnya.
+  function resetCalScroll(){
+    if (!calScroll) return;
+    calScroll.scrollLeft = 0;
+    updateCalScrollButtons();
+  }
+  if (calScroll){
+    calScroll.addEventListener('scroll', updateCalScrollButtons);
+    window.addEventListener('resize', updateCalScrollButtons);
+  }
+  if (calScrollLeft){
+    calScrollLeft.addEventListener('click', function(){
+      calScroll.scrollBy({ left: -Math.round(calScroll.clientWidth * 0.7), behavior: 'smooth' });
+    });
+  }
+  if (calScrollRight){
+    calScrollRight.addEventListener('click', function(){
+      calScroll.scrollBy({ left: Math.round(calScroll.clientWidth * 0.7), behavior: 'smooth' });
     });
   }
 
@@ -1977,17 +2133,84 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function checklistAllChecked(items){
     return items.length>0 && items.every(function(it){ return it.checked; });
   }
+  // Status centang checklist untuk SATU kemunculan bertanggal (reminder +
+  // tanggal tertentu). `notes` dipakai sebagai templat item (teks + baris
+  // mana yang berupa checklist), tapi status centangnya diambil dari
+  // state.checklistProgress per (reminder, tanggal, baris) — bukan dari
+  // marker ☑/☐ di dalam notes itu sendiri — supaya tiap kemunculan baru
+  // (tanggal baru) otomatis mulai kosong lagi.
+  //
+  // Migrasi data lama: kalau untuk (reminder, tanggal, baris) itu belum ada
+  // entri sama sekali di checklistProgress, dipakai status ☑/☐ apa adanya
+  // di notes sebagai nilai awal — ini menjaga status yang sudah pernah
+  // dicentang lewat sistem lama (sebelum fitur reset-per-tanggal ini ada)
+  // tidak mendadak hilang begitu saja.
+  function checklistItemsForDate(notes, reminderId, dateStr){
+    var items = checklistLines(notes);
+    if (!items.length || !dateStr) return items;
+    return items.map(function(it){
+      var key = checklistProgressKey(reminderId, dateStr, it.idx);
+      var checked = Object.prototype.hasOwnProperty.call(state.checklistProgress, key)
+        ? !!state.checklistProgress[key]
+        : it.checked;
+      return { idx: it.idx, text: it.text, checked: checked };
+    });
+  }
+  // Migrasi satu kali (self-healing, aman dipanggil berulang) untuk data
+  // checklist lama: sebelum fitur reset-per-tanggal ini ada, status
+  // tercentang (☑) ditulis langsung ke `notes` reminder, dipakai bersama
+  // oleh SEMUA tanggal kemunculan. Supaya reminder lama yang sudah
+  // terlanjur tercentang penuh (mis. checklist "Morning Routine" yang
+  // sudah dicentang kemarin) tidak ikut ter-"warisi" tercentang selamanya
+  // untuk tanggal-tanggal berikutnya, di sini kita:
+  //  1. Pindahkan status tercentang yang masih ada di `notes` menjadi
+  //     entri checklistProgress untuk HARI INI saja (supaya checklist yang
+  //     sedang berjalan hari ini tidak mendadak terlihat kosong lagi).
+  //  2. Kembalikan semua marker di `notes` itu sendiri ke ☐ (kosong),
+  //     supaya jadi templat baku — status tercentang selanjutnya SELALU
+  //     berasal dari checklistProgress per tanggal, bukan dari notes lagi.
+  // Reminder Fleksibel (r.flexible) sengaja dilewati karena checklist-nya
+  // memang masih memakai status tertanam di notes seperti semula (tidak
+  // berulang per tanggal).
+  var legacyChecklistMigrationInFlight = {};
+  function migrateLegacyChecklistState(){
+    if (!currentUser) return;
+    var todayISO = toISODate(new Date());
+    state.reminders.forEach(function(r){
+      if (!r || r.flexible || !r.notes) return;
+      if (legacyChecklistMigrationInFlight[r.id]) return; // sudah dikirim, tunggu round-trip cloud
+      var items = checklistLines(r.notes);
+      var checkedItems = items.filter(function(it){ return it.checked; });
+      if (!checkedItems.length) return; // sudah bersih (templat sudah ☐ semua)
+      legacyChecklistMigrationInFlight[r.id] = true;
+      var normalizedNotes = setAllChecklist(r.notes, false);
+      var lineIdxList = checkedItems.map(function(it){ return it.idx; });
+      setAllChecklistProgress(r.id, todayISO, lineIdxList, true);
+      var updated = Object.assign({}, r, { notes: normalizedNotes });
+      var idx = state.reminders.findIndex(function(x){ return x.id===r.id; });
+      if (idx !== -1){ state.reminders = state.reminders.slice(); state.reminders[idx] = updated; }
+      saveReminderToCloud(updated).catch(function(err){
+        console.error('Gagal migrasi checklist lama', err);
+      }).finally(function(){
+        legacyChecklistMigrationInFlight[r.id] = false;
+      });
+    });
+  }
   // Status "selesai" satu kemunculan (reminder + tanggal + jam): kalau
   // pengingatnya punya sub-checklist, selesai berarti semua item checklist
-  // tercentang; kalau tidak, pakai status centang per-kemunculan biasa.
-  // Dipakai bersama oleh panel "Saat Ini", "Lewat", dan "Mendatang" supaya
-  // ketiganya selalu sinkron.
+  // tercentang UNTUK TANGGAL kemunculan itu; kalau tidak, pakai status
+  // centang per-kemunculan biasa. Dipakai bersama oleh panel "Saat Ini",
+  // "Lewat", dan "Mendatang" supaya ketiganya selalu sinkron.
   function isOccurrenceDone(it){
-    var items = checklistLines(it.reminder.notes);
+    var items = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
     if (items.length) return checklistAllChecked(items);
     var key = completionKey(it.reminder.id, it.date, it.time);
     return !!state.completions[key];
   }
+  // Dipakai HANYA untuk item Fleksibel (tidak berulang per-tanggal): status
+  // centangnya masih ditulis langsung ke dalam `notes`, sama seperti
+  // sebelumnya, karena tidak ada konsep "tanggal kemunculan" untuk item
+  // lepas semacam ini.
   function toggleChecklistLine(notes, lineIdx, forceValue){
     var lines = (notes||'').split('\n');
     var line = lines[lineIdx];
@@ -2008,8 +2231,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
     return lines.join('\n');
   }
-  function renderChecklistHTML(notes){
-    var items = checklistLines(notes);
+  // reminderId/dateStr opsional: kalau diisi, status centang diambil per
+  // tanggal (lewat checklistItemsForDate); kalau tidak (dipakai untuk item
+  // Fleksibel), status diambil langsung dari marker ☑/☐ di notes seperti
+  // semula.
+  function renderChecklistHTML(notes, reminderId, dateStr){
+    var items = (reminderId && dateStr) ? checklistItemsForDate(notes, reminderId, dateStr) : checklistLines(notes);
     if (!items.length) return '';
     return '<ul class="sub-checklist">' +
       items.map(function(it){
@@ -2020,8 +2247,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       }).join('') +
     '</ul>';
   }
-  // Terapkan status centang dari checklist ke reminder (dan, bila relevan,
-  // ke status penyelesaian per-kejadian) lalu simpan.
+  // Terapkan status centang checklist Fleksibel (ditulis ke notes) lalu
+  // simpan. Hanya dipakai untuk ctx.type === 'flex' — lihat
+  // onChecklistItemToggle/onChecklistToggleAll untuk jalur bertanggal.
   function applyChecklistUpdate(reminderId, updatedNotes, ctx){
     var idx = state.reminders.findIndex(function(x){ return x.id===reminderId; });
     if (idx === -1) return;
@@ -2045,27 +2273,45 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       console.error(err);
       showToast('Gagal menyimpan status. Coba lagi.');
     });
-    if (ctx.type === 'current' || ctx.type === 'missed'){
-      setCompletion(reminderId, ctx.date, ctx.time, allChecked);
-    } else {
-      renderCurrentActivity();
-      renderUpcoming();
-      renderFlexible();
-    }
+    renderCurrentActivity();
+    renderUpcoming();
+    renderFlexible();
   }
   function onChecklistItemToggle(reminderId, lineIdx, ctx){
     var r = state.reminders.find(function(x){ return x.id===reminderId; });
     if (!r || !r.notes) return;
-    var updatedNotes = toggleChecklistLine(r.notes, lineIdx);
-    applyChecklistUpdate(reminderId, updatedNotes, ctx);
+    if (ctx.type === 'flex'){
+      var updatedNotes = toggleChecklistLine(r.notes, lineIdx);
+      applyChecklistUpdate(reminderId, updatedNotes, ctx);
+      return;
+    }
+    var items = checklistItemsForDate(r.notes, reminderId, ctx.date);
+    var item = items.find(function(x){ return x.idx === lineIdx; });
+    if (!item) return;
+    setChecklistProgress(reminderId, ctx.date, lineIdx, !item.checked);
+    renderCurrentActivity();
+    renderUpcoming();
+    renderFlexible();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
   }
   function onChecklistToggleAll(reminderId, ctx){
     var r = state.reminders.find(function(x){ return x.id===reminderId; });
     if (!r || !r.notes) return;
-    var items = checklistLines(r.notes);
+    if (ctx.type === 'flex'){
+      var itemsF = checklistLines(r.notes);
+      if (!itemsF.length) return;
+      var updatedNotes = setAllChecklist(r.notes, !checklistAllChecked(itemsF));
+      applyChecklistUpdate(reminderId, updatedNotes, ctx);
+      return;
+    }
+    var items = checklistItemsForDate(r.notes, reminderId, ctx.date);
     if (!items.length) return;
-    var updatedNotes = setAllChecklist(r.notes, !checklistAllChecked(items));
-    applyChecklistUpdate(reminderId, updatedNotes, ctx);
+    var newValue = !checklistAllChecked(items);
+    setAllChecklistProgress(reminderId, ctx.date, items.map(function(it){ return it.idx; }), newValue);
+    renderCurrentActivity();
+    renderUpcoming();
+    renderFlexible();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
   }
   function bindChecklistClicks(container, ctxForItem){
     Array.prototype.forEach.call(container.querySelectorAll('.sub-check-item'), function(li){
@@ -2780,7 +3026,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   function currentOverdueItemHtml(it){
     var c = catInfo(it.reminder.category);
-    var checklistItemsO = checklistLines(it.reminder.notes);
+    var checklistItemsO = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
     var hasChecklistO = checklistItemsO.length > 0;
     return '<li class="flex-item" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
       '<button type="button" class="flex-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistO?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
@@ -2788,7 +3034,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
       '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · '+it.time+'</div>' +
-      renderChecklistHTML(it.reminder.notes) +
+      renderChecklistHTML(it.reminder.notes, it.reminder.id, it.date) +
       renderNotesListHTML(it.reminder.notes) +
       renderFreeTextNotesHTML(it.reminder.notes) +
       '</div>' +
@@ -2859,7 +3105,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var it = res.current;
     var c = catInfo(it.reminder.category);
     var key = completionKey(it.reminder.id, it.date, it.time);
-    var checklistItemsCur = checklistLines(it.reminder.notes);
+    var checklistItemsCur = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
     var hasChecklistCur = checklistItemsCur.length > 0;
     var done = isOccurrenceDone(it);
     currentActivityEl.innerHTML =
@@ -2871,7 +3117,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<div class="cat-line"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</div>' +
           '<div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
           '<div class="meta">Mulai '+it.time+' · '+repeatLabel(it.reminder)+(res.next ? ' · berikutnya '+res.next.time : '')+'</div>' +
-          renderChecklistHTML(it.reminder.notes) +
+          renderChecklistHTML(it.reminder.notes, it.reminder.id, it.date) +
           renderNotesListHTML(it.reminder.notes) +
           renderFreeTextNotesHTML(it.reminder.notes) +
         '</div>' +
@@ -3265,7 +3511,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       flexibleListMissed.innerHTML = missed.map(function(it){
         var c = catInfo(it.reminder.category);
         var dtLabel = dayLabel(parseISODate(it.date));
-        var checklistItemsM = checklistLines(it.reminder.notes);
+        var checklistItemsM = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
         var hasChecklistM = checklistItemsM.length > 0;
         var doneM = hasChecklistM && checklistAllChecked(checklistItemsM);
         return '<li class="flex-item missed-item'+(doneM?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
@@ -3274,7 +3520,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '</button>' +
           '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
           '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
-          renderChecklistHTML(it.reminder.notes) +
+          renderChecklistHTML(it.reminder.notes, it.reminder.id, it.date) +
           renderNotesListHTML(it.reminder.notes) +
           '</div>' +
           '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
@@ -3798,7 +4044,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '</div>' +
           '<div class="dp-detail"'+(expanded?'':' hidden')+'>' +
             '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>' +
-            renderChecklistHTML(it.reminder.notes) +
+            renderChecklistHTML(it.reminder.notes, it.reminder.id, it.date) +
             renderNotesListHTML(it.reminder.notes) +
             renderFreeTextNotesHTML(it.reminder.notes) +
           '</div>' +
@@ -3843,6 +4089,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   function closeDayPanel(){ dayOverlay.hidden = true; }
   document.getElementById('closeDayPanel').addEventListener('click', closeDayPanel);
+  document.getElementById('dayPanelClose').addEventListener('click', closeDayPanel);
   dayOverlay.addEventListener('click', function(e){ if (e.target===dayOverlay) closeDayPanel(); });
   document.getElementById('addOnDay').addEventListener('click', function(){
     var d = state.dayPanelDate;
@@ -4216,14 +4463,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       subscribeCategories();
       subscribeUpgrades();
       subscribeCompletions();
+      subscribeChecklistProgress();
       refreshNotifyBanner();
     } else {
       if (unsubscribeReminders){ unsubscribeReminders(); unsubscribeReminders = null; }
       if (unsubscribeCategories){ unsubscribeCategories(); unsubscribeCategories = null; }
       if (unsubscribeUpgrades){ unsubscribeUpgrades(); unsubscribeUpgrades = null; }
       if (unsubscribeCompletions){ unsubscribeCompletions(); unsubscribeCompletions = null; }
+      if (unsubscribeChecklistProgress){ unsubscribeChecklistProgress(); unsubscribeChecklistProgress = null; }
       state.reminders = [];
       state.completions = {};
+      state.checklistProgress = {};
       CATS = DEFAULT_CATS.slice();
       UPGRADES = [];
       upgradePage = 0;
