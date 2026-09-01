@@ -810,6 +810,7 @@
   .btn-primary:hover{background:var(--moss-deep);}
   .btn-ghost{background:transparent; color:var(--ink-soft);}
   .btn-danger{background:transparent; color:var(--danger);}
+  .modal-actions .btn.icon-only{padding:0.55rem 0.75rem; font-size:1.05rem; line-height:1; display:inline-flex; align-items:center; justify-content:center;}
   .hint{font-size:0.72rem; color:var(--ink-soft); margin-top:0.3rem;}
 
   /* ---------- Auth (login/register) ---------- */
@@ -1351,11 +1352,12 @@
         <p class="hint">Kalau diisi, judul pengingat bisa diklik dan langsung membuka halaman ini. Boleh tanpa "https://", nanti ditambahkan otomatis.</p>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-danger" id="deleteBtn" style="display:none;">Hapus</button>
-        <button type="button" class="btn btn-ghost" id="duplicateBtn" style="display:none;">⧉ Duplikat</button>
-        <button type="button" class="btn btn-ghost" id="endBtn" style="display:none;">⏹ Akhiri</button>
+        <button type="button" class="btn btn-danger icon-only" id="deleteBtn" style="display:none;" aria-label="Hapus" title="Hapus">🗑</button>
+        <button type="button" class="btn btn-ghost icon-only" id="duplicateBtn" style="display:none;" aria-label="Duplikat" title="Duplikat">⧉</button>
+        <button type="button" class="btn btn-ghost icon-only" id="endBtn" style="display:none;" aria-label="Akhiri" title="Akhiri">⏹</button>
+        <button type="button" class="btn btn-ghost icon-only" id="restoreBtn" style="display:none;" aria-label="Kembalikan ke Saat Ini" title="Kembalikan ke Saat Ini (batalkan tanda selesai)">↺</button>
         <div style="flex:1;"></div>
-        <button type="button" class="btn btn-ghost" id="cancelForm">Batal</button>
+        <button type="button" class="btn btn-ghost icon-only" id="cancelForm" aria-label="Batal" title="Batal">✕</button>
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>
@@ -3516,7 +3518,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
             '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge+'</div>' +
             '<div class="acts">' +
-              '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button>' +
+              '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
             '</div></li>';
         });
       });
@@ -3525,7 +3527,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(upcomingList.querySelectorAll('.edit-up'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
-        openEditForm(btn.getAttribute('data-id'));
+        openEditForm(btn.getAttribute('data-id'), null, btn.getAttribute('data-date'), btn.getAttribute('data-time'));
       });
     });
   }
@@ -4131,6 +4133,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('deleteBtn').style.display = 'none';
     document.getElementById('duplicateBtn').style.display = 'none';
     document.getElementById('endBtn').style.display = 'none';
+    document.getElementById('restoreBtn').style.display = 'none';
+    formOccurrence = null;
     reminderForm.reset();
     selectedCat = CATS[0].id;
     catOptionsExpanded = false;
@@ -4162,7 +4166,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
   }
 
-  function openEditForm(id, preloaded){
+  // Menyimpan kemunculan (tanggal+jam) spesifik yang sedang dibuka di form
+  // ubah, KALAU dibuka dari daftar yang menampilkan satu kemunculan
+  // tertentu (mis. "Mendatang") — dipakai tombol "↺ Kembalikan ke Saat
+  // Ini" untuk tahu status/selesai kemunculan mana yang mau dibatalkan.
+  var formOccurrence = null; // { reminderId, date, time } atau null
+  function openEditForm(id, preloaded, occurrenceDate, occurrenceTime){
     var r = preloaded || state.reminders.find(function(x){ return x.id===id; });
     if (!r) return;
     closeDayPanel();
@@ -4176,6 +4185,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // "Berakhir pada" manual satu-satu.
     var endBtnEl = document.getElementById('endBtn');
     endBtnEl.style.display = (!r.flexible && r.repeat && r.repeat !== 'none') ? 'inline-block' : 'none';
+    // Tombol "↺" cuma muncul kalau form ini dibuka untuk satu kemunculan
+    // spesifik (dari daftar "Mendatang") DAN kemunculan itu sudah
+    // tercentang selesai — jadi bisa langsung dikembalikan ke "Saat Ini"
+    // tanpa perlu bolak-balik cari checklist-nya lagi.
+    var restoreBtnEl = document.getElementById('restoreBtn');
+    if (occurrenceDate && occurrenceTime && isOccurrenceDone({ reminder:r, date:occurrenceDate, time:occurrenceTime })){
+      formOccurrence = { reminderId:r.id, date:occurrenceDate, time:occurrenceTime };
+      restoreBtnEl.style.display = 'inline-block';
+    } else {
+      formOccurrence = null;
+      restoreBtnEl.style.display = 'none';
+    }
     document.getElementById('fTitle').value = r.title;
     selectedCat = r.category;
     catOptionsExpanded = false;
@@ -4332,6 +4353,27 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       console.error(err);
       showToast('Gagal mengakhiri pengingat. Coba lagi.');
     });
+  });
+
+  // "↺ Kembalikan ke Saat Ini" — membatalkan tanda selesai untuk SATU
+  // kemunculan tertentu (tanggal+jam) yang lagi dibuka di form ubah, tanpa
+  // menyentuh kemunculan lain dari pengingat berulang yang sama. Kalau
+  // pengingatnya punya sub-checklist, semua item checklist untuk tanggal
+  // itu ikut dikosongkan lagi (karena "selesai" untuk pengingat semacam
+  // itu berarti seluruh checklist tercentang).
+  document.getElementById('restoreBtn').addEventListener('click', function(){
+    if (!formOccurrence || !currentUser) return;
+    var occ = formOccurrence;
+    var r = state.reminders.find(function(x){ return x.id===occ.reminderId; });
+    if (!r) return;
+    closeForm();
+    var items = checklistItemsForDate(r.notes, r.id, occ.date);
+    if (items.length){
+      setAllChecklistProgress(r.id, occ.date, items.map(function(it){ return it.idx; }), false);
+    } else {
+      setCompletion(r.id, occ.date, occ.time, false);
+    }
+    showToast('Dikembalikan ke "Saat Ini"');
   });
 
   // ---------- Day panel ----------
