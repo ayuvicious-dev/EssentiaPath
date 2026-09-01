@@ -1731,6 +1731,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (unsubscribeCompletions) unsubscribeCompletions();
     unsubscribeCompletions = onSnapshot(completionsDocRef(), function(snap){
       state.completions = (snap.exists() && snap.data().map) ? snap.data().map : {};
+      // LOG DEBUG SEMENTARA — untuk melacak status centang "Terlewat"/
+      // Fleksibel yang balik lagi setelah refresh. Aman dihapus nanti.
+      console.log('[DEBUG completions] dimuat dari ' + (snap.metadata.fromCache ? 'CACHE LOKAL' : 'SERVER') + ', jumlah key:', Object.keys(state.completions).length, state.completions);
       // PENTING: status centang (state.completions) dipakai juga oleh
       // "Mendatang" dan "Fleksibel" (lewat isOccurrenceDone/getMissedItems),
       // bukan cuma "Saat Ini". Sebelumnya hanya renderCurrentActivity() yang
@@ -1784,8 +1787,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderFlexible();
     var patch = {};
     patch['map.' + key] = value ? true : deleteField();
-    setDoc(completionsDocRef(), patch, { merge: true }).catch(function(err){
-      console.error(err);
+    // LOG DEBUG SEMENTARA — untuk melacak status centang "Terlewat"/
+    // Fleksibel yang balik lagi setelah refresh. Aman dihapus nanti.
+    console.log('[DEBUG completions] mengirim ke cloud, key=' + key + ', value=' + value);
+    setDoc(completionsDocRef(), patch, { merge: true }).then(function(){
+      console.log('[DEBUG completions] BERHASIL tersimpan ke server, key=' + key);
+    }).catch(function(err){
+      console.error('[DEBUG completions] GAGAL tersimpan, key=' + key, err);
       // PENTING: kembalikan status lokal ke sebelum diklik, bukan
       // dibiarkan tetap tampak tercentang/hilang dari daftar. Kalau tidak
       // dikembalikan di sini, kegagalan penyimpanan baru terlihat NANTI
