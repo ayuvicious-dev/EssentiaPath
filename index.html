@@ -1463,13 +1463,23 @@ var auth = getAuth(firebaseApp);
 // tersimpan di penyimpanan lokal (IndexedDB) dan otomatis dikirim ulang
 // begitu ada koneksi — tidak hilang lagi saat refresh.
 var db;
+window.__offlineCacheDisabled = false;
 try {
   db = initializeFirestore(firebaseApp, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
   });
 } catch (e) {
   // Browser tidak mendukung IndexedDB (mis. mode privat di sebagian
-  // browser) — tetap jalan, hanya tanpa cache offline.
+  // browser) — tetap jalan, hanya tanpa cache offline. Ini SEBELUMNYA gagal
+  // tanpa pemberitahuan apa pun sama sekali, jadi kalau fallback ini kepakai,
+  // ditandai di `window.__offlineCacheDisabled` supaya bisa ditampilkan
+  // sebagai peringatan ke pengguna (lihat pemakaiannya di
+  // onAuthStateChanged) — centang yang dilakukan lalu langsung refresh
+  // SEBELUM sempat terkirim ke server bisa hilang lagi kalau flag ini
+  // aktif, karena tidak ada cache offline lokal untuk menyimpan tulisan
+  // yang masih tertunda.
+  console.error('Firestore offline persistence gagal diaktifkan, jalan tanpa cache offline:', e);
+  window.__offlineCacheDisabled = true;
   db = getFirestore(firebaseApp);
 }
 setPersistence(auth, browserLocalPersistence).catch(function(){});
@@ -4714,6 +4724,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       subscribeCompletions();
       subscribeChecklistProgress();
       refreshNotifyBanner();
+      // Kalau cache offline Firestore gagal aktif (lihat inisialisasi `db`
+      // di atas), tulisan (misalnya centang "Terlewat"/Fleksibel) yang
+      // belum sempat terkirim ke server bisa hilang kalau halaman
+      // direfresh terlalu cepat. Beri tahu sekali per sesi supaya tidak
+      // membingungkan diam-diam.
+      if (window.__offlineCacheDisabled && !sessionStorage.getItem('essentiapath.offlineCacheWarned')){
+        sessionStorage.setItem('essentiapath.offlineCacheWarned', '1');
+        showToast('Mode offline tidak aktif di browser ini — tunggu sebentar setelah mencentang sebelum menutup/refresh halaman, supaya sempat tersimpan.', 6000);
+      }
     } else {
       if (unsubscribeReminders){ unsubscribeReminders(); unsubscribeReminders = null; }
       if (unsubscribeCategories){ unsubscribeCategories(); unsubscribeCategories = null; }
