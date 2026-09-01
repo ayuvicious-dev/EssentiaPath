@@ -1110,6 +1110,14 @@
       </div>
       <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
     </div>
+    <div class="settings-block">
+      <h2>Cadangkan &amp; Pulihkan Data</h2>
+      <p class="hint">Unduh seluruh isi aplikasi (pengingat, kategori, status centang, dan daftar upgrade) sebagai satu file JSON untuk jaga-jaga. File ini bisa dipulihkan kembali kapan saja, misalnya setelah ganti perangkat atau kalau data tidak sengaja berubah.</p>
+      <button type="button" class="btn btn-ghost" id="backupJsonBtn">⬇ Unduh backup (.json)</button>
+      <button type="button" class="btn btn-ghost" id="restoreJsonBtn" style="margin-top:0.6rem;">⬆ Pulihkan dari file backup…</button>
+      <input type="file" id="restoreJsonInput" accept="application/json,.json" hidden>
+      <p class="hint" id="backupLastInfo" style="margin-top:0.6rem;"></p>
+    </div>
   </section>
 
   <section class="panel view-section settings-panel" data-view="display" aria-label="Tampilan">
@@ -1433,7 +1441,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
   getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, setDoc, deleteDoc, onSnapshot, deleteField
+  collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, deleteField, FieldPath
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration (from Firebase console → Project settings)
@@ -1730,25 +1738,70 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function subscribeCompletions(){
     if (unsubscribeCompletions) unsubscribeCompletions();
     unsubscribeCompletions = onSnapshot(completionsDocRef(), function(snap){
-      state.completions = (snap.exists() && snap.data().map) ? snap.data().map : {};
-      // LOG DEBUG SEMENTARA — untuk melacak status centang "Terlewat"/
-      // Fleksibel yang balik lagi setelah refresh. Aman dihapus nanti.
-      console.log('[DEBUG completions] dimuat dari ' + (snap.metadata.fromCache ? 'CACHE LOKAL' : 'SERVER') + ', jumlah key:', Object.keys(state.completions).length, state.completions);
-      // PENTING: status centang (state.completions) dipakai juga oleh
-      // "Mendatang" dan "Fleksibel" (lewat isOccurrenceDone/getMissedItems),
-      // bukan cuma "Saat Ini". Sebelumnya hanya renderCurrentActivity() yang
-      // dipanggil di sini, jadi kalau data completions ini datang belakangan
-      // (race dengan data pengingat yang dimuat lewat listener terpisah),
-      // atau ada centang baru masuk dari perangkat lain, daftar Fleksibel
-      // tetap memakai status lama — item yang sudah dicentang terlihat
-      // "tidak mau hilang" atau muncul lagi sampai ada pemicu render lain.
+      var raw = snap.exists() ? snap.data() : {};
+      var map = Object.assign({}, raw.map || {});
+      // PERBAIKAN DATA LAMA: dulu status centang ditulis lewat
+      // setDoc(ref, {'map.'+key: value}, {merge:true}). Untuk sebagian
+      // penulisan, Firestore ternyata TIDAK menafsirkan "map.key" itu
+      // sebagai field nested di dalam `map`, melainkan menyimpannya
+      // sebagai field TERPISAH yang namanya literal mengandung titik
+      // (mis. field bernama persis "map.rmti...|2026-09-01|09:00").
+      // Field seperti itu tidak pernah terbaca oleh `raw.map`, sehingga
+      // centangan terlihat "balik lagi" setelah refresh. Di sini kita
+      // deteksi field nyasar tsb, langsung anggap sudah tercentang di
+      // tampilan, dan bersihkan/pindahkan ke tempat yang benar di cloud.
+      var strayKeys = Object.keys(raw).filter(function(k){ return k !== 'map' && k.indexOf('map.') === 0; });
+      strayKeys.forEach(function(k){
+        var realKey = k.slice(4); // buang prefix literal "map."
+        if (raw[k] === true) map[realKey] = true;
+      });
+      state.completions = map;
       renderCurrentActivity();
       renderUpcoming();
       renderFlexible();
       pruneStaleCompletionsFromCloud(state.completions);
+      if (strayKeys.length) repairStrayCompletionFields(strayKeys, raw);
     }, function(err){
       console.error('Firestore completions sync error', err);
     });
+  }
+  // Menulis patch ke dokumen completions lewat updateDoc(), yang menurut
+  // dokumentasi resmi Firestore SELALU menafsirkan string "a.b" sebagai
+  // path ke field nested — beda dari setDoc(...,{merge:true}) yang untuk
+  // kasus ini perilakunya tidak konsisten (lihat catatan di atas). Kalau
+  // dokumennya belum pernah ada (pengguna baru), updateDoc akan gagal
+  // dengan kode 'not-found'; di situ kita buat dulu dokumen kosongnya lalu
+  // coba updateDoc lagi.
+  // fieldArgs: array datar [pathString1, value1, pathString2, value2, ...]
+  function writeCompletionsPatch(fieldArgs){
+    var ref = completionsDocRef();
+    return updateDoc.apply(null, [ref].concat(fieldArgs)).catch(function(err){
+      if (err && err.code === 'not-found') {
+        return setDoc(ref, {}, { merge: true }).then(function(){
+          return updateDoc.apply(null, [ref].concat(fieldArgs));
+        });
+      }
+      throw err;
+    });
+  }
+  var completionsRepairInFlight = false;
+  function repairStrayCompletionFields(strayKeys, raw){
+    if (!currentUser || completionsRepairInFlight) return;
+    completionsRepairInFlight = true;
+    var fieldArgs = [];
+    strayKeys.forEach(function(k){
+      var realKey = k.slice(4);
+      // Pindahkan nilainya ke tempat yang benar (nested di dalam `map`)...
+      fieldArgs.push('map.' + realKey, raw[k]);
+      // ...lalu hapus field literal yang nyasar. Karena NAMA field ini
+      // sendiri mengandung titik secara harfiah, satu-satunya cara
+      // menunjuknya dengan tepat (bukan sebagai path nested) adalah lewat
+      // FieldPath dengan SATU segmen berisi seluruh nama field tsb.
+      fieldArgs.push(new FieldPath(k), deleteField());
+    });
+    writeCompletionsPatch(fieldArgs)
+      .catch(function(err){ console.error('Gagal membersihkan field completions yang nyasar', err); })
+      .finally(function(){ completionsRepairInFlight = false; });
   }
   function completionKey(reminderId, dateStr, time){ return reminderId + '|' + dateStr + '|' + time; }
   function isStaleCompletionKey(key){
@@ -1766,10 +1819,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (completionsPruneInFlight || !currentUser) return;
     var staleKeys = Object.keys(map).filter(isStaleCompletionKey);
     if (!staleKeys.length) return;
-    var patch = {};
-    staleKeys.forEach(function(k){ patch['map.' + k] = deleteField(); });
+    var fieldArgs = [];
+    staleKeys.forEach(function(k){ fieldArgs.push('map.' + k, deleteField()); });
     completionsPruneInFlight = true;
-    setDoc(completionsDocRef(), patch, { merge: true })
+    writeCompletionsPatch(fieldArgs)
       .catch(function(err){ console.error('Gagal membersihkan status lama', err); })
       .finally(function(){ completionsPruneInFlight = false; });
   }
@@ -1785,15 +1838,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderCurrentActivity();
     renderUpcoming();
     renderFlexible();
-    var patch = {};
-    patch['map.' + key] = value ? true : deleteField();
-    // LOG DEBUG SEMENTARA — untuk melacak status centang "Terlewat"/
-    // Fleksibel yang balik lagi setelah refresh. Aman dihapus nanti.
-    console.log('[DEBUG completions] mengirim ke cloud, key=' + key + ', value=' + value);
-    setDoc(completionsDocRef(), patch, { merge: true }).then(function(){
-      console.log('[DEBUG completions] BERHASIL tersimpan ke server, key=' + key);
-    }).catch(function(err){
-      console.error('[DEBUG completions] GAGAL tersimpan, key=' + key, err);
+    writeCompletionsPatch(['map.' + key, value ? true : deleteField()]).catch(function(err){
+      console.error('Gagal menyimpan status centang', key, err);
       // PENTING: kembalikan status lokal ke sebelum diklik, bukan
       // dibiarkan tetap tampak tercentang/hilang dari daftar. Kalau tidak
       // dikembalikan di sini, kegagalan penyimpanan baru terlihat NANTI
@@ -4602,6 +4648,146 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       showToast('Aplikasi sudah terpasang atau tidak didukung browser ini.');
     }
   });
+
+  // ---------- Backup & Restore (Pengaturan → Cadangkan & Pulihkan Data) ----------
+  // Backup: kumpulkan seluruh data pengguna yang tersimpan di Firestore
+  // (pengingat, kategori, status centang "Saat Ini"/Fleksibel, status
+  // centang sub-checklist, dan daftar upgrade) jadi satu file JSON yang
+  // bisa diunduh. Restore: baca file JSON tsb kembali dan timpa data di
+  // Firestore supaya persis sama seperti isi file — dilindungi konfirmasi
+  // karena ini operasi merusak (menimpa data yang ada sekarang).
+  var BACKUP_FORMAT_VERSION = 1;
+  var BACKUP_LAST_KEY = 'essentiapath.lastBackupAt';
+
+  function buildBackupPayload(){
+    return {
+      app: 'EssentiaPath',
+      formatVersion: BACKUP_FORMAT_VERSION,
+      exportedAt: new Date().toISOString(),
+      account: currentUser ? currentUser.email : null,
+      data: {
+        reminders: state.reminders,
+        categories: CATS,
+        completions: state.completions,
+        checklistProgress: state.checklistProgress,
+        upgrades: UPGRADES
+      }
+    };
+  }
+
+  function downloadBackupJson(){
+    if (!currentUser) { showToast('Masuk dulu untuk membuat backup.'); return; }
+    var payload = buildBackupPayload();
+    var json = JSON.stringify(payload, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var stamp = toISODate(new Date()) + '_' + String(new Date().getHours()).padStart(2,'0') + String(new Date().getMinutes()).padStart(2,'0');
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'essentiapath-backup_' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    localStorage.setItem(BACKUP_LAST_KEY, new Date().toISOString());
+    refreshBackupLastInfo();
+    showToast('Backup diunduh: ' + a.download);
+  }
+
+  function refreshBackupLastInfo(){
+    var el = document.getElementById('backupLastInfo');
+    if (!el) return;
+    var last = localStorage.getItem(BACKUP_LAST_KEY);
+    if (!last) { el.textContent = 'Belum pernah membuat backup di perangkat ini.'; return; }
+    var d = new Date(last);
+    el.textContent = 'Backup terakhir diunduh: ' + d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Validasi ringan: pastikan file yang dipilih memang berformat backup
+  // aplikasi ini (bukan JSON sembarangan), tapi tetap toleran kalau ada
+  // bagian data yang hilang/kosong (mis. backup lama sebelum fitur upgrade
+  // ditambahkan) — bagian yang hilang cukup dilewati, bukan digagalkan.
+  function validateBackupPayload(parsed){
+    if (!parsed || typeof parsed !== 'object') return 'File bukan JSON yang valid.';
+    if (!parsed.data || typeof parsed.data !== 'object') return 'File ini bukan file backup EssentiaPath (struktur data tidak ditemukan).';
+    if (parsed.data.reminders && !Array.isArray(parsed.data.reminders)) return 'Data pengingat di file rusak (bukan daftar).';
+    if (parsed.data.categories && !Array.isArray(parsed.data.categories)) return 'Data kategori di file rusak (bukan daftar).';
+    if (parsed.data.upgrades && !Array.isArray(parsed.data.upgrades)) return 'Data upgrade di file rusak (bukan daftar).';
+    return null;
+  }
+
+  function restoreFromBackupPayload(parsed){
+    var b = parsed.data;
+    var backupReminders = Array.isArray(b.reminders) ? b.reminders : [];
+    // Pastikan tiap pengingat dari file punya id — kalau ada yang hilang
+    // (file diedit manual, mis.), buatkan id baru supaya tidak tabrakan.
+    backupReminders.forEach(function(r){ if (!r.id) r.id = uid(); });
+    var backupIds = {};
+    backupReminders.forEach(function(r){ backupIds[r.id] = true; });
+    var currentIds = state.reminders.map(function(r){ return r.id; });
+    var idsToDelete = currentIds.filter(function(id){ return !backupIds[id]; });
+
+    var tasks = [];
+    idsToDelete.forEach(function(id){ tasks.push(deleteReminderFromCloud(id)); });
+    backupReminders.forEach(function(r){ tasks.push(saveReminderToCloud(r)); });
+    if (Array.isArray(b.categories) && b.categories.length){
+      tasks.push(saveCategoriesToCloud(b.categories));
+    }
+    tasks.push(setDoc(completionsDocRef(), { map: (b.completions && typeof b.completions === 'object') ? b.completions : {} }));
+    tasks.push(setDoc(checklistProgressDocRef(), { map: (b.checklistProgress && typeof b.checklistProgress === 'object') ? b.checklistProgress : {} }));
+    if (Array.isArray(b.upgrades)){
+      tasks.push(saveUpgradesToCloud(b.upgrades));
+    }
+    return Promise.all(tasks);
+  }
+
+  function handleRestoreFile(file){
+    if (!currentUser) { showToast('Masuk dulu untuk memulihkan backup.'); return; }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var parsed;
+      try {
+        parsed = JSON.parse(String(reader.result));
+      } catch (e) {
+        showToast('Gagal membaca file: bukan JSON yang valid.', 5000);
+        return;
+      }
+      var problem = validateBackupPayload(parsed);
+      if (problem) { showToast(problem, 5000); return; }
+      var reminderCount = Array.isArray(parsed.data.reminders) ? parsed.data.reminders.length : 0;
+      var exportedInfo = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString('id-ID') : 'tidak diketahui';
+      var sure = confirm(
+        'Pulihkan backup ini akan MENIMPA seluruh data akun ini (pengingat, kategori, status centang, dan daftar upgrade) dengan isi file.\n\n' +
+        'File dibuat: ' + exportedInfo + '\n' +
+        'Jumlah pengingat di file: ' + reminderCount + '\n\n' +
+        'Lanjutkan pulihkan?'
+      );
+      if (!sure) return;
+      showToast('Memulihkan backup…', 4000);
+      restoreFromBackupPayload(parsed).then(function(){
+        showToast('Backup berhasil dipulihkan.');
+      }).catch(function(err){
+        console.error('Gagal memulihkan backup', err);
+        showToast('Sebagian/seluruh proses pulihkan gagal. Cek koneksi internet lalu coba lagi.', 6000);
+      });
+    };
+    reader.onerror = function(){
+      showToast('Gagal membaca file backup.', 5000);
+    };
+    reader.readAsText(file);
+  }
+
+  document.getElementById('backupJsonBtn').addEventListener('click', downloadBackupJson);
+  var restoreJsonInput = document.getElementById('restoreJsonInput');
+  document.getElementById('restoreJsonBtn').addEventListener('click', function(){
+    restoreJsonInput.value = '';
+    restoreJsonInput.click();
+  });
+  restoreJsonInput.addEventListener('change', function(){
+    var file = restoreJsonInput.files && restoreJsonInput.files[0];
+    if (file) handleRestoreFile(file);
+  });
+  refreshBackupLastInfo();
 
   // Begitu service worker versi baru siap dan mengambil alih kontrol
   // (terjadi setelah publish revisi baru ke GitHub Pages), muat ulang
