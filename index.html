@@ -328,6 +328,12 @@
   .up-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
   .up-item .meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
   .up-item .acts{display:flex; gap:0.3rem; flex:none;}
+
+  .dp-title{display:flex; align-items:center; gap:0.3rem; cursor:pointer; user-select:none;}
+  .dp-chev{width:14px; height:14px; flex:none; color:var(--ink-soft); transition:transform 0.18s ease;}
+  .dp-title[aria-expanded="true"] .dp-chev{transform:rotate(180deg);}
+  .dp-detail{margin-top:0.3rem;}
+  .dp-detail .sub-check-item{cursor:default;}
   .up-badge{display:inline-block; margin-top:0.32rem; font-size:0.64rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:999px; letter-spacing:0.02em;}
   .up-badge.done{background:rgba(63,102,89,0.15); color:var(--moss-deep);}
   .up-badge.ongoing{background:rgba(227,169,124,0.25); color:var(--amber-deep);}
@@ -3768,9 +3774,58 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // ---------- Day panel ----------
   var dayOverlay = document.getElementById('dayOverlay');
   var dayPanelList = document.getElementById('dayPanelList');
+  // Menyimpan status buka/tutup keterangan per item (kunci: reminderId+time)
+  // selama panel tanggal ini terbuka — direset tiap kali panel dibuka untuk
+  // tanggal (baru atau sama).
+  var dayPanelExpanded = {};
+
+  function renderDayPanelList(){
+    var items = itemsForDate(state.dayPanelDate);
+    if (!items.length){
+      dayPanelList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini.</div>';
+      return;
+    }
+    dayPanelList.innerHTML = items.map(function(it){
+      var c = catInfo(it.reminder.category);
+      var key = it.reminder.id + '|' + it.time;
+      var expanded = !!dayPanelExpanded[key];
+      return '<div class="up-item dp-item" data-key="'+escapeHTML(key)+'">' +
+        '<span class="dot" style="background:'+c.hex+'"></span>' +
+        '<div class="body">' +
+          '<div class="title dp-title" role="button" tabindex="0" aria-expanded="'+(expanded?'true':'false')+'">' +
+            titleWithLinkHTML(it.reminder.title, it.reminder.link) +
+            '<svg class="dp-chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</div>' +
+          '<div class="dp-detail"'+(expanded?'':' hidden')+'>' +
+            '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>' +
+            renderChecklistHTML(it.reminder.notes) +
+            renderNotesListHTML(it.reminder.notes) +
+            renderFreeTextNotesHTML(it.reminder.notes) +
+          '</div>' +
+        '</div>' +
+        '<div class="acts"><button type="button" class="icon-btn edit-day" data-id="'+it.reminder.id+'" aria-label="Ubah">✎</button></div>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(dayPanelList.querySelectorAll('.dp-title'), function(titleEl){
+      function toggle(){
+        var host = titleEl.closest('.dp-item');
+        var key = host.getAttribute('data-key');
+        dayPanelExpanded[key] = !dayPanelExpanded[key];
+        renderDayPanelList();
+      }
+      titleEl.addEventListener('click', toggle);
+      titleEl.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+      });
+    });
+    Array.prototype.forEach.call(dayPanelList.querySelectorAll('.edit-day'), function(btn){
+      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+    });
+  }
 
   function openDayPanel(dateStr){
     state.dayPanelDate = dateStr;
+    dayPanelExpanded = {};
     var dt = parseISODate(dateStr);
     var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     document.getElementById('dayPanelTitle').textContent = days[dt.getDay()]+', '+dt.getDate()+' '+MONTH_NAMES[dt.getMonth()]+' '+dt.getFullYear();
@@ -3783,21 +3838,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     } else {
       dayPanelHolidayEl.hidden = true;
     }
-    var items = itemsForDate(dateStr);
-    if (!items.length){
-      dayPanelList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini.</div>';
-    } else {
-      dayPanelList.innerHTML = items.map(function(it){
-        var c = catInfo(it.reminder.category);
-        return '<div class="up-item"><span class="dot" style="background:'+c.hex+'"></span>' +
-          '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
-          '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+(it.reminder.notes?' · '+escapeHTML(notesPreview(it.reminder.notes)):'')+'</div></div>' +
-          '<div class="acts"><button type="button" class="icon-btn edit-day" data-id="'+it.reminder.id+'" aria-label="Ubah">✎</button></div></div>';
-      }).join('');
-      Array.prototype.forEach.call(dayPanelList.querySelectorAll('.edit-day'), function(btn){
-        btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
-      });
-    }
+    renderDayPanelList();
     dayOverlay.hidden = false;
   }
   function closeDayPanel(){ dayOverlay.hidden = true; }
