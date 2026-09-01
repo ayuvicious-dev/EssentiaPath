@@ -385,7 +385,7 @@
   /* ---------- Search ---------- */
   .search-box{display:flex; align-items:center; gap:0.4rem; padding:0.42rem 0.65rem; border:1px solid var(--line); border-radius:10px; background:var(--paper-raised);}
   .search-box svg{width:14px; height:14px; color:var(--ink-soft); flex:none;}
-  .search-box input{border:none; background:none; outline:none; font-size:0.82rem; color:var(--ink); flex:1; min-width:0; font-family:inherit;}
+  .search-box input{border:none; background:none; outline:none; font-size:16px; color:var(--ink); flex:1; min-width:0; font-family:inherit;}
   .search-box input::placeholder{color:var(--ink-soft);}
   .search-box .search-clear{border:none; background:none; color:var(--ink-soft); cursor:pointer; padding:2px; display:none; flex:none; font-size:0.85rem; line-height:1; border-radius:50%;}
   .search-box.has-value .search-clear{display:inline-flex; align-items:center; justify-content:center;}
@@ -473,7 +473,11 @@
   }
   .checkbox-field input[type="checkbox"]{width:auto; margin:2px 0 0;}
   .checkbox-field label{font-size:0.82rem; font-weight:600; color:var(--ink); margin:0; cursor:pointer;}
-  .checkbox-field .hint{margin:0.15rem 0 0;}
+  /* Versi ringkas: cuma centang + label sebaris, tanpa deskripsi panjang di
+     bawahnya — dipakai untuk toggle yang sudah jelas dari labelnya sendiri
+     (fleksibel, prioritas), supaya form input pengingat lebih ringkas. */
+  .checkbox-field.compact{align-items:center; padding:0.5rem 0.7rem; margin-bottom:0.6rem;}
+  .checkbox-field.compact input[type="checkbox"]{margin:0;}
 
   /* ---------- Tab navigation (Dashboard / Kalender / Pengaturan) ---------- */
   /* Same tabbed navigation on every screen size — laptop/desktop no longer
@@ -650,8 +654,13 @@
   .cat-option.selected{border-color:var(--moss); background:var(--selected-bg); font-weight:700;}
   .cat-option-add{
     border-style:dashed; color:var(--moss-deep); font-weight:700; background:transparent;
+    padding:0.32rem 0.62rem;
   }
   .cat-option-add:hover{border-style:solid; background:var(--selected-bg);}
+  .cat-option-toggle{
+    color:var(--ink-soft); font-weight:700; background:transparent; padding:0.32rem 0.62rem;
+  }
+  .cat-option-toggle:hover{border-style:solid; background:var(--selected-bg); color:var(--ink);}
   .modal-actions{display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-top:1.1rem;}
   .btn{border:none; border-radius:999px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:700; cursor:pointer;}
   .btn-primary{background:var(--moss); color:#fff;}
@@ -1029,23 +1038,14 @@
         <label>Kategori</label>
         <div class="cat-options" id="catOptions"></div>
       </div>
-      <div class="field">
-        <label for="fLink">Link (opsional)</label>
-        <input type="text" id="fLink" maxlength="500" placeholder="Contoh: https://zoom.us/j/...">
-        <p class="hint">Kalau diisi, judul pengingat bisa diklik dan langsung membuka halaman ini. Boleh tanpa "https://", nanti ditambahkan otomatis.</p>
-      </div>
-      <div class="checkbox-field">
-        <input type="checkbox" id="fFlexible">
-        <div>
-          <label for="fFlexible">Tanpa tanggal — kerjakan kapan saja (fleksibel)</label>
-          <p class="hint">Tidak muncul di kalender. Muncul di daftar "Fleksibel" dan bisa dicentang saat selesai.</p>
+      <div class="row-2" id="flexPriorityRow">
+        <div class="checkbox-field compact" id="fFlexibleField">
+          <input type="checkbox" id="fFlexible">
+          <label for="fFlexible">Fleksibel</label>
         </div>
-      </div>
-      <div class="checkbox-field" id="fPriorityField" hidden>
-        <input type="checkbox" id="fPriority">
-        <div>
-          <label for="fPriority">Tandai sebagai prioritas</label>
-          <p class="hint">Tampil di kolom "Prioritas" pada daftar Fleksibel, terpisah dari yang standar.</p>
+        <div class="checkbox-field compact" id="fPriorityField" hidden>
+          <input type="checkbox" id="fPriority">
+          <label for="fPriority">Prioritas</label>
         </div>
       </div>
       <div id="scheduledFields">
@@ -1099,12 +1099,9 @@
             <p class="hint" style="margin-top:0.6rem;">Dihitung dari tanggal mulai di atas, lalu berulang tiap N hari (mis. 3 hari sekali, 5 hari sekali).</p>
           </div>
         </div>
-        <div class="checkbox-field" id="dayTypeToggleRow">
+        <div class="checkbox-field compact" id="dayTypeToggleRow">
           <input type="checkbox" id="fByDayType">
-          <div>
-            <label for="fByDayType">Jam berbeda untuk Sabtu &amp; hari libur</label>
-            <p class="hint">Jam di atas dipakai untuk hari kerja (Senin–Jumat). Aktifkan ini untuk atur jam berbeda saat jatuh di hari Sabtu atau hari libur (Minggu &amp; tanggal merah/cuti bersama).</p>
-          </div>
+          <label for="fByDayType">Jam berbeda untuk Sabtu &amp; hari libur</label>
         </div>
         <div class="row-2" id="dayTypeTimesRow" style="display:none;">
           <div class="field">
@@ -1142,8 +1139,13 @@
             List bullet
           </button>
         </div>
-        <textarea id="fNotes" maxlength="500" placeholder="Detail tambahan…"></textarea>
+        <textarea id="fNotes" placeholder="Detail tambahan…"></textarea>
         <p class="hint">Pilih format lalu ketik. Tekan Enter untuk baris baru dalam list, Enter dua kali untuk keluar dari list.</p>
+      </div>
+      <div class="field">
+        <label for="fLink">Link (opsional)</label>
+        <input type="text" id="fLink" maxlength="500" placeholder="Contoh: https://zoom.us/j/...">
+        <p class="hint">Kalau diisi, judul pengingat bisa diklik dan langsung membuka halaman ini. Boleh tanpa "https://", nanti ditambahkan otomatis.</p>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger" id="deleteBtn" style="display:none;">Hapus</button>
@@ -1229,7 +1231,7 @@ import {
   signOut, sendPasswordResetEmail, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
-  getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, enableIndexedDbPersistence
+  getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, enableIndexedDbPersistence, deleteField
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration (from Firebase console → Project settings)
@@ -1471,8 +1473,16 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   // ---------- Firestore-backed completion status for "Saat Ini" ----------
   // Menyimpan status "sudah dilakukan" per kemunculan (reminderId + tanggal),
   // supaya pengingat berulang tidak selamanya tercentang. Disimpan sebagai
-  // satu dokumen berisi map kecil (bukan koleksi terpisah) dan dibersihkan
-  // dari entri yang lebih tua dari 3 hari setiap kali disimpan.
+  // satu dokumen berisi map kecil (bukan koleksi terpisah).
+  //
+  // PENTING: setiap centang/hapus-centang HANYA menulis satu field
+  // ("map.<key>") lewat setDoc(..., {merge:true}), bukan menimpa seluruh
+  // map. Kalau kita menimpa seluruh map berdasarkan salinan lokal, dua
+  // perangkat yang aktif hampir bersamaan bisa saling menghapus centang
+  // satu sama lain (perangkat B menulis salinan lamanya yang belum sempat
+  // menerima update dari perangkat A, sehingga centang perangkat A hilang
+  // lagi). Menulis per-key membuat setiap perangkat hanya menyentuh key
+  // miliknya sendiri, jadi tidak ada perangkat yang bisa saling menimpa.
   var unsubscribeCompletions = null;
   function completionsDocRef(){
     return doc(db, 'users', currentUser.uid, 'settings', 'completions');
@@ -1482,35 +1492,48 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     unsubscribeCompletions = onSnapshot(completionsDocRef(), function(snap){
       state.completions = (snap.exists() && snap.data().map) ? snap.data().map : {};
       renderCurrentActivity();
+      pruneStaleCompletionsFromCloud(state.completions);
     }, function(err){
       console.error('Firestore completions sync error', err);
     });
   }
-  function saveCompletionsToCloud(map){
-    return setDoc(completionsDocRef(), { map: map });
-  }
-  function pruneOldCompletions(map){
-    var cutoff = toISODate(new Date(Date.now() - 3*86400000));
-    var out = {};
-    Object.keys(map).forEach(function(key){
-      var parts = key.split('|'); // reminderId|date|time
-      var date = parts[1];
-      if (date && date >= cutoff) out[key] = map[key];
-    });
-    return out;
-  }
   function completionKey(reminderId, dateStr, time){ return reminderId + '|' + dateStr + '|' + time; }
+  function isStaleCompletionKey(key){
+    var parts = key.split('|'); // reminderId|date|time
+    var date = parts[1];
+    var cutoff = toISODate(new Date(Date.now() - 3*86400000));
+    return !date || date < cutoff;
+  }
+  // Membersihkan entri lebih tua dari 3 hari dari cloud, tapi hanya
+  // menghapus key yang memang basi (satu field per key), tidak pernah
+  // menimpa seluruh dokumen — supaya tidak menghapus centang baru dari
+  // perangkat lain yang mungkin belum sempat kita terima.
+  var completionsPruneInFlight = false;
+  function pruneStaleCompletionsFromCloud(map){
+    if (completionsPruneInFlight || !currentUser) return;
+    var staleKeys = Object.keys(map).filter(isStaleCompletionKey);
+    if (!staleKeys.length) return;
+    var patch = {};
+    staleKeys.forEach(function(k){ patch['map.' + k] = deleteField(); });
+    completionsPruneInFlight = true;
+    setDoc(completionsDocRef(), patch, { merge: true })
+      .catch(function(err){ console.error('Gagal membersihkan status lama', err); })
+      .finally(function(){ completionsPruneInFlight = false; });
+  }
   function setCompletion(reminderId, dateStr, time, value){
     if (!currentUser) return;
     var key = completionKey(reminderId, dateStr, time);
+    // Perbarui tampilan lokal langsung supaya terasa responsif, tapi tetap
+    // kirim ke cloud sebagai patch satu field saja.
     var next = Object.assign({}, state.completions);
     if (value) next[key] = true; else delete next[key];
-    next = pruneOldCompletions(next);
     state.completions = next;
     renderCurrentActivity();
     renderUpcoming();
     renderFlexible();
-    saveCompletionsToCloud(next).catch(function(err){
+    var patch = {};
+    patch['map.' + key] = value ? true : deleteField();
+    setDoc(completionsDocRef(), patch, { merge: true }).catch(function(err){
       console.error(err);
       showToast('Gagal menyimpan status. Coba lagi.');
     });
@@ -1803,6 +1826,17 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
   function checklistAllChecked(items){
     return items.length>0 && items.every(function(it){ return it.checked; });
+  }
+  // Status "selesai" satu kemunculan (reminder + tanggal + jam): kalau
+  // pengingatnya punya sub-checklist, selesai berarti semua item checklist
+  // tercentang; kalau tidak, pakai status centang per-kemunculan biasa.
+  // Dipakai bersama oleh panel "Saat Ini", "Lewat", dan "Mendatang" supaya
+  // ketiganya selalu sinkron.
+  function isOccurrenceDone(it){
+    var items = checklistLines(it.reminder.notes);
+    if (items.length) return checklistAllChecked(items);
+    var key = completionKey(it.reminder.id, it.date, it.time);
+    return !!state.completions[key];
   }
   function toggleChecklistLine(notes, lineIdx, forceValue){
     var lines = (notes||'').split('\n');
@@ -2204,6 +2238,31 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   }
   function upgUid(){ return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
 
+  function copyUpgradeItemText(id){
+    var it = UPGRADES.find(function(u){ return u.id === id; });
+    if (!it) return;
+    var text = it.desc ? (it.title + '\n' + it.desc) : it.title;
+    function fallbackCopy(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); showToast('Disalin ke clipboard'); }
+      catch (err) { showToast('Gagal menyalin'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        showToast('Disalin ke clipboard');
+      }).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  }
+
   function upgradeRowHtml(it, absIndex, draggable){
     return '<div class="upg-row'+(it.done?' done':'')+'" data-index="'+absIndex+'" data-id="'+it.id+'">' +
       (draggable
@@ -2215,6 +2274,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         (it.desc ? '<div class="upg-desc">'+escapeHTML(it.desc)+'</div>' : '') +
       '</div>' +
       '<div class="upg-acts">' +
+        '<button type="button" class="icon-btn copy-upgrade" data-id="'+it.id+'" aria-label="Salin judul dan keterangan">⧉</button>' +
         '<button type="button" class="icon-btn edit-upgrade" data-id="'+it.id+'" aria-label="Ubah item">✎</button>' +
         '<button type="button" class="icon-btn delete-upgrade" data-id="'+it.id+'" aria-label="Hapus item">🗑</button>' +
       '</div>' +
@@ -2230,6 +2290,12 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
           console.error(err);
           showToast('Gagal memperbarui status. Coba lagi.');
         });
+      });
+    });
+    Array.prototype.forEach.call(container.querySelectorAll('.copy-upgrade'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        copyUpgradeItemText(btn.getAttribute('data-id'));
       });
     });
     Array.prototype.forEach.call(container.querySelectorAll('.edit-upgrade'), function(btn){
@@ -2511,11 +2577,17 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     var items = itemsForDate(todayISO); // sudah terurut naik berdasarkan jam
     var nowTime = nowHM();
     var current = null, next = null;
+    var pastItems = [];
     for (var i=0; i<items.length; i++){
-      if (items[i].time <= nowTime) current = items[i];
-      else { next = items[i]; break; }
+      if (items[i].time <= nowTime){
+        pastItems.push(items[i]);
+        // Kemunculan yang sudah ditandai selesai tidak dijadikan "saat ini" lagi
+        // — begitu semua tercentang, item ini hilang dari panel "Saat Ini".
+        if (!isOccurrenceDone(items[i])) current = items[i];
+      } else { next = items[i]; break; }
     }
-    return { current: current, next: next, hasToday: items.length>0 };
+    var pastAllDone = pastItems.length>0 && pastItems.every(isOccurrenceDone);
+    return { current: current, next: next, hasToday: items.length>0, pastAllDone: pastAllDone };
   }
   function getTodayOverdueItems(current){
     var todayISO = toISODate(new Date());
@@ -2525,11 +2597,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     items.forEach(function(it){
       if (it.time > nowTime) return; // belum waktunya
       if (current && it.reminder.id === current.reminder.id && it.time === current.time && it.date === current.date) return; // ini yang sedang "berlangsung", sudah tampil di atas
-      var key = completionKey(it.reminder.id, it.date, it.time);
-      var checklistItemsO = checklistLines(it.reminder.notes);
-      var hasChecklistO = checklistItemsO.length > 0;
-      var doneO = hasChecklistO ? checklistAllChecked(checklistItemsO) : !!state.completions[key];
-      if (doneO) return;
+      if (isOccurrenceDone(it)) return;
       out.push(it);
     });
     return out;
@@ -2595,9 +2663,16 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     }
     var res = getCurrentOccurrence();
     if (!res.current){
-      var msg = res.next
-        ? 'Belum ada agenda yang berjalan. Berikutnya pukul '+res.next.time+': '+escapeHTML(res.next.reminder.title)+'.'
-        : (res.hasToday ? 'Semua agenda hari ini sudah lewat.' : 'Tidak ada agenda untuk hari ini.');
+      var msg;
+      if (res.next){
+        msg = 'Belum ada agenda yang berjalan. Berikutnya pukul '+res.next.time+': '+escapeHTML(res.next.reminder.title)+'.';
+      } else if (res.pastAllDone){
+        msg = 'Semua agenda hari ini sudah selesai. Kerja bagus!';
+      } else if (res.hasToday){
+        msg = 'Semua agenda hari ini sudah lewat.';
+      } else {
+        msg = 'Tidak ada agenda untuk hari ini.';
+      }
       currentActivityEl.innerHTML = '<div class="current-empty">'+msg+'</div>';
       renderCurrentOverdue(res.current);
       return;
@@ -2607,7 +2682,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     var key = completionKey(it.reminder.id, it.date, it.time);
     var checklistItemsCur = checklistLines(it.reminder.notes);
     var hasChecklistCur = checklistItemsCur.length > 0;
-    var done = hasChecklistCur ? checklistAllChecked(checklistItemsCur) : !!state.completions[key];
+    var done = isOccurrenceDone(it);
     currentActivityEl.innerHTML =
       '<div class="current-item'+(done?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
         '<button type="button" class="current-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" aria-label="Tandai sudah dilakukan">' +
@@ -2725,8 +2800,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         html += '<div class="up-subgroup-label">'+period+'</div>';
         list.forEach(function(it){
           var c = catInfo(it.reminder.category);
-          var key = completionKey(it.reminder.id, it.date, it.time);
-          var isDone = !!state.completions[key];
+          var isDone = isOccurrenceDone(it);
           var isOngoing = !isDone && cur.current && cur.current.reminder.id===it.reminder.id &&
             cur.current.date===it.date && cur.current.time===it.time;
           var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
@@ -2768,8 +2842,8 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
         if (state.flexFilters.indexOf(r.category) === -1) return;
         var times = occurrencesOnDate(r, dateStr);
         times.forEach(function(t){
-          var key = completionKey(r.id, dateStr, t);
-          if (!state.completions[key]) out.push({ reminder:r, time:t, date:dateStr });
+          if (isOccurrenceDone({ reminder:r, date:dateStr, time:t })) return;
+          out.push({ reminder:r, time:t, date:dateStr });
         });
       });
     }
@@ -3161,32 +3235,81 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   fDateEl.addEventListener('change', function(){ updateDateDisplay(fDateEl, fDateDisplay); });
   fUntilEl.addEventListener('change', function(){ updateDateDisplay(fUntilEl, fUntilDisplay); });
   var selectedCat = CATS[0].id;
+  var catOptionsExpanded = false;
 
   var fPriority = document.getElementById('fPriority');
   var fPriorityField = document.getElementById('fPriorityField');
+  var fFlexibleField = document.getElementById('fFlexibleField');
   function toggleFlexibleUI(isFlexible){
     scheduledFields.style.display = isFlexible ? 'none' : 'block';
     fDateEl.required = !isFlexible;
     fTimeEl.required = !isFlexible;
     fPriorityField.hidden = !isFlexible;
+    // Kalau "Prioritas" disembunyikan, "Fleksibel" melebar penuh satu baris
+    // (bukan cuma setengah), supaya tidak ada ruang kosong di sampingnya.
+    fFlexibleField.style.gridColumn = isFlexible ? '' : '1 / -1';
   }
   fFlexible.addEventListener('change', function(){ toggleFlexibleUI(fFlexible.checked); });
 
   function renderCatOptions(){
-    catOptions.innerHTML = CATS.map(function(c){
+    // Rekomendasi: hanya 4 kategori (paling sering dipakai, lalu yang
+    // terakhir dipakai sebagai penentu urutan berikutnya) yang tampil di
+    // awal — supaya chip tidak penuh sesak. Kategori yang sedang dipilih
+    // tetap ikut tampil meski bukan salah satu dari 4 teratas. Ada tombol
+    // simbol untuk buka daftar lengkap, dan simbol "+" untuk tambah baru.
+    var visibleCats;
+    if (catOptionsExpanded || CATS.length <= 4){
+      visibleCats = CATS;
+    } else {
+      var topIds = getRecommendedCategoryIds(4);
+      if (topIds.indexOf(selectedCat) === -1 && CATS.some(function(c){ return c.id===selectedCat; })){
+        topIds = topIds.slice(0, 3).concat([selectedCat]);
+      }
+      visibleCats = CATS.filter(function(c){ return topIds.indexOf(c.id) !== -1; });
+    }
+    var canToggle = CATS.length > 4;
+    catOptions.innerHTML = visibleCats.map(function(c){
       return '<label class="cat-option'+(c.id===selectedCat?' selected':'')+'" data-cat="'+c.id+'">' +
         '<input type="radio" name="catRadio" value="'+c.id+'" '+(c.id===selectedCat?'checked':'')+' style="display:none;">' +
         '<span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</label>';
     }).join('') +
-    '<button type="button" class="cat-option cat-option-add" id="catOptionAdd">+ Tambah</button>';
+    (canToggle
+      ? '<button type="button" class="cat-option cat-option-toggle" id="catOptionToggle" aria-label="'+(catOptionsExpanded?'Ciutkan daftar kategori':'Tampilkan semua kategori')+'">'+(catOptionsExpanded?'▴':'▾')+'</button>'
+      : '') +
+    '<button type="button" class="cat-option cat-option-add" id="catOptionAdd" aria-label="Tambah kategori">+</button>';
     Array.prototype.forEach.call(catOptions.querySelectorAll('.cat-option[data-cat]'), function(lbl){
       lbl.addEventListener('click', function(){
         selectedCat = lbl.getAttribute('data-cat');
         renderCatOptions();
       });
     });
+    var toggleBtn = document.getElementById('catOptionToggle');
+    if (toggleBtn) toggleBtn.addEventListener('click', function(){
+      catOptionsExpanded = !catOptionsExpanded;
+      renderCatOptions();
+    });
     var addBtn = document.getElementById('catOptionAdd');
     if (addBtn) addBtn.addEventListener('click', openAddCategoryFormForReminder);
+  }
+  // Peringkat kategori: paling sering dipakai dulu (dihitung dari jumlah
+  // pengingat per kategori), lalu yang terakhir dipakai sebagai pemecah
+  // seri (dari id pengingat terbaru per kategori, id diawali timestamp
+  // pembuatan — lihat fungsi uid()).
+  function getRecommendedCategoryIds(n){
+    var freq = {}, lastUsed = {};
+    state.reminders.forEach(function(r){
+      if (!r.category) return;
+      freq[r.category] = (freq[r.category]||0) + 1;
+      if (!lastUsed[r.category] || r.id > lastUsed[r.category]) lastUsed[r.category] = r.id;
+    });
+    var ids = CATS.map(function(c){ return c.id; });
+    ids.sort(function(a,b){
+      var fa = freq[a]||0, fb = freq[b]||0;
+      if (fb !== fa) return fb - fa;
+      var la = lastUsed[a]||'', lb = lastUsed[b]||'';
+      return lb.localeCompare(la);
+    });
+    return ids.slice(0, n);
   }
 
   fRepeat.addEventListener('change', function(){
@@ -3288,6 +3411,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     document.getElementById('duplicateBtn').style.display = 'none';
     reminderForm.reset();
     selectedCat = CATS[0].id;
+    catOptionsExpanded = false;
     renderCatOptions();
     document.getElementById('fDate').value = prefillDate || toISODate(new Date());
     document.getElementById('fTime').value = '09:00';
@@ -3323,6 +3447,7 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     document.getElementById('duplicateBtn').style.display = 'inline-block';
     document.getElementById('fTitle').value = r.title;
     selectedCat = r.category;
+    catOptionsExpanded = false;
     renderCatOptions();
     document.getElementById('fDate').value = r.date || toISODate(new Date());
     document.getElementById('fTime').value = r.time || '09:00';
@@ -3731,9 +3856,29 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     }
   });
 
+  // Begitu service worker versi baru siap dan mengambil alih kontrol
+  // (terjadi setelah publish revisi baru ke GitHub Pages), muat ulang
+  // halaman otomatis sekali. Tanpa ini, tab/PWA yang sudah terbuka sebelum
+  // publish akan terus menjalankan JS lama di memori — cache boleh sudah
+  // ter-update, tapi kode yang sedang berjalan tidak berubah sampai
+  // di-reload. Ini penting supaya perbaikan bug (mis. sinkronisasi status
+  // selesai antar device) benar-benar aktif di semua device, bukan cuma
+  // yang baru dibuka.
   if ('serviceWorker' in navigator){
     window.addEventListener('load', function(){
-      navigator.serviceWorker.register('./service-worker.js').catch(function(){});
+      navigator.serviceWorker.register('./service-worker.js').then(function(reg){
+        // Cek update setiap kali tab kembali aktif/terlihat, supaya PWA yang
+        // dibiarkan terbuka lama tetap segera menemukan versi baru.
+        document.addEventListener('visibilitychange', function(){
+          if (document.visibilityState === 'visible') reg.update().catch(function(){});
+        });
+      }).catch(function(){});
+    });
+    var swReloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if (swReloaded) return;
+      swReloaded = true;
+      window.location.reload();
     });
   }
 
