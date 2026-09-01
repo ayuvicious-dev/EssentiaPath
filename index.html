@@ -10,8 +10,12 @@
     document.documentElement.setAttribute('data-theme', resolved);
   } catch(e){}
   try{
-    var fs = localStorage.getItem('essentiapath.fontSize') || 'medium';
-    document.documentElement.setAttribute('data-font-size', fs);
+    var fsRaw = localStorage.getItem('essentiapath.fontSize');
+    var fsMap = { small:14, medium:16, large:18 };
+    var fsPx = fsRaw && fsMap[fsRaw] ? fsMap[fsRaw] : (parseInt(fsRaw, 10) || 16);
+    if (fsPx < 13) fsPx = 13;
+    if (fsPx > 20) fsPx = 20;
+    document.documentElement.style.setProperty('--user-font-size', fsPx + 'px');
   } catch(e){}
 })();
 </script>
@@ -88,10 +92,9 @@
   }
   /* Ukuran font aplikasi (Tampilan → Ukuran Font): mengubah font-size akar
      (html), yang otomatis menyesuaikan hampir semua ukuran di aplikasi
-     karena nyaris semuanya pakai satuan rem/em relatif terhadap ini. */
-  :root[data-font-size="small"]{ font-size:14px; }
-  :root[data-font-size="medium"]{ font-size:16px; }
-  :root[data-font-size="large"]{ font-size:18px; }
+     karena nyaris semuanya pakai satuan rem/em relatif terhadap ini.
+     Nilainya kontinu (13–20px) lewat slider, disimpan di --user-font-size. */
+  :root{ font-size:var(--user-font-size, 16px); }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0; overflow-x:hidden;}
   body{
@@ -620,16 +623,38 @@
   .theme-tab svg{width:15px; height:15px;}
   .theme-tab.active{background:var(--paper-raised); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,0.12);}
 
+  .font-size-slider-wrap{display:flex; align-items:center; gap:0.6rem; padding:0.2rem 0.1rem 0.1rem;}
+  .font-size-slider-icon{color:var(--ink-soft); font-weight:700; flex:none; line-height:1;}
+  .font-size-slider{
+    flex:1; -webkit-appearance:none; appearance:none; height:6px; border-radius:999px;
+    background:var(--surface); outline:none; cursor:pointer; margin:0;
+  }
+  .font-size-slider::-webkit-slider-runnable-track{height:6px; border-radius:999px; background:var(--surface);}
+  .font-size-slider::-moz-range-track{height:6px; border-radius:999px; background:var(--surface);}
+  .font-size-slider::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:20px; height:20px; margin-top:-7px; border-radius:50%;
+    background:var(--moss); border:3px solid var(--paper-raised); box-shadow:0 1px 4px rgba(0,0,0,0.25); cursor:grab;
+  }
+  .font-size-slider::-webkit-slider-thumb:active{cursor:grabbing;}
+  .font-size-slider::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%; background:var(--moss); border:3px solid var(--paper-raised);
+    box-shadow:0 1px 4px rgba(0,0,0,0.25); cursor:grab;
+  }
+  .font-size-slider::-moz-range-thumb:active{cursor:grabbing;}
+
   .view-section{display:none;}
   .view-section.active{display:block;}
   .sidebar.view-section.active{display:flex;}
   .settings-panel.active{display:block;}
   body:not([data-view="calendar"]) .month-nav{display:none;}
-  body:not([data-view="dashboard"]) .add-btn{display:none;}
+  body:not([data-view="dashboard"]):not([data-view="flexible"]) .add-btn{display:none;}
   body[data-view="settings"] .toolbar{display:none;}
   body[data-view="settings"] .layout{display:none;}
   body[data-view="display"] .toolbar{display:none;}
   body[data-view="display"] .layout{display:none;}
+  body[data-view="flexible"] .toolbar{display:none;}
+  body[data-view="flexible"] .layout{display:none;}
+  .flexible-panel{padding:0.3rem 0.2rem 1rem; margin-top:1.25rem; position:relative; z-index:2;}
   .settings-panel{margin-top:1.25rem; position:relative; z-index:2;}
   .account-chip{display:none !important;}
 
@@ -646,6 +671,14 @@
   }
   @media (min-width:640px){ .modal{border-radius:16px;} }
   .modal h2{font-family:var(--font-display); font-size:1.2rem; margin:0 0 1rem; font-weight:600;}
+  .modal-head{display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem;}
+  .modal-head h2{margin:0 0 1rem;}
+  .modal-close{
+    flex:none; border:none; background:transparent; color:var(--amber-deep); cursor:pointer;
+    padding:0.2rem; margin-top:-0.1rem; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close svg{width:22px; height:22px;}
+  .modal-close:hover{background:rgba(var(--tint-rgb),0.08);}
   .field{margin-bottom:0.85rem;}
   .field label{display:block; font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin-bottom:0.3rem;}
   .field input, .field select, .field textarea{
@@ -896,66 +929,66 @@
         </div>
         <ul class="upcoming-list" id="upcomingList"></ul>
       </section>
-
-      <section class="panel" aria-label="Pengingat fleksibel">
-        <div class="sidebar-head">
-          <h2>Fleksibel</h2>
-          <div class="flex-filter-wrap">
-            <button type="button" class="icon-btn flex-sort-btn" id="flexSortBtn" aria-label="Urutkan: terbaru lebih dulu" title="Urutkan: terbaru lebih dulu">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <button type="button" class="icon-btn flex-filter-btn" id="flexFilterBtn" aria-label="Filter berdasarkan kategori" aria-expanded="false">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10.5 18h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-              <span class="filter-dot"></span>
-            </button>
-            <div class="flex-filter-popover" id="flexFilterPopover" hidden>
-              <div class="flex-filter-popover-head">
-                <span>Filter kategori</span>
-              </div>
-              <div class="flex-filter-bulk-acts">
-                <button type="button" class="flex-filter-all" id="flexFilterAll">Centang semua</button>
-                <button type="button" class="flex-filter-all" id="flexFilterNone">Hapus semua</button>
-              </div>
-              <div class="flex-filter-options" id="flexFilterOptions"></div>
-            </div>
-          </div>
-        </div>
-        <div class="search-box" id="flexSearchBox" style="margin:0 0.6rem 0.6rem;">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <input type="text" id="flexSearchInput" placeholder="Cari pengingat fleksibel…" autocomplete="off">
-          <button type="button" class="search-clear" id="flexSearchClear" aria-label="Hapus pencarian">✕</button>
-        </div>
-        <ul class="flex-list flex-list-missed" id="flexibleListMissed"></ul>
-        <div class="flex-columns">
-          <div class="flex-column">
-            <div class="flex-column-head priority"><span class="dot"></span>Prioritas</div>
-            <ul class="flex-list" id="flexibleListPriority"></ul>
-            <div class="upgrade-pagination" id="flexPaginationPriority" hidden>
-              <button type="button" id="flexPrevPriority">‹</button>
-              <span class="page-info" id="flexPageInfoPriority"></span>
-              <button type="button" id="flexNextPriority">›</button>
-            </div>
-          </div>
-          <div class="flex-column">
-            <div class="flex-column-head"><span class="dot"></span>Standar</div>
-            <ul class="flex-list" id="flexibleListStandard"></ul>
-            <div class="upgrade-pagination" id="flexPaginationStandard" hidden>
-              <button type="button" id="flexPrevStandard">‹</button>
-              <span class="page-info" id="flexPageInfoStandard"></span>
-              <button type="button" id="flexNextStandard">›</button>
-            </div>
-          </div>
-        </div>
-        <div class="flex-done-toggle-wrap" id="flexDoneToggleWrap" hidden>
-          <button type="button" class="flex-done-toggle" id="flexDoneToggle" aria-expanded="false">
-            <span id="flexDoneToggleLabel">Tampilkan yang selesai</span>
-            <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <ul class="flex-list flex-list-done" id="flexibleListDone" hidden></ul>
-        </div>
-      </section>
     </aside>
   </div>
+
+  <section class="panel view-section flexible-panel" data-view="flexible" aria-label="Fleksibel">
+    <div class="sidebar-head">
+      <h2>Fleksibel</h2>
+      <div class="flex-filter-wrap">
+        <button type="button" class="icon-btn flex-sort-btn" id="flexSortBtn" aria-label="Urutkan: terbaru lebih dulu" title="Urutkan: terbaru lebih dulu">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="icon-btn flex-filter-btn" id="flexFilterBtn" aria-label="Filter berdasarkan kategori" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10.5 18h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="filter-dot"></span>
+        </button>
+        <div class="flex-filter-popover" id="flexFilterPopover" hidden>
+          <div class="flex-filter-popover-head">
+            <span>Filter kategori</span>
+          </div>
+          <div class="flex-filter-bulk-acts">
+            <button type="button" class="flex-filter-all" id="flexFilterAll">Centang semua</button>
+            <button type="button" class="flex-filter-all" id="flexFilterNone">Hapus semua</button>
+          </div>
+          <div class="flex-filter-options" id="flexFilterOptions"></div>
+        </div>
+      </div>
+    </div>
+    <div class="search-box" id="flexSearchBox" style="margin:0 0.6rem 0.6rem;">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="text" id="flexSearchInput" placeholder="Cari pengingat fleksibel…" autocomplete="off">
+      <button type="button" class="search-clear" id="flexSearchClear" aria-label="Hapus pencarian">✕</button>
+    </div>
+    <ul class="flex-list flex-list-missed" id="flexibleListMissed"></ul>
+    <div class="flex-columns">
+      <div class="flex-column">
+        <div class="flex-column-head priority"><span class="dot"></span>Prioritas</div>
+        <ul class="flex-list" id="flexibleListPriority"></ul>
+        <div class="upgrade-pagination" id="flexPaginationPriority" hidden>
+          <button type="button" id="flexPrevPriority">‹</button>
+          <span class="page-info" id="flexPageInfoPriority"></span>
+          <button type="button" id="flexNextPriority">›</button>
+        </div>
+      </div>
+      <div class="flex-column">
+        <div class="flex-column-head"><span class="dot"></span>Standar</div>
+        <ul class="flex-list" id="flexibleListStandard"></ul>
+        <div class="upgrade-pagination" id="flexPaginationStandard" hidden>
+          <button type="button" id="flexPrevStandard">‹</button>
+          <span class="page-info" id="flexPageInfoStandard"></span>
+          <button type="button" id="flexNextStandard">›</button>
+        </div>
+      </div>
+    </div>
+    <div class="flex-done-toggle-wrap" id="flexDoneToggleWrap" hidden>
+      <button type="button" class="flex-done-toggle" id="flexDoneToggle" aria-expanded="false">
+        <span id="flexDoneToggleLabel">Tampilkan yang selesai</span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <ul class="flex-list flex-list-done" id="flexibleListDone" hidden></ul>
+    </div>
+  </section>
 
   <section class="panel view-section settings-panel" data-view="settings" aria-label="Pengaturan">
     <div class="settings-block">
@@ -1017,18 +1050,12 @@
     </div>
     <div class="settings-block">
       <h2>Ukuran Font</h2>
-      <div class="theme-tabs font-size-tabs" id="fontSizeTabs">
-        <button type="button" class="theme-tab font-size-tab" data-font-size-choice="small" style="font-size:0.8rem;">
-          Kecil
-        </button>
-        <button type="button" class="theme-tab font-size-tab" data-font-size-choice="medium" style="font-size:0.92rem;">
-          Sedang
-        </button>
-        <button type="button" class="theme-tab font-size-tab" data-font-size-choice="large" style="font-size:1.05rem;">
-          Besar
-        </button>
+      <div class="font-size-slider-wrap">
+        <span class="font-size-slider-icon" aria-hidden="true" style="font-size:0.7rem;">A</span>
+        <input type="range" id="fontSizeSlider" class="font-size-slider" min="13" max="20" step="1" value="16" aria-label="Ukuran font">
+        <span class="font-size-slider-icon" aria-hidden="true" style="font-size:1.25rem;">A</span>
       </div>
-      <p class="hint">Mengubah ukuran teks di seluruh aplikasi supaya lebih mudah dibaca.</p>
+      <p class="hint">Geser untuk mengubah ukuran teks di seluruh aplikasi supaya lebih mudah dibaca. Saat ini: <strong id="fontSizeValueLabel">16px</strong></p>
     </div>
     <div class="settings-block">
       <h2>Akun</h2>
@@ -1057,6 +1084,10 @@
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>Dashboard</span>
   </button>
+  <button type="button" class="nav-btn" data-view="flexible">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Fleksibel</span>
+  </button>
   <button type="button" class="nav-btn" data-view="calendar">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="14.5" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <span>Kalender</span>
@@ -1082,7 +1113,12 @@
 <!-- Add / edit reminder modal -->
 <div class="overlay" id="formOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
-    <h2 id="formTitle">Pengingat baru</h2>
+    <div class="modal-head">
+      <h2 id="formTitle">Pengingat baru</h2>
+      <button type="button" class="modal-close" id="formClose" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
     <form id="reminderForm">
       <input type="hidden" id="reminderId">
       <div class="field">
@@ -3632,6 +3668,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   document.getElementById('openAdd').addEventListener('click', function(){ openAddForm(); });
   document.getElementById('cancelForm').addEventListener('click', closeForm);
+  var formCloseBtn = document.getElementById('formClose');
+  if (formCloseBtn) formCloseBtn.addEventListener('click', closeForm);
   formOverlay.addEventListener('click', function(e){ if (e.target===formOverlay) closeForm(); });
 
   reminderForm.addEventListener('submit', function(e){
@@ -4177,7 +4215,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (themeMetaEl) themeMetaEl.setAttribute('content', resolved === 'dark' ? '#212E26' : '#D9E6D0');
   }
   function updateThemeTabs(pref){
-    Array.prototype.forEach.call(document.querySelectorAll('.theme-tab'), function(btn){
+    Array.prototype.forEach.call(document.querySelectorAll('#themeTabs .theme-tab'), function(btn){
       btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === pref);
     });
   }
@@ -4186,7 +4224,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     applyTheme(pref);
     updateThemeTabs(pref);
   }
-  Array.prototype.forEach.call(document.querySelectorAll('.theme-tab'), function(btn){
+  Array.prototype.forEach.call(document.querySelectorAll('#themeTabs .theme-tab'), function(btn){
     btn.addEventListener('click', function(){ setThemePref(btn.getAttribute('data-theme-choice')); });
   });
   applyTheme(getThemePref());
@@ -4198,32 +4236,40 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     else if (darkMql.addListener) darkMql.addListener(onSystemChange);
   }
 
-  // ---------- Ukuran Font (Kecil / Sedang / Besar) ----------
+  // ---------- Ukuran Font (slider 13–20px) ----------
   var FONT_SIZE_KEY = 'essentiapath.fontSize';
+  var FONT_SIZE_MIN = 13, FONT_SIZE_MAX = 20, FONT_SIZE_LEGACY = { small:14, medium:16, large:18 };
   function getFontSizePref(){
     try {
-      var v = localStorage.getItem(FONT_SIZE_KEY);
-      return (v === 'small' || v === 'large') ? v : 'medium';
-    } catch(e){ return 'medium'; }
+      var raw = localStorage.getItem(FONT_SIZE_KEY);
+      var px = raw && FONT_SIZE_LEGACY[raw] ? FONT_SIZE_LEGACY[raw] : parseInt(raw, 10);
+      if (!px || isNaN(px)) px = 16;
+      if (px < FONT_SIZE_MIN) px = FONT_SIZE_MIN;
+      if (px > FONT_SIZE_MAX) px = FONT_SIZE_MAX;
+      return px;
+    } catch(e){ return 16; }
   }
-  function applyFontSize(pref){
-    document.documentElement.setAttribute('data-font-size', pref);
+  function applyFontSize(px){
+    document.documentElement.style.setProperty('--user-font-size', px + 'px');
   }
-  function updateFontSizeTabs(pref){
-    Array.prototype.forEach.call(document.querySelectorAll('.font-size-tab'), function(btn){
-      btn.classList.toggle('active', btn.getAttribute('data-font-size-choice') === pref);
-    });
+  var fontSizeSlider = document.getElementById('fontSizeSlider');
+  var fontSizeValueLabel = document.getElementById('fontSizeValueLabel');
+  function updateFontSizeUi(px){
+    if (fontSizeSlider) fontSizeSlider.value = px;
+    if (fontSizeValueLabel) fontSizeValueLabel.textContent = px + 'px';
   }
-  function setFontSizePref(pref){
-    try { localStorage.setItem(FONT_SIZE_KEY, pref); } catch(e){}
-    applyFontSize(pref);
-    updateFontSizeTabs(pref);
+  function setFontSizePref(px){
+    px = parseInt(px, 10);
+    if (isNaN(px)) return;
+    try { localStorage.setItem(FONT_SIZE_KEY, String(px)); } catch(e){}
+    applyFontSize(px);
+    updateFontSizeUi(px);
   }
-  Array.prototype.forEach.call(document.querySelectorAll('.font-size-tab'), function(btn){
-    btn.addEventListener('click', function(){ setFontSizePref(btn.getAttribute('data-font-size-choice')); });
-  });
+  if (fontSizeSlider){
+    fontSizeSlider.addEventListener('input', function(){ setFontSizePref(fontSizeSlider.value); });
+  }
   applyFontSize(getFontSizePref());
-  updateFontSizeTabs(getFontSizePref());
+  updateFontSizeUi(getFontSizePref());
 
   // ---------- View navigation (Dashboard / Kalender / Pengaturan) ----------
   function setView(view){
