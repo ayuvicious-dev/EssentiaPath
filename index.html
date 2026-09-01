@@ -478,6 +478,13 @@
      (fleksibel, prioritas), supaya form input pengingat lebih ringkas. */
   .checkbox-field.compact{align-items:center; padding:0.5rem 0.7rem; margin-bottom:0.6rem;}
   .checkbox-field.compact input[type="checkbox"]{margin:0;}
+  /* Tanpa baris ini, atribut "hidden" tidak benar-benar menyembunyikan elemen
+     karena .checkbox-field sudah men-declare display:flex — kalau tidak
+     ditimpa lagi di sini, Prioritas tetap ikut dirender saat seharusnya
+     disembunyikan, sehingga Fleksibel (yang melebar penuh) dan Prioritas
+     (yang masih tampil) jadi terdorong ke baris grid berikutnya alih-alih
+     sebaris. */
+  .checkbox-field[hidden]{display:none;}
 
   /* ---------- Tab navigation (Dashboard / Kalender / Pengaturan) ---------- */
   /* Same tabbed navigation on every screen size — laptop/desktop no longer
@@ -1039,13 +1046,13 @@
         <div class="cat-options" id="catOptions"></div>
       </div>
       <div class="row-2" id="flexPriorityRow">
+        <div class="checkbox-field compact" id="fPriorityField">
+          <input type="checkbox" id="fPriority">
+          <label for="fPriority">Prioritas</label>
+        </div>
         <div class="checkbox-field compact" id="fFlexibleField">
           <input type="checkbox" id="fFlexible">
           <label for="fFlexible">Fleksibel</label>
-        </div>
-        <div class="checkbox-field compact" id="fPriorityField" hidden>
-          <input type="checkbox" id="fPriority">
-          <label for="fPriority">Prioritas</label>
         </div>
       </div>
       <div id="scheduledFields">
@@ -1231,7 +1238,8 @@ import {
   signOut, sendPasswordResetEmail, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
-  getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, enableIndexedDbPersistence, deleteField
+  getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, setDoc, deleteDoc, onSnapshot, deleteField
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration (from Firebase console → Project settings)
@@ -1245,9 +1253,32 @@ var firebaseConfig = {
 };
 var firebaseApp = initializeApp(firebaseConfig);
 var auth = getAuth(firebaseApp);
-var db = getFirestore(firebaseApp);
+// Sebelumnya pakai getFirestore() + enableIndexedDbPersistence(db) yang
+// dibungkus try/catch — tapi enableIndexedDbPersistence() gagal lewat
+// PROMISE yang ditolak (bukan exception biasa), jadi try/catch itu tidak
+// pernah benar-benar menangkapnya. Kasus paling umum yang membuatnya gagal:
+// aplikasi ini dibuka di lebih dari satu tab/instance sekaligus (mis. tab
+// browser + PWA yang sama-sama terbuka), yang di versi lama membuat cache
+// offline mati total tanpa pemberitahuan apa pun. Akibatnya: centang/ubah
+// data yang dilakukan lalu langsung refresh SEBELUM sempat terkirim ke
+// server, hilang tanpa jejak lokal untuk disambung ulang — persis seperti
+// status centang yang "balik lagi" setelah tutup-buka aplikasi.
+// initializeFirestore() dengan persistentMultipleTabManager() di bawah ini
+// memakai cache offline yang tetap aktif dan tersinkron walau dibuka di
+// beberapa tab sekaligus, jadi tulisan yang belum sempat terkirim tetap
+// tersimpan di penyimpanan lokal (IndexedDB) dan otomatis dikirim ulang
+// begitu ada koneksi — tidak hilang lagi saat refresh.
+var db;
+try {
+  db = initializeFirestore(firebaseApp, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  // Browser tidak mendukung IndexedDB (mis. mode privat di sebagian
+  // browser) — tetap jalan, hanya tanpa cache offline.
+  db = getFirestore(firebaseApp);
+}
 setPersistence(auth, browserLocalPersistence).catch(function(){});
-try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsupported browser — app still works, just without offline cache */ }
 
 (function(){
   "use strict";
@@ -1535,7 +1566,13 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     patch['map.' + key] = value ? true : deleteField();
     setDoc(completionsDocRef(), patch, { merge: true }).catch(function(err){
       console.error(err);
-      showToast('Gagal menyimpan status. Coba lagi.');
+      // Ditampilkan lebih lama (bukan 2.2 detik biasa) karena ini kegagalan
+      // penting: kalau tidak disadari, tanda centang terlihat berhasil di
+      // layar tapi sebenarnya tidak tersimpan ke cloud, sehingga akan
+      // "balik lagi" begitu halaman di-refresh atau dibuka di perangkat
+      // lain. Penyebab paling umum: aturan keamanan Firestore belum
+      // meng-cover users/{uid}/settings/{docId}, atau koneksi terputus.
+      showToast('Gagal menyimpan status centang ke cloud — akan muncul lagi setelah refresh. Cek koneksi internet / aturan Firestore.', 6000);
     });
   }
   function toggleCompletion(reminderId, dateStr, time){
@@ -1873,17 +1910,34 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   // Terapkan status centang dari checklist ke reminder (dan, bila relevan,
   // ke status penyelesaian per-kejadian) lalu simpan.
   function applyChecklistUpdate(reminderId, updatedNotes, ctx){
-    var r = state.reminders.find(function(x){ return x.id===reminderId; });
-    if (!r) return;
+    var idx = state.reminders.findIndex(function(x){ return x.id===reminderId; });
+    if (idx === -1) return;
+    var r = state.reminders[idx];
     var allChecked = checklistAllChecked(checklistLines(updatedNotes));
     var updated = Object.assign({}, r, { notes: updatedNotes });
     if (ctx.type === 'flex') updated.done = allChecked;
+    // PENTING: perbarui state.reminders di sini juga (bukan cuma kirim ke
+    // cloud), supaya render berikutnya langsung memakai notes yang sudah
+    // dicentang — bukan salinan lama yang masih menunggu Firestore
+    // mengirim balik data terbaru. Tanpa ini, isOccurrenceDone()/
+    // flexItemIsDone() (yang membaca status checklist dari state.reminders)
+    // masih melihat versi lama yang belum tercentang, jadi item terlihat
+    // "tidak mau hilang" sampai round-trip ke server selesai — dan kalau
+    // pengguna keburu klik lagi sebelum itu selesai, klik-klik itu terasa
+    // sia-sia sampai akhirnya satu klik "kebetulan" pas dengan update yang
+    // baru masuk.
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
     saveReminderToCloud(updated).catch(function(err){
       console.error(err);
       showToast('Gagal menyimpan status. Coba lagi.');
     });
     if (ctx.type === 'current' || ctx.type === 'missed'){
       setCompletion(reminderId, ctx.date, ctx.time, allChecked);
+    } else {
+      renderCurrentActivity();
+      renderUpcoming();
+      renderFlexible();
     }
   }
   function onChecklistItemToggle(reminderId, lineIdx, ctx){
@@ -3180,18 +3234,28 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     flexCols.standard.page++; renderFlexible();
   });
   function toggleFlexDone(id){
-    var r = state.reminders.find(function(x){ return x.id===id; });
-    if (!r) return;
-    var updated = Object.assign({}, r, { done: !r.done });
+    var idx = state.reminders.findIndex(function(x){ return x.id===id; });
+    if (idx === -1) return;
+    var updated = Object.assign({}, state.reminders[idx], { done: !state.reminders[idx].done });
+    // Sama seperti applyChecklistUpdate: perbarui state.reminders langsung
+    // di sini, jangan tunggu Firestore mengirim balik datanya, supaya
+    // render berikutnya (dipanggil di bawah) langsung memakai status yang
+    // baru — bukan status lama yang bikin item terlihat tidak berubah.
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
+    renderFlexible();
     saveReminderToCloud(updated).catch(function(err){
       console.error(err);
       showToast('Gagal memperbarui status. Coba lagi.');
     });
   }
   function toggleFlexPriority(id){
-    var r = state.reminders.find(function(x){ return x.id===id; });
-    if (!r) return;
-    var updated = Object.assign({}, r, { priority: !r.priority });
+    var idx = state.reminders.findIndex(function(x){ return x.id===id; });
+    if (idx === -1) return;
+    var updated = Object.assign({}, state.reminders[idx], { priority: !state.reminders[idx].priority });
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
+    renderFlexible();
     saveReminderToCloud(updated).catch(function(err){
       console.error(err);
       showToast('Gagal memperbarui prioritas. Coba lagi.');
@@ -3244,10 +3308,8 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
     scheduledFields.style.display = isFlexible ? 'none' : 'block';
     fDateEl.required = !isFlexible;
     fTimeEl.required = !isFlexible;
-    fPriorityField.hidden = !isFlexible;
-    // Kalau "Prioritas" disembunyikan, "Fleksibel" melebar penuh satu baris
-    // (bukan cuma setengah), supaya tidak ada ruang kosong di sampingnya.
-    fFlexibleField.style.gridColumn = isFlexible ? '' : '1 / -1';
+    // Prioritas & Fleksibel sekarang selalu tampil sebaris berdampingan,
+    // tidak lagi disembunyikan/menunggu Fleksibel dicentang.
   }
   fFlexible.addEventListener('change', function(){ toggleFlexibleUI(fFlexible.checked); });
 
@@ -3724,11 +3786,15 @@ try { enableIndexedDbPersistence(db); } catch(e){ /* multiple tabs open, or unsu
   // ---------- Toast ----------
   var toastEl = document.getElementById('toast');
   var toastTimer = null;
-  function showToast(msg){
+  // durationMs opsional: dipakai untuk pesan penting (mis. gagal simpan ke
+  // cloud, kemungkinan besar karena aturan Firestore/koneksi) yang perlu
+  // waktu lebih lama supaya tidak terlewat, berbeda dari toast biasa yang
+  // sengaja singkat.
+  function showToast(msg, durationMs){
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, durationMs || 2200);
   }
 
   // ---------- Notifications ----------
