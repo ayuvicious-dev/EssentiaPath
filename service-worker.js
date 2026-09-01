@@ -1,7 +1,7 @@
 // EssentiaPath service worker
 // Bump CACHE_NAME any time index.html (or other cached assets) changes,
 // so returning users get the fresh version instead of a stale cache.
-const CACHE_NAME = "essentiapath-cache-v76";
+const CACHE_NAME = "essentiapath-cache-v78";
 const ASSETS = [
   "./",
   "./index.html",

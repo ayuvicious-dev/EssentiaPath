@@ -9,6 +9,10 @@
       : ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', resolved);
   } catch(e){}
+  try{
+    var fs = localStorage.getItem('essentiapath.fontSize') || 'medium';
+    document.documentElement.setAttribute('data-font-size', fs);
+  } catch(e){}
 })();
 </script>
 <meta charset="UTF-8">
@@ -82,6 +86,12 @@
     --sunday:#E8776A;
     --saturday:#5FC98A;
   }
+  /* Ukuran font aplikasi (Tampilan → Ukuran Font): mengubah font-size akar
+     (html), yang otomatis menyesuaikan hampir semua ukuran di aplikasi
+     karena nyaris semuanya pakai satuan rem/em relatif terhadap ini. */
+  :root[data-font-size="small"]{ font-size:14px; }
+  :root[data-font-size="medium"]{ font-size:16px; }
+  :root[data-font-size="large"]{ font-size:18px; }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0; overflow-x:hidden;}
   body{
@@ -725,7 +735,17 @@
   .auth-links{display:flex; justify-content:space-between; align-items:center; margin-top:0.9rem; font-size:0.78rem;}
   .auth-links button{background:none; border:none; color:var(--moss-deep); font-weight:700; cursor:pointer; padding:0; font-size:0.78rem;}
   .auth-hint{font-size:0.72rem; color:var(--ink-soft); margin-top:0.6rem; text-align:center;}
-  .auth-loading{font-size:0.85rem; color:var(--ink-soft); text-align:center; padding:2rem 0;}
+  /* Splash awal ("memeriksa status masuk") sebelum auth-card login muncul:
+     sengaja polos tanpa kotak/kartu, tanpa logo, tanpa teks status — cuma
+     nama aplikasi di tengah layar, memakai warna latar hero yang sudah ada
+     (bukan kotak abu-abu terpisah) supaya konsisten di light maupun dark mode. */
+  .auth-loading-splash{
+    display:flex; align-items:center; justify-content:center; width:100%; padding:2rem;
+  }
+  .auth-loading-brand{
+    font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.7rem;
+    letter-spacing:0.01em; color:var(--ink); text-align:center;
+  }
 
   /* ---------- Day popover ---------- */
   .day-panel .modal{max-width:420px;}
@@ -745,17 +765,8 @@
 
 <!-- Auth gate: shown until the user is signed in -->
 <div class="overlay auth-overlay" id="authOverlay">
-  <div class="auth-card" id="authLoading">
-    <div class="auth-brand">
-      <span class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="17" cy="7" r="3.4" fill="#3E2A18"/>
-          <path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#3E2A18" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/>
-        </svg>
-      </span>
-      <span class="auth-brand-name">EssentiaPath</span>
-    </div>
-    <p class="auth-loading">Memeriksa status masuk…</p>
+  <div class="auth-loading-splash" id="authLoading">
+    <span class="auth-loading-brand">EssentiaPath</span>
   </div>
 
   <div class="auth-card" id="authCard" hidden>
@@ -1003,6 +1014,21 @@
         </button>
       </div>
       <p class="hint">"Sistem" mengikuti pengaturan terang/gelap perangkat Anda secara otomatis.</p>
+    </div>
+    <div class="settings-block">
+      <h2>Ukuran Font</h2>
+      <div class="theme-tabs font-size-tabs" id="fontSizeTabs">
+        <button type="button" class="theme-tab font-size-tab" data-font-size-choice="small" style="font-size:0.8rem;">
+          Kecil
+        </button>
+        <button type="button" class="theme-tab font-size-tab" data-font-size-choice="medium" style="font-size:0.92rem;">
+          Sedang
+        </button>
+        <button type="button" class="theme-tab font-size-tab" data-font-size-choice="large" style="font-size:1.05rem;">
+          Besar
+        </button>
+      </div>
+      <p class="hint">Mengubah ukuran teks di seluruh aplikasi supaya lebih mudah dibaca.</p>
     </div>
     <div class="settings-block">
       <h2>Akun</h2>
@@ -4171,6 +4197,33 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (darkMql.addEventListener) darkMql.addEventListener('change', onSystemChange);
     else if (darkMql.addListener) darkMql.addListener(onSystemChange);
   }
+
+  // ---------- Ukuran Font (Kecil / Sedang / Besar) ----------
+  var FONT_SIZE_KEY = 'essentiapath.fontSize';
+  function getFontSizePref(){
+    try {
+      var v = localStorage.getItem(FONT_SIZE_KEY);
+      return (v === 'small' || v === 'large') ? v : 'medium';
+    } catch(e){ return 'medium'; }
+  }
+  function applyFontSize(pref){
+    document.documentElement.setAttribute('data-font-size', pref);
+  }
+  function updateFontSizeTabs(pref){
+    Array.prototype.forEach.call(document.querySelectorAll('.font-size-tab'), function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-font-size-choice') === pref);
+    });
+  }
+  function setFontSizePref(pref){
+    try { localStorage.setItem(FONT_SIZE_KEY, pref); } catch(e){}
+    applyFontSize(pref);
+    updateFontSizeTabs(pref);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.font-size-tab'), function(btn){
+    btn.addEventListener('click', function(){ setFontSizePref(btn.getAttribute('data-font-size-choice')); });
+  });
+  applyFontSize(getFontSizePref());
+  updateFontSizeTabs(getFontSizePref());
 
   // ---------- View navigation (Dashboard / Kalender / Pengaturan) ----------
   function setView(view){
