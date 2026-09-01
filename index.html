@@ -59,6 +59,7 @@
     --sunday-bg:#FBE6E2;
     --today-num:#3E7CB1;
     --today-bg:#FBE8D6;
+    --travel-bg:#DCEAF7;
     --cat-kerja:#93AF9E;
     --cat-pribadi:#E3A97C;
     --cat-kesehatan:#C6A6C4;
@@ -97,6 +98,7 @@
     --sunday-bg:#3A2420;
     --today-num:#7FBEE8;
     --today-bg:#3A2A18;
+    --travel-bg:#1E2E3D;
   }
   /* Ukuran font aplikasi (Tampilan → Ukuran Font): mengubah font-size akar
      (html), yang otomatis menyesuaikan hampir semua ukuran di aplikasi
@@ -130,10 +132,9 @@
     overflow:hidden;
     background:linear-gradient(180deg, var(--hero-top), var(--hero-bottom));
     color:var(--ink);
-    padding-bottom:2.75rem;
+    padding-bottom:1.5rem;
   }
-  .hero-trail{position:absolute; inset:0; width:100%; height:100%; opacity:0.6; pointer-events:none;}
-  .hero-inner{position:relative; z-index:1; padding-top:1.75rem;}
+  .hero-inner{position:relative; z-index:1; padding-top:1.5rem;}
   .hero-top{display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
   .brand{display:flex; align-items:center; gap:0.65rem;}
   .brand-mark{width:34px; height:34px; border-radius:9px; background:var(--amber); display:flex; align-items:center; justify-content:center; flex:none;}
@@ -155,16 +156,18 @@
   .account-logout:hover{background:rgba(var(--tint-rgb),0.18);}
 
   .toolbar{
-    display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
-    margin-top:1.75rem;
+    display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap;
+    margin-top:1.25rem;
   }
-  .month-nav{display:flex; align-items:center; gap:0.6rem;}
-  .month-nav button{
-    width:36px; height:36px; border-radius:50%; border:1px solid rgba(var(--tint-rgb),0.18);
-    background:rgba(var(--tint-rgb),0.05); color:var(--ink); cursor:pointer; font-size:1rem;
-    display:flex; align-items:center; justify-content:center; transition:background 0.15s ease;
+  .month-nav{display:flex; align-items:center; gap:0.35rem;}
+  .month-nav-btn{
+    width:34px; height:34px; border-radius:50%; border:none;
+    background:transparent; color:var(--ink-soft); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.15s ease, color 0.15s ease;
   }
-  .month-nav button:hover{background:rgba(var(--tint-rgb),0.12);}
+  .month-nav-btn svg{width:18px; height:18px;}
+  .month-nav-btn:hover{background:rgba(var(--tint-rgb),0.1); color:var(--ink);}
   .month-label{font-family:var(--font-display); font-size:1.3rem; font-weight:600; min-width:11ch; text-align:center;}
   .today-btn{
     border:1px solid rgba(var(--tint-rgb),0.2); background:transparent; color:var(--ink);
@@ -194,7 +197,7 @@
   /* ---------- Layout ---------- */
   .layout{
     display:grid; grid-template-columns:minmax(0,1fr); gap:1.5rem;
-    margin-top:-1.75rem; position:relative; z-index:2;
+    margin-top:-1rem; position:relative; z-index:2;
   }
 
   .panel{
@@ -222,10 +225,10 @@
      over the header — otherwise the calendar always overlaps whichever
      banner happens to be showing. These rules check the actual `hidden`
      state instead of just DOM order. */
-  #notifyNotice:not([hidden]){margin-top:-1.75rem;}
+  #notifyNotice:not([hidden]){margin-top:-1rem;}
   #notifyNotice:not([hidden]) ~ #installNotice{margin-top:1.25rem;}
   #notifyNotice:not([hidden]) ~ .layout{margin-top:1.25rem;}
-  #notifyNotice[hidden] ~ #installNotice:not([hidden]){margin-top:-1.75rem;}
+  #notifyNotice[hidden] ~ #installNotice:not([hidden]){margin-top:-1rem;}
   #notifyNotice[hidden] ~ #installNotice:not([hidden]) ~ .layout{margin-top:1.25rem;}
 
   /* ---------- Calendar ---------- */
@@ -286,6 +289,13 @@
      kelihatan bedanya sekilas dari tampilan bulan. */
   .day-cell.is-saturday{background:var(--saturday-bg);}
   .day-cell.is-sunday{background:var(--sunday-bg);}
+  /* Kotak tanggal yang punya minimal satu pengingat bertanda "Travel":
+     latar biru pastel, ditaruh SETELAH is-saturday/is-sunday supaya
+     menang di atas warna akhir pekan/libur (spesifisitas sama, urutan
+     di stylesheet yang menentukan) — tapi tetap sebelum .today di bawah
+     supaya "hari ini" yang tetap paling menonjol kalau kebetulan
+     bertumpuk dengan tanggal travel. */
+  .day-cell.is-travel{background:var(--travel-bg);}
   /* .day-cell.today ditaruh PALING BELAKANG (setelah is-saturday/is-sunday)
      supaya, kalau hari ini kebetulan jatuh di akhir pekan/hari libur, latar
      biru pastel "hari ini" ini yang menang — bukan hijau/merah pastelnya. */
@@ -899,10 +909,6 @@
 </div>
 
 <header class="hero">
-  <svg class="hero-trail" viewBox="0 0 1180 210" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M -20 150 C 150 60, 320 210, 500 120 S 820 20, 1000 90 S 1160 60, 1220 100"
-          fill="none" stroke="#7C9484" stroke-width="2.5" stroke-dasharray="1 12" stroke-linecap="round"/>
-  </svg>
   <div class="shell hero-inner">
     <div class="hero-top">
       <div class="brand">
@@ -922,10 +928,13 @@
 
     <div class="toolbar">
       <div class="month-nav">
-        <button id="prevMonth" aria-label="Bulan sebelumnya">‹</button>
+        <button type="button" class="month-nav-btn" id="prevMonth" aria-label="Bulan sebelumnya">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
         <div class="month-label" id="monthLabel">—</div>
-        <button id="nextMonth" aria-label="Bulan berikutnya">›</button>
-        <button class="today-btn" id="gotoToday">Hari ini</button>
+        <button type="button" class="month-nav-btn" id="nextMonth" aria-label="Bulan berikutnya">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -1234,6 +1243,7 @@
             <option value="hourly">Tiap beberapa jam</option>
             <option value="daily">Harian</option>
             <option value="everyNDays">Setiap X hari sekali</option>
+            <option value="everyNWeeks">Setiap X minggu sekali</option>
             <option value="weekday">Hari kerja (Sen–Jum)</option>
             <option value="weekend">Akhir pekan (Sab–Min)</option>
             <option value="weekly">Mingguan</option>
@@ -1264,6 +1274,16 @@
             <p class="hint" style="margin-top:0.6rem;">Dihitung dari tanggal mulai di atas, lalu berulang tiap N hari (mis. 3 hari sekali, 5 hari sekali).</p>
           </div>
         </div>
+        <div class="row-2" id="everyNWeeksRow" style="display:none;">
+          <div class="field">
+            <label for="fEveryNWeeks">Setiap berapa minggu</label>
+            <input type="number" id="fEveryNWeeks" min="2" max="52" value="4">
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <p class="hint" style="margin-top:0.6rem;">Dihitung dari tanggal mulai di atas, lalu berulang tiap N minggu di hari yang sama (mis. pulang tiap Sabtu akhir bulan → 4 minggu sekali).</p>
+          </div>
+        </div>
         <div class="checkbox-field compact" id="dayTypeToggleRow">
           <input type="checkbox" id="fByDayType">
           <label for="fByDayType">Jam berbeda untuk Sabtu &amp; hari libur</label>
@@ -1278,13 +1298,23 @@
             <input type="time" id="fTimeHoliday">
           </div>
         </div>
-        <div class="field" id="untilRow">
-          <label for="fUntil">Berakhir pada (opsional)</label>
-          <div class="date-field-wrap">
-            <input type="date" id="fUntil">
-            <span class="date-field-display" id="fUntilDisplay" aria-hidden="true"></span>
+        <div class="row-2" id="untilRow">
+          <div class="field">
+            <label for="fUntil">Berakhir pada (opsional)</label>
+            <div class="date-field-wrap">
+              <input type="date" id="fUntil">
+              <span class="date-field-display" id="fUntilDisplay" aria-hidden="true"></span>
+            </div>
+            <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
           </div>
-          <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
+          <div class="field">
+            <label>&nbsp;</label>
+            <div class="checkbox-field compact" id="fTravelField" style="margin-bottom:0;">
+              <input type="checkbox" id="fTravel">
+              <label for="fTravel">Travel</label>
+            </div>
+            <p class="hint">Kotak tanggalnya di kalender akan berwarna biru pastel.</p>
+          </div>
         </div>
       </div>
       <div class="field">
@@ -1315,6 +1345,7 @@
       <div class="modal-actions">
         <button type="button" class="btn btn-danger" id="deleteBtn" style="display:none;">Hapus</button>
         <button type="button" class="btn btn-ghost" id="duplicateBtn" style="display:none;">⧉ Duplikat</button>
+        <button type="button" class="btn btn-ghost" id="endBtn" style="display:none;">⏹ Akhiri</button>
         <div style="flex:1;"></div>
         <button type="button" class="btn btn-ghost" id="cancelForm">Batal</button>
         <button type="submit" class="btn btn-primary">Simpan</button>
@@ -1463,7 +1494,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   ];
   var CATS = DEFAULT_CATS.slice();
   var REPEAT_LABEL = {
-    none:"Sekali", hourly:"Tiap jam", daily:"Harian", everyNDays:"Setiap X hari", weekday:"Hari kerja", weekend:"Akhir pekan",
+    none:"Sekali", hourly:"Tiap jam", daily:"Harian", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", weekend:"Akhir pekan",
     weekly:"Mingguan", biweekly:"Dua mingguan", monthly:"Bulanan", endOfMonth:"Akhir bulan", quarterly:"Triwulanan", annually:"Tahunan"
   };
   function repeatLabel(r){
@@ -1474,6 +1505,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     } else if (r.repeat === 'everyNDays'){
       var nd = Math.max(2, parseInt(r.everyNDaysInterval || 2, 10));
       base = nd+' hari sekali';
+    } else if (r.repeat === 'everyNWeeks'){
+      var nw = Math.max(2, parseInt(r.everyNWeeksInterval || 2, 10));
+      base = nw+' minggu sekali';
     } else {
       base = REPEAT_LABEL[r.repeat] || REPEAT_LABEL.none;
     }
@@ -1949,6 +1983,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var diffDaysN = Math.round((d - start) / 86400000);
         return (diffDaysN>=0 && diffDaysN % nDays === 0) ? [resolveOccTime(r, d)] : [];
       }
+      case 'everyNWeeks': {
+        var nWeeks = Math.max(2, parseInt(r.everyNWeeksInterval || 2, 10));
+        var diffDaysNW = Math.round((d - start) / 86400000);
+        return (diffDaysNW>=0 && diffDaysNW % (nWeeks*7) === 0) ? [resolveOccTime(r, d)] : [];
+      }
       case 'weekday': {
         var wd = d.getDay();
         return (wd>=1 && wd<=5) ? [resolveOccTime(r, d)] : [];
@@ -2143,6 +2182,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       } else if (dow === 6){
         cellBgCls = ' is-saturday';
       }
+      // Kalau ada pengingat bertanda "Travel" jatuh di tanggal ini, latar
+      // kotaknya jadi biru pastel (is-travel) — menang di atas warna akhir
+      // pekan/libur karena aturan CSS-nya ditulis setelahnya, tapi tetap
+      // kalah dari .today (lihat komentar di CSS).
+      var hasTravel = items.some(function(it){ return !!(it.reminder && it.reminder.travel); });
+      if (hasTravel) cellBgCls += ' is-travel';
       var cls = 'day-cell' + (inMonth?'':' muted') + (isToday?' today':'') + cellBgCls;
       var numCls = 'day-num';
       var titleAttr = '';
@@ -3804,6 +3849,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var fRepeat = document.getElementById('fRepeat');
   var hourlyRow = document.getElementById('hourlyRow');
   var everyNDaysRow = document.getElementById('everyNDaysRow');
+  var everyNWeeksRow = document.getElementById('everyNWeeksRow');
   var dayTypeToggleRow = document.getElementById('dayTypeToggleRow');
   var dayTypeTimesRow = document.getElementById('dayTypeTimesRow');
   var fByDayType = document.getElementById('fByDayType');
@@ -3816,6 +3862,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var fDateDisplay = document.getElementById('fDateDisplay');
   var fUntilDisplay = document.getElementById('fUntilDisplay');
   var fUntilEl = document.getElementById('fUntil');
+  var fTravel = document.getElementById('fTravel');
   function updateDateDisplay(inputEl, displayEl){
     if (!displayEl) return;
     displayEl.textContent = inputEl.value ? formatDMY(inputEl.value) : '';
@@ -3901,6 +3948,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   fRepeat.addEventListener('change', function(){
     hourlyRow.style.display = fRepeat.value === 'hourly' ? 'grid' : 'none';
     everyNDaysRow.style.display = fRepeat.value === 'everyNDays' ? 'grid' : 'none';
+    everyNWeeksRow.style.display = fRepeat.value === 'everyNWeeks' ? 'grid' : 'none';
     var hideDayType = fRepeat.value === 'hourly';
     dayTypeToggleRow.style.display = hideDayType ? 'none' : 'flex';
     if (hideDayType){
@@ -3995,6 +4043,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('reminderId').value = '';
     document.getElementById('deleteBtn').style.display = 'none';
     document.getElementById('duplicateBtn').style.display = 'none';
+    document.getElementById('endBtn').style.display = 'none';
     reminderForm.reset();
     selectedCat = CATS[0].id;
     catOptionsExpanded = false;
@@ -4007,8 +4056,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fRepeat.value = 'none';
     hourlyRow.style.display = 'none';
     everyNDaysRow.style.display = 'none';
+    everyNWeeksRow.style.display = 'none';
     document.getElementById('fHourly').value = 4;
     document.getElementById('fEveryNDays').value = 3;
+    document.getElementById('fEveryNWeeks').value = 4;
     dayTypeToggleRow.style.display = 'flex';
     fByDayType.checked = false;
     dayTypeTimesRow.style.display = 'none';
@@ -4017,6 +4068,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('fLink').value = '';
     fFlexible.checked = false;
     fPriority.checked = false;
+    fTravel.checked = false;
     toggleFlexibleUI(false);
     resetNotesToolbar();
     formOverlay.hidden = false;
@@ -4031,6 +4083,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('reminderId').value = r.id;
     document.getElementById('deleteBtn').style.display = 'inline-block';
     document.getElementById('duplicateBtn').style.display = 'inline-block';
+    // Tombol "Akhiri" cuma relevan untuk pengingat berulang (bukan sekali
+    // jalan, bukan fleksibel) — fungsinya menandai tanggal berakhir supaya
+    // pengingat berhenti muncul lagi setelah hari ini, tanpa perlu isi
+    // "Berakhir pada" manual satu-satu.
+    var endBtnEl = document.getElementById('endBtn');
+    endBtnEl.style.display = (!r.flexible && r.repeat && r.repeat !== 'none') ? 'inline-block' : 'none';
     document.getElementById('fTitle').value = r.title;
     selectedCat = r.category;
     catOptionsExpanded = false;
@@ -4041,8 +4099,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fRepeat.value = r.repeat && r.repeat!=='none' ? r.repeat : 'none';
     hourlyRow.style.display = r.repeat==='hourly' ? 'grid' : 'none';
     everyNDaysRow.style.display = r.repeat==='everyNDays' ? 'grid' : 'none';
+    everyNWeeksRow.style.display = r.repeat==='everyNWeeks' ? 'grid' : 'none';
     document.getElementById('fHourly').value = r.hourlyInterval || 4;
     document.getElementById('fEveryNDays').value = r.everyNDaysInterval || 3;
+    document.getElementById('fEveryNWeeks').value = r.everyNWeeksInterval || 4;
     dayTypeToggleRow.style.display = r.repeat==='hourly' ? 'none' : 'flex';
     fByDayType.checked = r.timeMode === 'byDayType';
     dayTypeTimesRow.style.display = fByDayType.checked ? 'grid' : 'none';
@@ -4059,6 +4119,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     })();
     fFlexible.checked = !!r.flexible;
     fPriority.checked = !!r.priority;
+    fTravel.checked = !!r.travel;
     toggleFlexibleUI(!!r.flexible);
     formOverlay.hidden = false;
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
@@ -4085,12 +4146,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         category: selectedCat,
         flexible: true,
         priority: fPriority.checked,
+        travel: false,
         done: existing ? !!existing.done : false,
         date: null,
         time: null,
         repeat: 'none',
         hourlyInterval: null,
         everyNDaysInterval: null,
+        everyNWeeksInterval: null,
         until: null,
         timeMode: null,
         timeSaturday: null,
@@ -4108,12 +4171,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         category: selectedCat,
         flexible: false,
         priority: false,
+        travel: fTravel.checked,
         done: null,
         date: document.getElementById('fDate').value,
         time: baseTime,
         repeat: fRepeat.value,
         hourlyInterval: fRepeat.value==='hourly' ? parseInt(document.getElementById('fHourly').value||4,10) : null,
         everyNDaysInterval: fRepeat.value==='everyNDays' ? Math.max(2, parseInt(document.getElementById('fEveryNDays').value||3,10)) : null,
+        everyNWeeksInterval: fRepeat.value==='everyNWeeks' ? Math.max(2, parseInt(document.getElementById('fEveryNWeeks').value||4,10)) : null,
         until: document.getElementById('fUntil').value || null,
         timeMode: useDayType ? 'byDayType' : null,
         timeSaturday: useDayType ? (fTimeSaturday.value || baseTime) : null,
@@ -4162,6 +4227,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     }).catch(function(err){
       console.error(err);
       showToast('Gagal menggandakan pengingat. Coba lagi.');
+    });
+  });
+
+  document.getElementById('endBtn').addEventListener('click', function(){
+    var id = document.getElementById('reminderId').value;
+    if (!id || !currentUser) return;
+    var r = state.reminders.find(function(x){ return x.id===id; });
+    if (!r) return;
+    var todayStr = toISODate(new Date());
+    if (!confirm('Akhiri pengulangan pengingat ini per hari ini? Pengingat tidak akan muncul lagi setelah hari ini.')) return;
+    var updated = Object.assign({}, r, { until: todayStr });
+    closeForm();
+    saveReminderToCloud(updated).then(function(){
+      showToast('Pengingat diakhiri per hari ini');
+    }).catch(function(err){
+      console.error(err);
+      showToast('Gagal mengakhiri pengingat. Coba lagi.');
     });
   });
 
@@ -4252,10 +4334,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   });
   document.getElementById('nextMonth').addEventListener('click', function(){
     state.viewDate = new Date(state.viewDate.getFullYear(), state.viewDate.getMonth()+1, 1);
-    renderCalendar();
-  });
-  document.getElementById('gotoToday').addEventListener('click', function(){
-    state.viewDate = new Date();
     renderCalendar();
   });
 
