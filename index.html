@@ -185,7 +185,7 @@
 
   /* ---------- Layout ---------- */
   .layout{
-    display:grid; grid-template-columns:1fr; gap:1.5rem;
+    display:grid; grid-template-columns:minmax(0,1fr); gap:1.5rem;
     margin-top:-1.75rem; position:relative; z-index:2;
   }
 
@@ -223,26 +223,35 @@
   /* ---------- Calendar ---------- */
   .calendar{padding:0.6rem 0.45rem;}
   @media (min-width:480px){ .calendar{padding:1.1rem;} }
-  /* Di layar sempit (hp), grid 7 kolom kalau dipaksa muat ke lebar layar
-     jadi terlalu sempit per harinya (judul pengingat kepotong). Jadi di hp
-     kalender sengaja dibuat LEBIH LEBAR dari layar (lewat min-width pada
-     .cal-scroll-inner) supaya tiap sel harian lebih lega, lalu dibungkus
-     wadah yang bisa digeser mendatar (.cal-scroll) dengan tombol navigasi
-     kiri/kanan di bawahnya. Di layar lebih lebar (≥640px) sudah cukup
-     lega tanpa perlu digeser, jadi constraint ini dilepas lagi. */
+  /* Lebar tiap kolom kalender sekarang otomatis mengikuti konten terlebar
+     di kolom itu (lihat .cal-grid-wrap di bawah), jadi kolom bisa jadi
+     lebih lebar dari layar hp begitu ada judul pengingat yang panjang.
+     .cal-scroll membungkusnya supaya bisa digeser mendatar (dengan tombol
+     navigasi kiri/kanan di bawahnya) tanpa memotong konten. NOTE PENTING:
+     agar overflow-x:auto ini benar-benar membatasi lebar (bukan malah ikut
+     melebar mengikuti kontennya), leluhurnya (.layout) WAJIB pakai
+     grid-template-columns:minmax(0,1fr) — bukan cuma 1fr — karena item
+     grid punya min-width:auto bawaan yang akan memaksa track melebar
+     mengikuti ukuran minimum konten di dalamnya kalau tidak di-nol-kan. */
   .cal-scroll{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; margin:0 -0.45rem; padding:0 0.45rem;}
   .cal-scroll::-webkit-scrollbar{display:none;}
-  .cal-scroll-inner{min-width:640px;}
   @media (min-width:480px){
     .cal-scroll{margin:0 -1.1rem; padding:0 1.1rem;}
-    .cal-scroll-inner{min-width:720px;}
   }
-  @media (min-width:640px){
-    .cal-scroll{overflow-x:visible; margin:0; padding:0;}
-    .cal-scroll-inner{min-width:0;}
-  }
+  /* Wadah bersama untuk header hari (weekday-row) dan sel tanggal (day-grid).
+     Keduanya memakai grid-template-columns:subgrid supaya berbagi TRACK KOLOM
+     yang sama persis — dan lebar tiap kolom otomatis mengikuti konten
+     terlebar di kolom itu (judul pengingat), bukan dipaksa sama rata lagi.
+     minmax(84px, max-content) memberi lebar minimum yang wajar sekaligus
+     membiarkan kolom melebar kalau ada judul pengingat yang panjang.
+     Karena lebarnya sekarang dinamis (bisa jadi lebih lebar dari panel di
+     layar mana pun, bukan cuma hp), .cal-scroll TETAP overflow-x:auto di
+     semua ukuran layar — tidak dilepas lagi di breakpoint besar seperti
+     sebelumnya — supaya kalau suatu saat kontennya melebar, tetap bisa
+     digeser & tidak terpotong/tumpah ke luar panel. */
+  .cal-grid-wrap{display:grid; grid-template-columns:repeat(7, minmax(84px, max-content)); gap:3px;}
+  @media (min-width:480px){ .cal-grid-wrap{gap:6px;} }
   .cal-scroll-nav{display:flex; justify-content:center; gap:0.6rem; margin-top:0.6rem;}
-  @media (min-width:640px){ .cal-scroll-nav{display:none;} }
   .cal-scroll-btn{
     width:38px; height:38px; border-radius:50%; border:1px solid rgba(var(--tint-rgb),0.18);
     background:rgba(var(--tint-rgb),0.05); color:var(--ink); cursor:pointer;
@@ -251,13 +260,11 @@
   .cal-scroll-btn svg{width:20px; height:20px;}
   .cal-scroll-btn:hover:not(:disabled){background:rgba(var(--tint-rgb),0.12);}
   .cal-scroll-btn:disabled{opacity:0.35; cursor:default;}
-  .weekday-row{display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:6px;}
-  @media (min-width:480px){ .weekday-row{gap:6px;} }
+  .weekday-row{display:grid; grid-template-columns:subgrid; grid-column:1/-1; margin-bottom:6px;}
   .weekday-row span{
     text-align:center; font-size:0.72rem; font-weight:600; color:var(--ink-soft);
   }
-  .day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
-  @media (min-width:480px){ .day-grid{gap:6px;} }
+  .day-grid{display:grid; grid-template-columns:subgrid; grid-column:1/-1;}
   .day-cell{
     min-height:92px; min-width:0; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft);
     padding:0.3rem 0.3rem 0.3rem; cursor:pointer; text-align:left; display:flex; flex-direction:column;
@@ -295,10 +302,10 @@
     width:16px; height:16px; border-radius:50%; background:var(--amber); position:relative; flex:none;
   }
   .pin::after{content:""; position:absolute; inset:4.5px; border-radius:50%; background:#3E2A18;}
-  .day-items{display:flex; flex-direction:column; gap:2px; overflow:hidden; min-width:0;}
+  .day-items{display:flex; flex-direction:column; gap:2px; min-width:0;}
   .chip{
-    display:flex; align-items:center; gap:0.3rem; font-size:0.66rem; padding:2px 5px; border-radius:6px;
-    background:var(--line-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;
+    display:flex; align-items:flex-start; gap:0.3rem; font-size:0.66rem; padding:2px 5px; border-radius:6px;
+    background:var(--line-soft); white-space:normal; overflow-wrap:break-word; max-width:230px; min-width:0;
   }
   @media (min-width:480px){
     .chip{font-size:0.7rem; padding:2px 6px;}
@@ -306,7 +313,7 @@
   @media (min-width:860px){
     .chip{font-size:0.76rem; padding:3px 7px; gap:0.4rem;}
   }
-  .chip .dot{width:6px; height:6px; border-radius:50%; flex:none;}
+  .chip .dot{width:6px; height:6px; border-radius:50%; flex:none; margin-top:0.32em;}
   .chip .t{font-family:var(--font-mono); color:var(--ink-soft); flex:none;}
   .more-link{font-size:0.68rem; color:var(--moss-deep); font-weight:700; padding-left:2px;}
   @media (min-width:860px){ .more-link{font-size:0.74rem;} }
@@ -931,10 +938,12 @@
       </div>
       <div class="cal-scroll" id="calScroll">
         <div class="cal-scroll-inner">
-          <div class="weekday-row">
-            <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span class="is-saturday">Sab</span><span class="is-sunday">Min</span>
+          <div class="cal-grid-wrap">
+            <div class="weekday-row">
+              <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span class="is-saturday">Sab</span><span class="is-sunday">Min</span>
+            </div>
+            <div class="day-grid" id="dayGrid"></div>
           </div>
-          <div class="day-grid" id="dayGrid"></div>
         </div>
       </div>
       <div class="cal-scroll-nav" id="calScrollNav">
