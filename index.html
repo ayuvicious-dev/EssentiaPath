@@ -1254,6 +1254,7 @@
             <option value="everyNDays">Setiap X hari sekali</option>
             <option value="everyNWeeks">Setiap X minggu sekali</option>
             <option value="weekday">Hari kerja (Sen–Jum)</option>
+            <option value="workdaySat">Hari Kerja (Sen–Sab)</option>
             <option value="weekend">Akhir pekan (Sab–Min)</option>
             <option value="weekly">Mingguan</option>
             <option value="biweekly">Dua mingguan</option>
@@ -1292,6 +1293,15 @@
             <label>&nbsp;</label>
             <p class="hint" style="margin-top:0.6rem;">Dihitung dari tanggal mulai di atas, lalu berulang tiap N minggu di hari yang sama (mis. pulang tiap Sabtu akhir bulan → 4 minggu sekali).</p>
           </div>
+        </div>
+        <div class="checkbox-field compact" id="workdaySatToggleRow" style="display:none;">
+          <input type="checkbox" id="fWorkdaySatSpecial">
+          <label for="fWorkdaySatSpecial">Sabtu</label>
+        </div>
+        <div class="field" id="workdaySatTimeRow" style="display:none;">
+          <label for="fTimeWorkdaySat">Jam khusus hari Sabtu</label>
+          <input type="time" id="fTimeWorkdaySat">
+          <p class="hint">Hari Senin–Jumat tetap memakai jam di atas; hari Sabtu memakai jam ini.</p>
         </div>
         <div class="checkbox-field compact" id="dayTypeToggleRow">
           <input type="checkbox" id="fByDayType">
@@ -1514,7 +1524,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   ];
   var CATS = DEFAULT_CATS.slice();
   var REPEAT_LABEL = {
-    none:"Sekali", hourly:"Tiap jam", daily:"Harian", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", weekend:"Akhir pekan",
+    none:"Sekali", hourly:"Tiap jam", daily:"Harian", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", workdaySat:"Hari Kerja (Sen–Sab)", weekend:"Akhir pekan",
     weekly:"Mingguan", biweekly:"Dua mingguan", monthly:"Bulanan", endOfMonth:"Akhir bulan", quarterly:"Triwulanan", annually:"Tahunan"
   };
   function repeatLabel(r){
@@ -1532,6 +1542,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       base = REPEAT_LABEL[r.repeat] || REPEAT_LABEL.none;
     }
     if (r.timeMode === 'byDayType') base += ' · jam per hari';
+    if (r.repeat === 'workdaySat' && r.workdaySatSpecial) base += ' · Sabtu jam khusus';
     return base;
   }
   var MONTH_NAMES = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -2060,6 +2071,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // untuk hari Minggu/tanggal merah/cuti bersama. Selain itu, selalu pakai
   // r.time (perilaku lama, jam tetap).
   function resolveOccTime(r, d){
+    if (r.repeat === 'workdaySat' && r.workdaySatSpecial && d.getDay() === 6){
+      return r.timeWorkdaySat || r.time;
+    }
     if (r.timeMode !== 'byDayType') return r.time;
     if (isHolidayDate(d)) return r.timeHoliday || r.time;
     if (d.getDay() === 6) return r.timeSaturday || r.time;
@@ -2092,6 +2106,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       case 'weekday': {
         var wd = d.getDay();
         return (wd>=1 && wd<=5) ? [resolveOccTime(r, d)] : [];
+      }
+      case 'workdaySat': {
+        var wds = d.getDay();
+        return (wds>=1 && wds<=6) ? [resolveOccTime(r, d)] : [];
       }
       case 'weekend': {
         var we = d.getDay();
@@ -3954,6 +3972,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var dayTypeToggleRow = document.getElementById('dayTypeToggleRow');
   var dayTypeTimesRow = document.getElementById('dayTypeTimesRow');
   var fByDayType = document.getElementById('fByDayType');
+  var workdaySatToggleRow = document.getElementById('workdaySatToggleRow');
+  var workdaySatTimeRow = document.getElementById('workdaySatTimeRow');
+  var fWorkdaySatSpecial = document.getElementById('fWorkdaySatSpecial');
+  var fTimeWorkdaySat = document.getElementById('fTimeWorkdaySat');
   var fTimeSaturday = document.getElementById('fTimeSaturday');
   var fTimeHoliday = document.getElementById('fTimeHoliday');
   var fFlexible = document.getElementById('fFlexible');
@@ -4050,7 +4072,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     hourlyRow.style.display = fRepeat.value === 'hourly' ? 'grid' : 'none';
     everyNDaysRow.style.display = fRepeat.value === 'everyNDays' ? 'grid' : 'none';
     everyNWeeksRow.style.display = fRepeat.value === 'everyNWeeks' ? 'grid' : 'none';
-    var hideDayType = fRepeat.value === 'hourly';
+    var isWorkdaySat = fRepeat.value === 'workdaySat';
+    workdaySatToggleRow.style.display = isWorkdaySat ? 'flex' : 'none';
+    if (!isWorkdaySat){
+      fWorkdaySatSpecial.checked = false;
+      workdaySatTimeRow.style.display = 'none';
+    }
+    var hideDayType = fRepeat.value === 'hourly' || isWorkdaySat;
     dayTypeToggleRow.style.display = hideDayType ? 'none' : 'flex';
     if (hideDayType){
       fByDayType.checked = false;
@@ -4059,6 +4087,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   });
   fByDayType.addEventListener('change', function(){
     dayTypeTimesRow.style.display = fByDayType.checked ? 'grid' : 'none';
+  });
+  fWorkdaySatSpecial.addEventListener('change', function(){
+    workdaySatTimeRow.style.display = fWorkdaySatSpecial.checked ? 'block' : 'none';
   });
 
   // ---------- Catatan: format list (teks biasa / centang / angka / bullet) ----------
@@ -4168,6 +4199,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     dayTypeTimesRow.style.display = 'none';
     fTimeSaturday.value = '09:00';
     fTimeHoliday.value = '09:00';
+    workdaySatToggleRow.style.display = 'none';
+    fWorkdaySatSpecial.checked = false;
+    workdaySatTimeRow.style.display = 'none';
+    fTimeWorkdaySat.value = '09:00';
     document.getElementById('fLink').value = '';
     fFlexible.checked = false;
     fPriority.checked = false;
@@ -4223,7 +4258,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('fHourly').value = r.hourlyInterval || 4;
     document.getElementById('fEveryNDays').value = r.everyNDaysInterval || 3;
     document.getElementById('fEveryNWeeks').value = r.everyNWeeksInterval || 4;
-    dayTypeToggleRow.style.display = r.repeat==='hourly' ? 'none' : 'flex';
+    workdaySatToggleRow.style.display = r.repeat==='workdaySat' ? 'flex' : 'none';
+    fWorkdaySatSpecial.checked = r.repeat==='workdaySat' && !!r.workdaySatSpecial;
+    workdaySatTimeRow.style.display = fWorkdaySatSpecial.checked ? 'block' : 'none';
+    fTimeWorkdaySat.value = r.timeWorkdaySat || r.time || '09:00';
+    dayTypeToggleRow.style.display = (r.repeat==='hourly' || r.repeat==='workdaySat') ? 'none' : 'flex';
     fByDayType.checked = r.timeMode === 'byDayType';
     dayTypeTimesRow.style.display = fByDayType.checked ? 'grid' : 'none';
     fTimeSaturday.value = r.timeSaturday || r.time || '09:00';
@@ -4278,6 +4317,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         timeMode: null,
         timeSaturday: null,
         timeHoliday: null,
+        workdaySatSpecial: false,
+        timeWorkdaySat: null,
         notes: document.getElementById('fNotes').value.trim(),
         link: document.getElementById('fLink').value.trim()
       };
@@ -4303,6 +4344,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         timeMode: useDayType ? 'byDayType' : null,
         timeSaturday: useDayType ? (fTimeSaturday.value || baseTime) : null,
         timeHoliday: useDayType ? (fTimeHoliday.value || baseTime) : null,
+        workdaySatSpecial: (fRepeat.value==='workdaySat' && fWorkdaySatSpecial.checked),
+        timeWorkdaySat: (fRepeat.value==='workdaySat' && fWorkdaySatSpecial.checked) ? (fTimeWorkdaySat.value || baseTime) : null,
         notes: document.getElementById('fNotes').value.trim(),
         link: document.getElementById('fLink').value.trim()
       };
