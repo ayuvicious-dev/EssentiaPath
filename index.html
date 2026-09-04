@@ -394,6 +394,9 @@
   .up-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
   .up-item .meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
   .up-item .acts{display:flex; gap:0.3rem; flex:none;}
+  .recent-added-list{max-height:none; overflow:visible;}
+  .recent-added-list .up-item .meta{font-style:normal;}
+  #recentAddedPagination{margin:0 0.6rem 0.9rem;}
 
   .dp-title{display:flex; align-items:center; gap:0.3rem; cursor:pointer; user-select:none;}
   .dp-chev{width:14px; height:14px; flex:none; color:var(--ink-soft); transition:transform 0.18s ease;}
@@ -1012,6 +1015,18 @@
           </div>
         </div>
         <ul class="upcoming-list" id="upcomingList"></ul>
+      </section>
+
+      <section class="panel" aria-label="Baru ditambahkan">
+        <div class="sidebar-head">
+          <h2>Baru Ditambahkan</h2>
+        </div>
+        <ul class="upcoming-list recent-added-list" id="recentAddedList"></ul>
+        <div class="upgrade-pagination" id="recentAddedPagination" hidden>
+          <button type="button" id="recentAddedPrev">‹ Sebelumnya</button>
+          <span class="page-info" id="recentAddedPageInfo"></span>
+          <button type="button" id="recentAddedNext">Setelahnya ›</button>
+        </div>
       </section>
     </aside>
   </div>
@@ -3562,6 +3577,104 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
 
+  // ---------- Recently added (dashboard, below "Mendatang") ----------
+  // Menampilkan pengingat yang paling baru dibuat, digeser 5 baris per
+  // halaman (sebelumnya/setelahnya), lengkap dengan tanggal & jam saat
+  // pengingat itu ditambahkan.
+  var recentAddedList = document.getElementById('recentAddedList');
+  var recentAddedPaginationEl = document.getElementById('recentAddedPagination');
+  var recentAddedPageInfoEl = document.getElementById('recentAddedPageInfo');
+  var recentAddedPrevBtn = document.getElementById('recentAddedPrev');
+  var recentAddedNextBtn = document.getElementById('recentAddedNext');
+  var recentAddedPage = 0;
+  var RECENT_ADDED_PAGE_SIZE = 5;
+  // Rentang tahun wajar untuk validasi hasil decode id lama (lihat di bawah).
+  var RECENT_ADDED_MIN_MS = Date.UTC(2020,0,1);
+  var RECENT_ADDED_MAX_MS = Date.UTC(2040,0,1);
+
+  function reminderCreatedAtMs(r){
+    if (r.createdAt){
+      var t = typeof r.createdAt === 'number' ? r.createdAt : Date.parse(r.createdAt);
+      if (!isNaN(t) && t > 0) return t;
+    }
+    // Pengingat lama (dibuat sebelum field createdAt ada) tidak punya
+    // tanggal input tersimpan — coba tebak dari id-nya, karena uid()
+    // selalu diawali 'r' + timestamp pembuatan dalam basis 36. Panjang
+    // timestamp base-36 bisa sedikit berbeda antar tahun, jadi dicoba
+    // beberapa panjang dan dipilih yang hasilnya masuk akal.
+    if (r.id && r.id.charAt(0) === 'r'){
+      for (var len = 7; len <= 9; len++){
+        var ts = parseInt(r.id.slice(1, 1 + len), 36);
+        if (!isNaN(ts) && ts >= RECENT_ADDED_MIN_MS && ts < RECENT_ADDED_MAX_MS){
+          return ts;
+        }
+      }
+    }
+    return 0;
+  }
+
+  function formatDMYHM(ms){
+    var d = new Date(ms);
+    var dd = ('0' + d.getDate()).slice(-2);
+    var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+    var hh = ('0' + d.getHours()).slice(-2);
+    var mi = ('0' + d.getMinutes()).slice(-2);
+    return dd + '/' + mm + '/' + d.getFullYear() + ' · ' + hh + ':' + mi;
+  }
+
+  function renderRecentAdded(){
+    if (!recentAddedList) return;
+    var sorted = state.reminders.slice().sort(function(a, b){
+      return reminderCreatedAtMs(b) - reminderCreatedAtMs(a);
+    });
+    var total = sorted.length;
+    if (total === 0){
+      recentAddedList.innerHTML = '<div class="empty-state">Belum ada pengingat yang ditambahkan.</div>';
+      recentAddedPaginationEl.hidden = true;
+      return;
+    }
+    var totalPages = Math.max(1, Math.ceil(total / RECENT_ADDED_PAGE_SIZE));
+    if (recentAddedPage >= totalPages) recentAddedPage = totalPages - 1;
+    if (recentAddedPage < 0) recentAddedPage = 0;
+    var start = recentAddedPage * RECENT_ADDED_PAGE_SIZE;
+    var pageItems = sorted.slice(start, start + RECENT_ADDED_PAGE_SIZE);
+
+    recentAddedList.innerHTML = pageItems.map(function(r){
+      var c = catInfo(r.category);
+      var ms = reminderCreatedAtMs(r);
+      return '<li class="up-item" data-id="' + r.id + '">' +
+        '<span class="dot" style="background:' + c.hex + '"></span>' +
+        '<div class="body"><div class="title">' + titleWithLinkHTML(r.title, r.link) + '</div>' +
+        '<div class="meta">Ditambahkan ' + (ms ? formatDMYHM(ms) : 'tidak diketahui') + '</div></div>' +
+        '<div class="acts">' +
+          '<button type="button" class="icon-btn edit-recent" aria-label="Ubah" data-id="' + r.id + '">✎</button>' +
+        '</div></li>';
+    }).join('');
+
+    recentAddedPaginationEl.hidden = total <= RECENT_ADDED_PAGE_SIZE;
+    recentAddedPageInfoEl.textContent = 'Halaman ' + (recentAddedPage + 1) + ' dari ' + totalPages;
+    recentAddedPrevBtn.disabled = recentAddedPage <= 0;
+    recentAddedNextBtn.disabled = recentAddedPage >= totalPages - 1;
+
+    Array.prototype.forEach.call(recentAddedList.querySelectorAll('.edit-recent'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openEditForm(btn.getAttribute('data-id'));
+      });
+    });
+  }
+  if (recentAddedPrevBtn){
+    recentAddedPrevBtn.addEventListener('click', function(){
+      if (recentAddedPage > 0){ recentAddedPage--; renderRecentAdded(); }
+    });
+  }
+  if (recentAddedNextBtn){
+    recentAddedNextBtn.addEventListener('click', function(){
+      var totalPages = Math.max(1, Math.ceil(state.reminders.length / RECENT_ADDED_PAGE_SIZE));
+      if (recentAddedPage < totalPages - 1){ recentAddedPage++; renderRecentAdded(); }
+    });
+  }
+
   // ---------- Missed (overdue, not-daily) occurrences → surfaced in Fleksibel ----------
   // Kalau sampai hari itu berakhir sebuah kemunculan belum ditandai selesai,
   // dan jenis pengulangannya BUKAN harian (harian pasti muncul lagi besok,
@@ -4307,6 +4420,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         priority: fPriority.checked,
         travel: false,
         done: existing ? !!existing.done : false,
+        createdAt: existing ? (existing.createdAt || null) : Date.now(),
         date: null,
         time: null,
         repeat: 'none',
@@ -4334,6 +4448,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         priority: false,
         travel: fTravel.checked,
         done: null,
+        createdAt: existing ? (existing.createdAt || null) : Date.now(),
         date: document.getElementById('fDate').value,
         time: baseTime,
         repeat: fRepeat.value,
@@ -4382,7 +4497,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!r) return;
     var copy = Object.assign({}, r, {
       id: uid(),
-      done: r.flexible ? false : null
+      done: r.flexible ? false : null,
+      createdAt: Date.now()
     });
     saveReminderToCloud(copy).then(function(){
       showToast('Pengingat digandakan. Sesuaikan lalu simpan.');
@@ -5146,6 +5262,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderUpgradeSettings();
     renderCurrentActivity();
     renderUpcoming();
+    renderRecentAdded();
     renderFlexible();
   }
   renderAll();

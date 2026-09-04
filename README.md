@@ -57,6 +57,7 @@ Untuk revisi berikutnya:
 - **Jenis pengulangan**: sekali, tiap jam (interval bisa diatur), harian, **setiap X hari sekali (interval bebas, mis. 2/3/4/5/6 hari sekali)**, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan — dengan tanggal berakhir opsional.
 - **Kategori berwarna, bisa dikustomisasi** — kelola daftar kategori (tambah, ubah nama/warna, hapus) dari tab Pengaturan → Kategori. Kategori juga tersinkron ke cloud per akun (`users/{uid}/settings/categories`), dan bisa disembunyikan/ditampilkan sebagai filter dari layar yang sama. Kategori yang masih dipakai pengingat tidak bisa dihapus sampai pengingatnya dipindah dulu.
 - **Daftar Mendatang** — semua pengingat 14 hari ke depan, dikelompokkan per tanggal.
+- **Baru Ditambahkan** — panel di bawah "Mendatang" yang menampilkan pengingat paling baru dibuat, lengkap dengan tanggal & jam saat ditambahkan. Bisa digeser per 5 baris (Sebelumnya/Setelahnya).
 - **Notifikasi lokal** — saat aplikasi terbuka di tab/perangkat, EssentiaPath memeriksa pengingat yang jatuh tempo setiap 20 detik dan menampilkan notifikasi browser (perlu izin notifikasi, dan perangkat harus dalam keadaan menjalankan aplikasi — lihat catatan di bawah).
 - **Mode offline** dasar via service worker (aset di-cache) + cache offline Firestore (data terakhir tetap terbaca saat koneksi putus, lalu tersinkron ulang begitu online).
 - **Bisa dipasang (installable)** ke layar utama/desktop lewat prompt "Pasang aplikasi".
