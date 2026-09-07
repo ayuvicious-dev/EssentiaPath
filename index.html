@@ -2706,6 +2706,71 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!text) return '';
     return '<div class="notes-freetext">'+escapeHTML(text).replace(/ · /g, '<br>')+'</div>';
   }
+  // Gabungan renderChecklistHTML + renderNotesListHTML + renderFreeTextNotesHTML,
+  // TAPI menjaga urutan baris ASLI seperti yang diketik pengguna di kolom
+  // "Catatan (opsional)". Sebelumnya ketiga fungsi itu dipanggil terpisah
+  // berurutan (checklist dulu, baru list bullet/angka, baru teks bebas),
+  // sehingga kalau pengguna menyelingi baris (mis. judul tanggal berformat
+  // bullet, diikuti beberapa item checklist di bawahnya, lalu tanggal
+  // berikutnya, dst.), hasil tampilannya malah terpisah jadi satu blok besar
+  // checklist lalu satu blok besar bullet — bukan berselang-seling seperti
+  // aslinya. Di sini baris-baris yang berurutan & sejenis (checklist / list
+  // bullet-angka / teks bebas) dikelompokkan jadi satu <ul>/<div> yang
+  // berdekatan, TAPI kelompok-kelompok itu sendiri tetap tersusun sesuai
+  // urutan kemunculan barisnya di `notes`.
+  function renderNotesOrderedHTML(notes, reminderId, dateStr){
+    if (!notes) return '';
+    var checklistItems = (reminderId && dateStr) ? checklistItemsForDate(notes, reminderId, dateStr) : checklistLines(notes);
+    var checklistByIdx = {};
+    checklistItems.forEach(function(it){ checklistByIdx[it.idx] = it; });
+    var lines = notes.split('\n');
+    var blocks = [];
+    function pushToBlock(type, item){
+      var last = blocks[blocks.length - 1];
+      if (last && last.type === type){ last.items.push(item); return; }
+      blocks.push({ type: type, items: [item] });
+    }
+    lines.forEach(function(line, idx){
+      if (Object.prototype.hasOwnProperty.call(checklistByIdx, idx)){
+        var chk = checklistByIdx[idx];
+        pushToBlock('checklist', { idx: idx, checked: chk.checked, text: chk.text });
+        return;
+      }
+      var info = lineMarkerInfo(line);
+      if (info.type === 'bullet'){
+        pushToBlock('list', { type:'bullet', text: line.slice(info.markerLen) });
+      } else if (info.type === 'number'){
+        pushToBlock('list', { type:'number', text: line.slice(info.markerLen), num: info.num });
+      } else {
+        var trimmed = line.trim();
+        if (trimmed) pushToBlock('text', { text: trimmed });
+      }
+    });
+    return blocks.map(function(b){
+      if (b.type === 'checklist'){
+        return '<ul class="sub-checklist">' +
+          b.items.map(function(it){
+            return '<li class="sub-check-item'+(it.checked?' checked':'')+'" data-line="'+it.idx+'">' +
+              '<span class="sub-check-box">'+(it.checked?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>' +
+              '<span class="sub-check-label">'+escapeHTML(it.text)+'</span>' +
+            '</li>';
+          }).join('') +
+        '</ul>';
+      }
+      if (b.type === 'list'){
+        return '<ul class="notes-plain-list">' +
+          b.items.map(function(it){
+            var marker = it.type === 'number' ? (it.num + '.') : '\u2022';
+            return '<li class="notes-plain-item">' +
+              '<span class="notes-plain-marker">'+escapeHTML(marker)+'</span>' +
+              '<span class="notes-plain-text">'+escapeHTML(it.text)+'</span>' +
+            '</li>';
+          }).join('') +
+        '</ul>';
+      }
+      return '<div class="notes-freetext">' + b.items.map(function(it){ return escapeHTML(it.text); }).join('<br>') + '</div>';
+    }).join('');
+  }
 
   // ---------- Category management (Pengaturan) ----------
   var catManageList = document.getElementById('catManageList');
@@ -3361,9 +3426,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
       '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · '+it.time+'</div>' +
-      renderChecklistHTML(it.reminder.notes, it.reminder.id, it.date) +
-      renderNotesListHTML(it.reminder.notes) +
-      renderFreeTextNotesHTML(it.reminder.notes) +
+      renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
       '</div>' +
       '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
   }
@@ -3444,9 +3507,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<div class="cat-line"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</div>' +
           '<div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
           '<div class="meta">Mulai '+it.time+' · '+repeatLabel(it.reminder)+(res.next ? ' · berikutnya '+res.next.time : '')+'</div>' +
-          renderChecklistHTML(it.reminder.notes, it.reminder.id, it.date) +
-          renderNotesListHTML(it.reminder.notes) +
-          renderFreeTextNotesHTML(it.reminder.notes) +
+          renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
         '</div>' +
       '</div>';
     var checkBtn = currentActivityEl.querySelector('.current-check');
@@ -3863,8 +3924,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
       '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+(freeText?' · '+escapeHTML(freeText):'')+'</div>' +
-      renderChecklistHTML(r.notes) +
-      renderNotesListHTML(r.notes) +
+      renderNotesOrderedHTML(r.notes) +
       '</div>' +
       '<div class="acts">' +
         '<button type="button" class="icon-btn toggle-priority" aria-label="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" title="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" data-id="'+r.id+'">'+(r.priority?'★':'☆')+'</button>' +
@@ -3945,8 +4005,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '</button>' +
           '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
           '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
-          renderChecklistHTML(it.reminder.notes, it.reminder.id, it.date) +
-          renderNotesListHTML(it.reminder.notes) +
+          renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
           '</div>' +
           '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
       }).join('');
@@ -4574,9 +4633,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '</div>' +
           '<div class="dp-detail"'+(expanded?'':' hidden')+'>' +
             '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>' +
-            renderChecklistHTML(it.reminder.notes, it.reminder.id, it.date) +
-            renderNotesListHTML(it.reminder.notes) +
-            renderFreeTextNotesHTML(it.reminder.notes) +
+            renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
           '</div>' +
         '</div>' +
         '<div class="acts"><button type="button" class="icon-btn edit-day" data-id="'+it.reminder.id+'" aria-label="Ubah">✎</button></div>' +
