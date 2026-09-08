@@ -792,6 +792,37 @@
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;}
   .row-3 .checkbox-field.compact{padding:0.5rem 0.5rem;}
+  /* Baris Ulangi / Jam Khusus / Berakhir pada: seragamkan ukuran ketiga
+     kolom supaya sama kecil & rapat, tidak mengikuti ukuran field biasa. */
+  #repeatUntilRow.row-3{align-items:start;}
+  #repeatUntilRow.row-3 .field{margin-bottom:0;}
+  #repeatUntilRow.row-3 .field label{font-size:0.72rem; margin-bottom:0.25rem;}
+  #repeatUntilRow.row-3 .field input,
+  #repeatUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem;}
+  #repeatUntilRow.row-3 .date-field-display{font-size:0.8rem; left:0.5rem;}
+  #repeatUntilRow.row-3 .checkbox-field.compact{padding:0.45rem 0.5rem; gap:0.4rem; height:100%; box-sizing:border-box;}
+  #repeatUntilRow.row-3 .checkbox-field.compact label{font-size:0.72rem; line-height:1.2;}
+  #repeatUntilRow.row-3 .hint{font-size:0.66rem; margin-top:0.3rem; line-height:1.25;}
+  @media (min-width:640px){
+    #repeatUntilRow.row-3 .field input,
+    #repeatUntilRow.row-3 .field select{ font-size:0.8rem; }
+  }
+
+  /* Tombol info (i) kecil di sebelah label, membuka penjelasan singkat */
+  .info-tip-btn{
+    width:15px; height:15px; border-radius:50%; border:1px solid var(--line); background:var(--paper-raised);
+    color:var(--ink-soft); font-size:0.62rem; font-weight:800; font-style:italic; font-family:Georgia,serif;
+    line-height:1; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+    padding:0; margin-left:0.3rem; flex:none; vertical-align:middle;
+  }
+  .info-tip-btn:hover, .info-tip-btn[aria-expanded="true"]{border-color:var(--moss); color:var(--moss-deep);}
+  .info-tip-popover{
+    position:absolute; top:100%; left:0; margin-top:0.35rem; z-index:20;
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+    padding:0.45rem 0.6rem; font-size:0.72rem; font-weight:500; color:var(--ink);
+    box-shadow:0 4px 14px rgba(0,0,0,0.14); width:max-content; max-width:170px; line-height:1.35;
+  }
+  .info-tip-popover[hidden]{display:none;}
   .cat-select-row{display:flex; align-items:flex-start; gap:0.5rem;}
   .cat-dropdown{position:relative; flex:1; min-width:0;}
   .cat-dropdown-field{
@@ -1295,24 +1326,40 @@
             <input type="time" id="fTime">
           </div>
         </div>
-        <div class="field">
-          <label for="fRepeat">Ulangi</label>
-          <select id="fRepeat">
-            <option value="none">Tidak berulang</option>
-            <option value="hourly">Tiap beberapa jam</option>
-            <option value="daily">Harian</option>
-            <option value="everyNDays">Setiap X hari sekali</option>
-            <option value="everyNWeeks">Setiap X minggu sekali</option>
-            <option value="weekday">Hari kerja (Sen–Jum)</option>
-            <option value="workdaySat">Hari Kerja (Sen–Sab)</option>
-            <option value="weekend">Akhir pekan (Sab–Min)</option>
-            <option value="weekly">Mingguan</option>
-            <option value="biweekly">Dua mingguan</option>
-            <option value="monthly">Bulanan</option>
-            <option value="endOfMonth">Akhir bulan</option>
-            <option value="quarterly">Triwulanan (tiap 3 bulan)</option>
-            <option value="annually">Tahunan</option>
-          </select>
+        <div class="row-3" id="repeatUntilRow">
+          <div class="field">
+            <label for="fRepeat">Ulangi</label>
+            <select id="fRepeat">
+              <option value="none">Tidak berulang</option>
+              <option value="hourly">Tiap beberapa jam</option>
+              <option value="daily">Harian</option>
+              <option value="everyNDays">Setiap X hari sekali</option>
+              <option value="everyNWeeks">Setiap X minggu sekali</option>
+              <option value="weekday">Hari kerja (Sen–Jum)</option>
+              <option value="workdaySat">Hari Kerja (Sen–Sab)</option>
+              <option value="weekend">Akhir pekan (Sab–Min)</option>
+              <option value="weekly">Mingguan</option>
+              <option value="biweekly">Dua mingguan</option>
+              <option value="monthly">Bulanan</option>
+              <option value="endOfMonth">Akhir bulan</option>
+              <option value="quarterly">Triwulanan (tiap 3 bulan)</option>
+              <option value="annually">Tahunan</option>
+            </select>
+          </div>
+          <div class="checkbox-field compact" id="dayTypeToggleRow" style="position:relative;">
+            <input type="checkbox" id="fByDayType">
+            <label for="fByDayType">Jam Khusus</label>
+            <button type="button" class="info-tip-btn" id="dayTypeInfoBtn" aria-label="Info Jam Khusus" aria-expanded="false">i</button>
+            <div class="info-tip-popover" id="dayTypeInfoPopover" hidden>Khusus Sabtu dan hari libur.</div>
+          </div>
+          <div class="field" id="untilRow">
+            <label for="fUntil">Berakhir pada (opsional)</label>
+            <div class="date-field-wrap">
+              <input type="date" id="fUntil">
+              <span class="date-field-display" id="fUntilDisplay" aria-hidden="true"></span>
+            </div>
+            <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
+          </div>
         </div>
         <div class="row-2" id="hourlyRow" style="display:none;">
           <div class="field">
@@ -1353,10 +1400,6 @@
           <input type="time" id="fTimeWorkdaySat">
           <p class="hint">Hari Senin–Jumat tetap memakai jam di atas; hari Sabtu memakai jam ini.</p>
         </div>
-        <div class="checkbox-field compact" id="dayTypeToggleRow">
-          <input type="checkbox" id="fByDayType">
-          <label for="fByDayType">Jam khusus Sabtu &amp; libur</label>
-        </div>
         <div class="row-2" id="dayTypeTimesRow" style="display:none;">
           <div class="field">
             <label for="fTimeSaturday">Jam hari Sabtu</label>
@@ -1366,14 +1409,6 @@
             <label for="fTimeHoliday">Jam hari libur</label>
             <input type="time" id="fTimeHoliday">
           </div>
-        </div>
-        <div class="field" id="untilRow">
-          <label for="fUntil">Berakhir pada (opsional)</label>
-          <div class="date-field-wrap">
-            <input type="date" id="fUntil">
-            <span class="date-field-display" id="fUntilDisplay" aria-hidden="true"></span>
-          </div>
-          <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
         </div>
       </div>
       <div class="field">
@@ -4172,6 +4207,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var dayTypeToggleRow = document.getElementById('dayTypeToggleRow');
   var dayTypeTimesRow = document.getElementById('dayTypeTimesRow');
   var fByDayType = document.getElementById('fByDayType');
+  var dayTypeInfoBtn = document.getElementById('dayTypeInfoBtn');
+  var dayTypeInfoPopover = document.getElementById('dayTypeInfoPopover');
+  if (dayTypeInfoBtn && dayTypeInfoPopover){
+    dayTypeInfoBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      var open = dayTypeInfoPopover.hidden;
+      dayTypeInfoPopover.hidden = !open;
+      dayTypeInfoBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e){
+      if (!dayTypeInfoPopover.hidden && !dayTypeInfoPopover.contains(e.target) && e.target !== dayTypeInfoBtn){
+        dayTypeInfoPopover.hidden = true;
+        dayTypeInfoBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
   var workdaySatToggleRow = document.getElementById('workdaySatToggleRow');
   var workdaySatTimeRow = document.getElementById('workdaySatTimeRow');
   var fWorkdaySatSpecial = document.getElementById('fWorkdaySatSpecial');
