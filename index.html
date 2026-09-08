@@ -790,23 +790,43 @@
   .notes-fmt-btn.active{border-color:var(--moss); background:var(--selected-bg); color:var(--moss-deep);}
   #upgradeDesc{resize:vertical; min-height:80px; overflow-y:auto;}
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
-  .cat-options{display:flex; flex-wrap:wrap; gap:0.4rem;}
-  .cat-option{
-    border:1.5px solid var(--line); border-radius:999px; padding:0.32rem 0.7rem 0.32rem 0.55rem; font-size:0.78rem;
-    display:flex; align-items:center; gap:0.35rem; cursor:pointer; background:var(--paper-raised);
+  .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;}
+  .row-3 .checkbox-field.compact{padding:0.5rem 0.5rem;}
+  .cat-select-row{display:flex; align-items:flex-start; gap:0.5rem;}
+  .cat-dropdown{position:relative; flex:1; min-width:0;}
+  .cat-dropdown-field{
+    display:flex; align-items:center; gap:0.5rem;
+    border:1px solid var(--line); border-radius:9px; padding:0.55rem 0.65rem;
+    background:var(--surface);
   }
-  .cat-option input{width:auto; margin:0;}
-  .cat-option .dot{width:9px; height:9px; border-radius:50%;}
-  .cat-option.selected{border-color:var(--moss); background:var(--selected-bg); font-weight:700;}
-  .cat-option-add{
-    border-style:dashed; color:var(--moss-deep); font-weight:700; background:transparent;
-    padding:0.32rem 0.62rem;
+  .cat-dropdown-field input{
+    flex:1; min-width:0; border:none; background:transparent; padding:0; margin:0;
+    font:inherit; font-size:16px; color:var(--ink); outline:none;
   }
-  .cat-option-add:hover{border-style:solid; background:var(--selected-bg);}
-  .cat-option-toggle{
-    color:var(--ink-soft); font-weight:700; background:transparent; padding:0.32rem 0.62rem;
+  @media (min-width:640px){ .cat-dropdown-field input{ font-size:0.9rem; } }
+  .cat-dropdown-dot{width:9px; height:9px; border-radius:50%; flex:none;}
+  .cat-dropdown-caret{flex:none; color:var(--ink-soft); transition:transform .15s ease;}
+  .cat-dropdown.open .cat-dropdown-caret{transform:rotate(180deg);}
+  .cat-dropdown.invalid .cat-dropdown-field{border-color:var(--danger);}
+  .cat-dropdown-list{
+    position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:20; margin:0; padding:0.3rem; list-style:none;
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.16);
+    max-height:240px; overflow-y:auto;
   }
-  .cat-option-toggle:hover{border-style:solid; background:var(--selected-bg); color:var(--ink);}
+  .cat-dropdown-list li{
+    display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.6rem; border-radius:7px; cursor:pointer; font-size:0.88rem; color:var(--ink);
+  }
+  .cat-dropdown-list li:hover, .cat-dropdown-list li.active{background:var(--selected-bg);}
+  .cat-dropdown-list li.selected{font-weight:700; background:var(--selected-bg);}
+  .cat-dropdown-list li .dot{width:9px; height:9px; border-radius:50%; flex:none;}
+  .cat-dropdown-list .cat-dropdown-empty{color:var(--ink-soft); cursor:default;}
+  .cat-dropdown-list .cat-dropdown-empty:hover{background:transparent;}
+  .cat-select-row .btn-add-cat{align-self:stretch;}
+  .btn-add-cat{
+    flex:none; border:1.5px dashed var(--line); border-radius:9px; background:transparent;
+    color:var(--moss-deep); font-weight:700; font-size:1.15rem; line-height:1; padding:0 0.85rem; cursor:pointer;
+  }
+  .btn-add-cat:hover{border-style:solid; background:var(--selected-bg);}
   .modal-actions{display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-top:1.1rem;}
   .btn{border:none; border-radius:999px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:700; cursor:pointer;}
   .btn-primary{background:var(--moss); color:#fff;}
@@ -1233,10 +1253,20 @@
         <input type="text" id="fTitle" required placeholder="Contoh: Bayar tagihan listrik" maxlength="80">
       </div>
       <div class="field">
-        <label>Kategori</label>
-        <div class="cat-options" id="catOptions"></div>
+        <label id="catButtonLabel" for="catInput">Kategori</label>
+        <div class="cat-select-row">
+          <div class="cat-dropdown" id="catDropdown">
+            <div class="cat-dropdown-field">
+              <span class="cat-dropdown-dot" id="catButtonDot" hidden></span>
+              <input type="text" class="cat-dropdown-input" id="catInput" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="catDropdownList" aria-autocomplete="list" aria-labelledby="catButtonLabel" autocomplete="off" placeholder="Ketik untuk cari…">
+              <svg class="cat-dropdown-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <ul class="cat-dropdown-list" id="catDropdownList" role="listbox" aria-labelledby="catButtonLabel" hidden></ul>
+          </div>
+          <button type="button" class="btn-add-cat" id="catOptionAdd" aria-label="Tambah kategori" title="Tambah kategori">+</button>
+        </div>
       </div>
-      <div class="row-2" id="flexPriorityRow">
+      <div class="row-3" id="flexPriorityRow">
         <div class="checkbox-field compact" id="fPriorityField">
           <input type="checkbox" id="fPriority">
           <label for="fPriority">Prioritas</label>
@@ -1245,7 +1275,12 @@
           <input type="checkbox" id="fFlexible">
           <label for="fFlexible">Fleksibel</label>
         </div>
+        <div class="checkbox-field compact" id="fTravelField">
+          <input type="checkbox" id="fTravel">
+          <label for="fTravel">Travel</label>
+        </div>
       </div>
+      <p class="hint" id="fTravelHint" style="margin-top:-0.4rem;">Kalau "Travel" dicentang, kotak tanggalnya di kalender akan berwarna biru pastel.</p>
       <div id="scheduledFields">
         <div class="row-2">
           <div class="field">
@@ -1320,7 +1355,7 @@
         </div>
         <div class="checkbox-field compact" id="dayTypeToggleRow">
           <input type="checkbox" id="fByDayType">
-          <label for="fByDayType">Jam berbeda untuk Sabtu &amp; hari libur</label>
+          <label for="fByDayType">Jam khusus Sabtu &amp; libur</label>
         </div>
         <div class="row-2" id="dayTypeTimesRow" style="display:none;">
           <div class="field">
@@ -1332,23 +1367,13 @@
             <input type="time" id="fTimeHoliday">
           </div>
         </div>
-        <div class="row-2" id="untilRow">
-          <div class="field">
-            <label for="fUntil">Berakhir pada (opsional)</label>
-            <div class="date-field-wrap">
-              <input type="date" id="fUntil">
-              <span class="date-field-display" id="fUntilDisplay" aria-hidden="true"></span>
-            </div>
-            <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
+        <div class="field" id="untilRow">
+          <label for="fUntil">Berakhir pada (opsional)</label>
+          <div class="date-field-wrap">
+            <input type="date" id="fUntil">
+            <span class="date-field-display" id="fUntilDisplay" aria-hidden="true"></span>
           </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <div class="checkbox-field compact" id="fTravelField" style="margin-bottom:0;">
-              <input type="checkbox" id="fTravel">
-              <label for="fTravel">Travel</label>
-            </div>
-            <p class="hint">Kotak tanggalnya di kalender akan berwarna biru pastel.</p>
-          </div>
+          <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
         </div>
       </div>
       <div class="field">
@@ -4136,7 +4161,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // ---------- Add/Edit form ----------
   var formOverlay = document.getElementById('formOverlay');
   var reminderForm = document.getElementById('reminderForm');
-  var catOptions = document.getElementById('catOptions');
+  var catDropdownWrap = document.getElementById('catDropdown');
+  var catInput = document.getElementById('catInput');
+  var catButtonDot = document.getElementById('catButtonDot');
+  var catDropdownList = document.getElementById('catDropdownList');
   var fRepeat = document.getElementById('fRepeat');
   var hourlyRow = document.getElementById('hourlyRow');
   var everyNDaysRow = document.getElementById('everyNDaysRow');
@@ -4164,80 +4192,120 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   fDateEl.addEventListener('change', function(){ updateDateDisplay(fDateEl, fDateDisplay); });
   fUntilEl.addEventListener('change', function(){ updateDateDisplay(fUntilEl, fUntilDisplay); });
-  var selectedCat = CATS[0].id;
-  var catOptionsExpanded = false;
+  var selectedCat = '';
+  function openCatDropdown(){
+    catDropdownList.hidden = false;
+    catDropdownWrap.classList.add('open');
+    catInput.setAttribute('aria-expanded', 'true');
+  }
+  function closeCatDropdown(){
+    catDropdownList.hidden = true;
+    catDropdownWrap.classList.remove('open');
+    catInput.setAttribute('aria-expanded', 'false');
+  }
+  // Render daftar opsi dropdown, disaring berdasar teks yang diketik
+  // (pencarian dilakukan lewat cocok substring di label kategori, supaya
+  // pengguna yang punya banyak kategori tidak perlu scroll jauh — cukup
+  // ketik beberapa huruf).
+  function renderCatList(query){
+    var q = (query || '').trim().toLowerCase();
+    var filtered = q ? CATS.filter(function(c){ return c.label.toLowerCase().indexOf(q) !== -1; }) : CATS;
+    catDropdownList.innerHTML = filtered.length
+      ? filtered.map(function(c){
+          return '<li role="option" data-cat="'+c.id+'" aria-selected="'+(c.id===selectedCat?'true':'false')+'"'+(c.id===selectedCat?' class="selected"':'')+'>' +
+            '<span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</li>';
+        }).join('')
+      : '<li class="cat-dropdown-empty">Tidak ada kategori yang cocok</li>';
+  }
+  catInput.addEventListener('focus', function(){
+    renderCatList(catInput.value);
+    openCatDropdown();
+  });
+  catInput.addEventListener('click', function(){
+    renderCatList(catInput.value);
+    openCatDropdown();
+  });
+  catInput.addEventListener('input', function(){
+    catDropdownWrap.classList.remove('invalid');
+    renderCatList(catInput.value);
+    openCatDropdown();
+  });
+  // mousedown (bukan click) dipakai supaya pemilihan tetap terjadi walau
+  // input kehilangan fokus (blur) tepat sebelum event click terpicu.
+  catDropdownList.addEventListener('mousedown', function(e){ e.preventDefault(); });
+  catDropdownList.addEventListener('click', function(e){
+    var li = e.target.closest('li[data-cat]');
+    if (!li) return;
+    selectedCat = li.getAttribute('data-cat');
+    catDropdownWrap.classList.remove('invalid');
+    renderCatOptions();
+    closeCatDropdown();
+  });
+  catInput.addEventListener('blur', function(){
+    // Kalau yang diketik tidak cocok persis dengan salah satu kategori,
+    // kembalikan tampilan ke kategori yang sedang terpilih (atau kosong) —
+    // supaya tidak bisa "menyimpan" nama kategori bebas hasil ketikan.
+    setTimeout(function(){
+      var typed = catInput.value.trim().toLowerCase();
+      var exact = CATS.find(function(c){ return c.label.toLowerCase() === typed; });
+      if (exact) selectedCat = exact.id;
+      renderCatOptions();
+      closeCatDropdown();
+    }, 120);
+  });
+  catInput.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){ closeCatDropdown(); catInput.blur(); }
+    else if (e.key === 'Enter'){
+      e.preventDefault();
+      var first = catDropdownList.querySelector('li[data-cat]');
+      if (first) first.click();
+    }
+  });
+  document.addEventListener('click', function(e){
+    if (!catDropdownWrap.contains(e.target)) closeCatDropdown();
+  });
+  var catOptionAddBtn = document.getElementById('catOptionAdd');
+  if (catOptionAddBtn) catOptionAddBtn.addEventListener('click', function(){
+    closeCatDropdown();
+    openAddCategoryFormForReminder();
+  });
 
   var fPriority = document.getElementById('fPriority');
   var fPriorityField = document.getElementById('fPriorityField');
   var fFlexibleField = document.getElementById('fFlexibleField');
+  var fTravelField = document.getElementById('fTravelField');
+  var fTravelHint = document.getElementById('fTravelHint');
   function toggleFlexibleUI(isFlexible){
     scheduledFields.style.display = isFlexible ? 'none' : 'block';
     fDateEl.required = !isFlexible;
     fTimeEl.required = !isFlexible;
+    // Travel cuma berlaku untuk pengingat terjadwal (bukan Fleksibel) —
+    // begitu Fleksibel dicentang, sembunyikan & lepas centang Travel juga,
+    // supaya tidak ada centang yang kelihatan aktif tapi diabaikan saat
+    // disimpan (lihat data.travel di listener 'submit' di bawah).
+    fTravelField.hidden = isFlexible;
+    fTravelHint.style.display = isFlexible ? 'none' : 'block';
+    if (isFlexible) fTravel.checked = false;
     // Prioritas & Fleksibel sekarang selalu tampil sebaris berdampingan,
     // tidak lagi disembunyikan/menunggu Fleksibel dicentang.
   }
   fFlexible.addEventListener('change', function(){ toggleFlexibleUI(fFlexible.checked); });
 
   function renderCatOptions(){
-    // Rekomendasi: hanya 4 kategori (paling sering dipakai, lalu yang
-    // terakhir dipakai sebagai penentu urutan berikutnya) yang tampil di
-    // awal — supaya chip tidak penuh sesak. Kategori yang sedang dipilih
-    // tetap ikut tampil meski bukan salah satu dari 4 teratas. Ada tombol
-    // simbol untuk buka daftar lengkap, dan simbol "+" untuk tambah baru.
-    var visibleCats;
-    if (catOptionsExpanded || CATS.length <= 4){
-      visibleCats = CATS;
-    } else {
-      var topIds = getRecommendedCategoryIds(4);
-      if (topIds.indexOf(selectedCat) === -1 && CATS.some(function(c){ return c.id===selectedCat; })){
-        topIds = topIds.slice(0, 3).concat([selectedCat]);
-      }
-      visibleCats = CATS.filter(function(c){ return topIds.indexOf(c.id) !== -1; });
-    }
-    var canToggle = CATS.length > 4;
-    catOptions.innerHTML = visibleCats.map(function(c){
-      return '<label class="cat-option'+(c.id===selectedCat?' selected':'')+'" data-cat="'+c.id+'">' +
-        '<input type="radio" name="catRadio" value="'+c.id+'" '+(c.id===selectedCat?'checked':'')+' style="display:none;">' +
-        '<span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</label>';
-    }).join('') +
-    (canToggle
-      ? '<button type="button" class="cat-option cat-option-toggle" id="catOptionToggle" aria-label="'+(catOptionsExpanded?'Ciutkan daftar kategori':'Tampilkan semua kategori')+'">'+(catOptionsExpanded?'▴':'▾')+'</button>'
-      : '') +
-    '<button type="button" class="cat-option cat-option-add" id="catOptionAdd" aria-label="Tambah kategori">+</button>';
-    Array.prototype.forEach.call(catOptions.querySelectorAll('.cat-option[data-cat]'), function(lbl){
-      lbl.addEventListener('click', function(){
-        selectedCat = lbl.getAttribute('data-cat');
-        renderCatOptions();
-      });
-    });
-    var toggleBtn = document.getElementById('catOptionToggle');
-    if (toggleBtn) toggleBtn.addEventListener('click', function(){
-      catOptionsExpanded = !catOptionsExpanded;
-      renderCatOptions();
-    });
-    var addBtn = document.getElementById('catOptionAdd');
-    if (addBtn) addBtn.addEventListener('click', openAddCategoryFormForReminder);
-  }
-  // Peringkat kategori: paling sering dipakai dulu (dihitung dari jumlah
-  // pengingat per kategori), lalu yang terakhir dipakai sebagai pemecah
-  // seri (dari id pengingat terbaru per kategori, id diawali timestamp
-  // pembuatan — lihat fungsi uid()).
-  function getRecommendedCategoryIds(n){
-    var freq = {}, lastUsed = {};
-    state.reminders.forEach(function(r){
-      if (!r.category) return;
-      freq[r.category] = (freq[r.category]||0) + 1;
-      if (!lastUsed[r.category] || r.id > lastUsed[r.category]) lastUsed[r.category] = r.id;
-    });
-    var ids = CATS.map(function(c){ return c.id; });
-    ids.sort(function(a,b){
-      var fa = freq[a]||0, fb = freq[b]||0;
-      if (fb !== fa) return fb - fa;
-      var la = lastUsed[a]||'', lb = lastUsed[b]||'';
-      return lb.localeCompare(la);
-    });
-    return ids.slice(0, n);
+    // Dropdown kustom dengan input pencarian: mengetik akan menyaring
+    // daftar kategori (bukan rekomendasi/urutan "paling sering dipakai"),
+    // supaya tidak perlu scroll jauh kalau kategorinya banyak. Kategori
+    // hanya bisa dipilih dari daftar — kalau teks yang diketik tidak
+    // cocok persis dengan salah satu kategori, akan dikembalikan ke
+    // kategori yang sedang terpilih saat kehilangan fokus (lihat listener
+    // 'blur'). Validasi wajib-diisi ditangani manual saat submit (lihat
+    // listener 'submit' di bawah), bukan lewat atribut HTML required,
+    // karena ini bukan elemen form native.
+    var cat = CATS.find(function(c){ return c.id===selectedCat; });
+    catInput.value = cat ? cat.label : '';
+    catButtonDot.hidden = !cat;
+    if (cat) catButtonDot.style.background = cat.hex;
+    renderCatList('');
   }
 
   fRepeat.addEventListener('change', function(){
@@ -4351,8 +4419,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('restoreBtn').style.display = 'none';
     formOccurrence = null;
     reminderForm.reset();
-    selectedCat = CATS[0].id;
-    catOptionsExpanded = false;
+    selectedCat = '';
+    closeCatDropdown();
+    catDropdownWrap.classList.remove('invalid');
     renderCatOptions();
     document.getElementById('fDate').value = prefillDate || toISODate(new Date());
     document.getElementById('fTime').value = '09:00';
@@ -4418,7 +4487,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     }
     document.getElementById('fTitle').value = r.title;
     selectedCat = r.category;
-    catOptionsExpanded = false;
+    closeCatDropdown();
+    catDropdownWrap.classList.remove('invalid');
     renderCatOptions();
     document.getElementById('fDate').value = r.date || toISODate(new Date());
     document.getElementById('fTime').value = r.time || '09:00';
@@ -4466,6 +4536,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   reminderForm.addEventListener('submit', function(e){
     e.preventDefault();
+    if (!CATS.some(function(c){ return c.id===selectedCat; })){
+      catDropdownWrap.classList.add('invalid');
+      catInput.focus();
+      showToast('Pilih kategori dulu');
+      return;
+    }
     var id = document.getElementById('reminderId').value;
     var isFlexible = fFlexible.checked;
     var existing = id ? state.reminders.find(function(x){ return x.id===id; }) : null;
