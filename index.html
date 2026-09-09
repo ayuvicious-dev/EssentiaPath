@@ -797,6 +797,21 @@
   #dateTimeUntilRow.row-3 input[type="time"]{padding-right:1.6rem;}
   #dateTimeUntilRow.row-3 .date-field-display{font-size:0.72rem; left:0.35rem; right:1.6rem;}
   #dateTimeUntilRow.row-3 .hint{font-size:0.62rem; margin-top:0.3rem; line-height:1.25;}
+  /* Di bawah 480px, ruang yang disisakan untuk ikon kalender/jam bawaan
+     browser (padding-right 1.6rem di atas) ternyata membuat total lebar
+     3 kolom melebihi lebar layar HP, sehingga kolom "Berakhir pada" jadi
+     bersinggungan/menimpa kolom "Waktu" (terlihat di HP kecil). Di lebar
+     ini kita lepas tampilan ikon bawaan input tanggal (toh sudah ada teks
+     tanggal kustom sendiri lewat .date-field-display) dan kecilkan sisa
+     padding kanan input waktu, supaya ruang yang terbebas cukup untuk
+     ketiga kolom muat sejajar tanpa saling menimpa. */
+  @media (max-width:479px){
+    #dateTimeUntilRow.row-3 .date-field-wrap input[type="date"]{
+      -webkit-appearance:none; appearance:none;
+    }
+    #dateTimeUntilRow.row-3 input[type="time"]{ padding-right:0.35rem; }
+    #dateTimeUntilRow.row-3 .date-field-display{ right:0.35rem; }
+  }
   @media (min-width:480px){
     #dateTimeUntilRow.row-3{gap:1rem;}
     #dateTimeUntilRow.row-3 .field label{font-size:0.72rem; min-height:1.9em;}
