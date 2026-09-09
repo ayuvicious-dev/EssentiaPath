@@ -903,15 +903,34 @@
   .auth-links button{background:none; border:none; color:var(--moss-deep); font-weight:700; cursor:pointer; padding:0; font-size:0.78rem;}
   .auth-hint{font-size:0.72rem; color:var(--ink-soft); margin-top:0.6rem; text-align:center;}
   /* Splash awal ("memeriksa status masuk") sebelum auth-card login muncul:
-     sengaja polos tanpa kotak/kartu, tanpa logo, tanpa teks status — cuma
-     nama aplikasi di tengah layar, memakai warna latar hero yang sudah ada
-     (bukan kotak abu-abu terpisah) supaya konsisten di light maupun dark mode. */
+     logo aplikasi (tanpa teks nama) + bar persentase loading, memakai warna
+     tema EssentiaPath (moss/amber) di atas gradasi hero yang sudah ada,
+     supaya konsisten di light maupun dark mode. */
   .auth-loading-splash{
-    display:flex; align-items:center; justify-content:center; width:100%; padding:2rem;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    width:100%; padding:2rem; gap:1.1rem;
   }
-  .auth-loading-brand{
-    font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.7rem;
-    letter-spacing:0.01em; color:var(--ink); text-align:center;
+  .auth-loading-logo{
+    width:88px; height:88px; flex:none;
+    filter:drop-shadow(0 10px 22px rgba(61,95,80,0.28));
+    animation:authLoadingPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes authLoadingPulse{
+    0%, 100%{ transform:scale(1); }
+    50%{ transform:scale(1.045); }
+  }
+  .auth-loading-bar-track{
+    width:min(220px, 60vw); height:6px; border-radius:999px;
+    background:rgba(var(--tint-rgb),0.14); overflow:hidden;
+  }
+  .auth-loading-bar-fill{
+    height:100%; width:0%; border-radius:999px;
+    background:linear-gradient(90deg, var(--moss), var(--amber));
+    transition:width 0.25s ease-out;
+  }
+  .auth-loading-percent{
+    font-family:var(--font-mono); font-size:0.78rem; font-weight:600;
+    letter-spacing:0.02em; color:var(--ink-soft);
   }
 
   /* ---------- Day popover ---------- */
@@ -933,7 +952,26 @@
 <!-- Auth gate: shown until the user is signed in -->
 <div class="overlay auth-overlay" id="authOverlay">
   <div class="auth-loading-splash" id="authLoading">
-    <span class="auth-loading-brand">EssentiaPath</span>
+    <svg class="auth-loading-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="authLogoBodyGrad" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" style="stop-color:var(--moss)"/>
+          <stop offset="100%" style="stop-color:var(--moss-deep)"/>
+        </linearGradient>
+        <linearGradient id="authLogoFoldGrad" x1="70" y1="60" x2="94" y2="84" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" style="stop-color:var(--amber)"/>
+          <stop offset="100%" style="stop-color:var(--moss)"/>
+        </linearGradient>
+      </defs>
+      <rect x="30" y="6" width="9" height="17" rx="4.5" style="fill:var(--moss-deep)"/>
+      <rect x="61" y="6" width="9" height="17" rx="4.5" style="fill:var(--moss-deep)"/>
+      <path d="M28 18h44a14 14 0 0 1 14 14v40a14 14 0 0 1-14 14H28a14 14 0 0 1-14-14V32a14 14 0 0 1 14-14z" style="fill:url(#authLogoBodyGrad)"/>
+      <rect x="27" y="33" width="46" height="39" rx="5" style="fill:var(--paper)"/>
+      <path d="M37 53.5l8.5 8.5 17-17" style="fill:none; stroke:url(#authLogoBodyGrad); stroke-width:6.4; stroke-linecap:round; stroke-linejoin:round;"/>
+      <path d="M86 58v12a14 14 0 0 1-14 14h-4z" style="fill:url(#authLogoFoldGrad)"/>
+    </svg>
+    <div class="auth-loading-bar-track"><div class="auth-loading-bar-fill" id="authLoadingBarFill"></div></div>
+    <span class="auth-loading-percent" id="authLoadingPercent">0%</span>
   </div>
 
   <div class="auth-card" id="authCard" hidden>
@@ -5096,6 +5134,35 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // ---------- Auth (Firebase email/password) ----------
   var authOverlay = document.getElementById('authOverlay');
   var authLoadingEl = document.getElementById('authLoading');
+  var authLoadingBarFill = document.getElementById('authLoadingBarFill');
+  var authLoadingPercentEl = document.getElementById('authLoadingPercent');
+  var authLoadingPct = 0;
+  var authLoadingTimer = null;
+  function setAuthLoadingPct(p){
+    authLoadingPct = p;
+    if (authLoadingBarFill) authLoadingBarFill.style.width = p + '%';
+    if (authLoadingPercentEl) authLoadingPercentEl.textContent = Math.round(p) + '%';
+  }
+  // Belum ada tahapan boot yang benar-benar terukur (cek status login
+  // Firebase biasanya cuma sebentar), jadi bar diisi bertahap mendekati
+  // ~90% (melambat, gaya "ease-out") selagi menunggu, lalu begitu
+  // onAuthStateChanged benar-benar selesai, langsung disentak ke 100% dan
+  // ditahan sebentar supaya terasa "selesai memuat", baru splash disembunyikan.
+  function startAuthLoadingAnim(){
+    setAuthLoadingPct(0);
+    clearInterval(authLoadingTimer);
+    authLoadingTimer = setInterval(function(){
+      var remaining = 90 - authLoadingPct;
+      if (remaining <= 0.5){ clearInterval(authLoadingTimer); return; }
+      setAuthLoadingPct(authLoadingPct + remaining * 0.12);
+    }, 120);
+  }
+  function finishAuthLoadingAnim(done){
+    clearInterval(authLoadingTimer);
+    setAuthLoadingPct(100);
+    setTimeout(done, 220);
+  }
+  startAuthLoadingAnim();
   var authCard = document.getElementById('authCard');
   var authForm = document.getElementById('authForm');
   var authError = document.getElementById('authError');
@@ -5184,6 +5251,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   onAuthStateChanged(auth, function(user){
     currentUser = user;
+    finishAuthLoadingAnim(function(){
     authLoadingEl.hidden = true;
     if (user){
       authOverlay.hidden = true;
@@ -5222,6 +5290,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       setAuthMode('login');
       renderAll();
     }
+    });
   });
 
   // ---------- Theme (Terang / Gelap / Sistem) ----------
