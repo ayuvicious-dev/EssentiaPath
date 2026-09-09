@@ -176,7 +176,7 @@
   }
   .today-btn:hover{background:rgba(var(--tint-rgb),0.08);}
   .add-btn{
-    position:fixed; right:1.1rem; bottom:calc(4.7rem + env(safe-area-inset-bottom)); z-index:45;
+    position:relative; flex:none; align-self:flex-start; margin-top:-1.55rem; z-index:41;
     width:56px; height:56px; padding:0; border-radius:50%;
     background:var(--amber); color:#3E2A18; border:none;
     display:flex; align-items:center; justify-content:center;
@@ -189,9 +189,6 @@
   .add-btn-label{
     position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
     clip:rect(0,0,0,0); white-space:nowrap; border:0;
-  }
-  @media (min-width:640px){
-    .add-btn{ bottom:calc(5.9rem + env(safe-area-inset-bottom)); right:1.6rem; }
   }
 
   /* ---------- Layout ---------- */
@@ -372,7 +369,7 @@
     font-size:0.72rem; font-family:inherit; color:var(--ink); pointer-events:none; white-space:nowrap;
   }
   .up-date-today-btn svg{width:14px; height:14px;}
-  .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem; max-height:420px; overflow-y:auto;}
+  .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem;}
   .up-group-label{
     font-size:0.68rem; text-transform:none; color:var(--ink-soft); font-weight:700; padding:0.5rem 0.5rem 0.15rem;
     position:sticky; top:0; background:var(--paper-raised); z-index:1;
@@ -773,21 +770,25 @@
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;}
   .row-3 .checkbox-field.compact{padding:0.5rem 0.5rem;}
-  /* Baris Tanggal mulai / Waktu / Berakhir pada: di layar sempit (HP),
-     susun 2 kolom (Tanggal mulai + Waktu) lalu "Berakhir pada" penuh satu
-     baris di bawahnya — supaya ketiga kolom tidak berdesakan/bersinggungan.
-     Di layar lebih lebar, kembali ke 3 kolom sejajar seperti semula. */
-  #dateTimeUntilRow.row-3{align-items:start; grid-template-columns:1fr 1fr; row-gap:0.85rem;}
-  #dateTimeUntilRow.row-3 #untilRow{grid-column:1 / -1;}
-  #dateTimeUntilRow.row-3 .field{margin-bottom:0;}
-  #dateTimeUntilRow.row-3 .field label{font-size:0.72rem; margin-bottom:0.25rem; min-height:1.9em; display:flex; align-items:flex-end;}
+  /* Baris Tanggal mulai / Waktu / Berakhir pada: selalu 3 kolom sejajar
+     dalam satu baris, termasuk di layar sempit (HP) — ukuran font, padding,
+     dan ikon dikecilkan supaya tetap muat, dengan gap yang cukup supaya
+     ketiga kolom tidak bersinggungan langsung. */
+  #dateTimeUntilRow.row-3{align-items:start; grid-template-columns:1fr 1fr 1fr; gap:0.4rem; row-gap:0.85rem;}
+  #dateTimeUntilRow.row-3 .field{margin-bottom:0; min-width:0;}
+  #dateTimeUntilRow.row-3 .field label{font-size:0.66rem; margin-bottom:0.25rem; min-height:1.7em; display:flex; align-items:flex-end; white-space:normal; line-height:1.15;}
   #dateTimeUntilRow.row-3 .field input,
-  #dateTimeUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem; width:100%; box-sizing:border-box;}
-  #dateTimeUntilRow.row-3 .date-field-display{font-size:0.8rem; left:0.5rem;}
-  #dateTimeUntilRow.row-3 .hint{font-size:0.66rem; margin-top:0.3rem; line-height:1.25;}
+  #dateTimeUntilRow.row-3 .field select{padding:0.4rem 0.35rem; font-size:0.72rem; width:100%; box-sizing:border-box;}
+  #dateTimeUntilRow.row-3 .date-field-wrap svg,
+  #dateTimeUntilRow.row-3 input[type="time"]{padding-right:1.6rem;}
+  #dateTimeUntilRow.row-3 .date-field-display{font-size:0.72rem; left:0.35rem; right:1.6rem;}
+  #dateTimeUntilRow.row-3 .hint{font-size:0.62rem; margin-top:0.3rem; line-height:1.25;}
   @media (min-width:480px){
-    #dateTimeUntilRow.row-3{grid-template-columns:1fr 1fr 1fr; row-gap:0;}
-    #dateTimeUntilRow.row-3 #untilRow{grid-column:auto;}
+    #dateTimeUntilRow.row-3{gap:0.5rem;}
+    #dateTimeUntilRow.row-3 .field label{font-size:0.72rem; min-height:1.9em;}
+    #dateTimeUntilRow.row-3 .field input,
+    #dateTimeUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem;}
+    #dateTimeUntilRow.row-3 .date-field-display{font-size:0.8rem; left:0.5rem;}
   }
   @media (min-width:640px){
     #dateTimeUntilRow.row-3 .field input,
@@ -819,11 +820,11 @@
   .cat-dropdown{position:relative; flex:1; min-width:0;}
   .cat-dropdown-field{
     display:flex; align-items:center; gap:0.5rem;
-    border:1px solid var(--line); border-radius:9px; padding:0.55rem 0.65rem;
+    border:1px solid var(--line); border-radius:9px; padding:0 0.65rem;
     background:var(--surface);
   }
   .cat-dropdown-field input{
-    flex:1; min-width:0; border:none; background:transparent; padding:0; margin:0;
+    flex:1; min-width:0; border:none; background:transparent; padding:0.55rem 0; margin:0;
     font:inherit; font-size:16px; color:var(--ink); outline:none;
   }
   @media (min-width:640px){ .cat-dropdown-field input{ font-size:0.9rem; } }
@@ -1060,17 +1061,6 @@
         <ul class="upcoming-list" id="upcomingList"></ul>
       </section>
 
-      <section class="panel" aria-label="Baru ditambahkan">
-        <div class="sidebar-head">
-          <h2>Baru Ditambahkan</h2>
-        </div>
-        <ul class="upcoming-list recent-added-list" id="recentAddedList"></ul>
-        <div class="upgrade-pagination" id="recentAddedPagination" hidden>
-          <button type="button" id="recentAddedPrev">‹ Sebelumnya</button>
-          <span class="page-info" id="recentAddedPageInfo"></span>
-          <button type="button" id="recentAddedNext">Setelahnya ›</button>
-        </div>
-      </section>
     </aside>
   </div>
 
@@ -1168,6 +1158,16 @@
       <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
     </div>
     <div class="settings-block">
+      <h2>Riwayat</h2>
+      <p class="hint">Pengingat yang paling baru ditambahkan, lengkap dengan tanggal &amp; jam saat dibuat.</p>
+      <ul class="upcoming-list recent-added-list" id="recentAddedList"></ul>
+      <div class="upgrade-pagination" id="recentAddedPagination" hidden>
+        <button type="button" id="recentAddedPrev">‹ Sebelumnya</button>
+        <span class="page-info" id="recentAddedPageInfo"></span>
+        <button type="button" id="recentAddedNext">Setelahnya ›</button>
+      </div>
+    </div>
+    <div class="settings-block">
       <h2>Cadangkan &amp; Pulihkan Data</h2>
       <p class="hint">Unduh seluruh isi aplikasi (pengingat, kategori, dan status centang) sebagai satu file JSON untuk jaga-jaga. File ini bisa dipulihkan kembali kapan saja, misalnya setelah ganti perangkat atau kalau data tidak sengaja berubah.</p>
       <button type="button" class="btn btn-ghost" id="backupJsonBtn">⬇ Unduh backup (.json)</button>
@@ -1215,6 +1215,10 @@
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>Fleksibel</span>
   </button>
+  <button type="button" class="add-btn" id="openAdd" aria-label="Pengingat baru">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <span class="add-btn-label">Pengingat baru</span>
+  </button>
   <button type="button" class="nav-btn" data-view="calendar">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="14.5" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <span>Kalender</span>
@@ -1224,11 +1228,6 @@
     <span>Setting</span>
   </button>
 </nav>
-
-<button class="add-btn" id="openAdd" aria-label="Pengingat baru">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-  <span class="add-btn-label">Pengingat baru</span>
-</button>
 
 <footer>Pengingat Anda tersimpan di akun Firebase Anda dan hanya bisa diakses setelah masuk dengan email &amp; kata sandi.</footer>
 
@@ -1245,7 +1244,7 @@
       <input type="hidden" id="reminderId">
       <div class="field">
         <label for="fTitle">Judul</label>
-        <input type="text" id="fTitle" required placeholder="Contoh: Bayar tagihan listrik" maxlength="80">
+        <input type="text" id="fTitle" required placeholder="" maxlength="80">
       </div>
       <div class="row-2">
         <div class="field">
@@ -1254,7 +1253,7 @@
             <div class="cat-dropdown" id="catDropdown">
               <div class="cat-dropdown-field">
                 <span class="cat-dropdown-dot" id="catButtonDot" hidden></span>
-                <input type="text" class="cat-dropdown-input" id="catInput" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="catDropdownList" aria-autocomplete="list" aria-labelledby="catButtonLabel" autocomplete="off" placeholder="Ketik untuk cari…">
+                <input type="text" class="cat-dropdown-input" id="catInput" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="catDropdownList" aria-autocomplete="list" aria-labelledby="catButtonLabel" autocomplete="off" placeholder="">
                 <svg class="cat-dropdown-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
               <ul class="cat-dropdown-list" id="catDropdownList" role="listbox" aria-labelledby="catButtonLabel" hidden></ul>
@@ -1264,7 +1263,7 @@
         </div>
         <div class="field">
           <label for="fLink">Link (opsional)</label>
-          <input type="text" id="fLink" maxlength="500" placeholder="Contoh: https://zoom.us/j/...">
+          <input type="text" id="fLink" maxlength="500" placeholder="">
         </div>
       </div>
       <div class="row-3" id="flexPriorityRow">
@@ -1398,7 +1397,7 @@
             List bullet
           </button>
         </div>
-        <textarea id="fNotes" placeholder="Detail tambahan…"></textarea>
+        <textarea id="fNotes" placeholder=""></textarea>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger icon-only" id="deleteBtn" style="display:none;" aria-label="Hapus" title="Hapus">🗑</button>
@@ -1436,6 +1435,24 @@
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Category detail: reminders linked to this category -->
+<div class="overlay day-panel" id="catDetailOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="catDetailTitle">
+    <div class="modal-head">
+      <h2 id="catDetailTitle">Kategori</h2>
+      <button type="button" class="modal-close" id="catDetailClose" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="hint" id="catDetailCount" style="margin:-0.3rem 0 0.7rem;"></p>
+    <div class="day-panel-list" id="catDetailList"></div>
+    <div class="modal-actions">
+      <div style="flex:1;"></div>
+      <button type="button" class="btn btn-ghost" id="closeCatDetail">Tutup</button>
+    </div>
   </div>
 </div>
 
@@ -1538,6 +1555,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     "#B79C8C","#8FB8A8","#D9A0A0","#A9A0D9","#7C9484"
   ];
   var CATS = DEFAULT_CATS.slice();
+
   var REPEAT_LABEL = {
     none:"Sekali", hourly:"Tiap jam", daily:"Harian", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", workdaySat:"Hari Kerja (Sen–Sab)", weekend:"Akhir pekan",
     weekly:"Mingguan", biweekly:"Dua mingguan", monthly:"Bulanan", endOfMonth:"Akhir bulan", quarterly:"Triwulanan", annually:"Tahunan"
@@ -2824,6 +2842,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<span class="dot" style="background:'+c.hex+'"></span><span class="label">'+escapeHTML(c.label)+'</span>' +
         '</button>' +
         '<div class="acts">' +
+          '<button type="button" class="icon-btn detail-cat" data-id="'+c.id+'" aria-label="Rincian kategori '+escapeHTML(c.label)+'" title="Lihat pengingat di kategori ini">🔍</button>' +
           '<button type="button" class="icon-btn edit-cat" data-id="'+c.id+'" aria-label="Ubah kategori">✎</button>' +
           '<button type="button" class="icon-btn delete-cat" data-id="'+c.id+'" aria-label="Hapus kategori">🗑</button>' +
         '</div>' +
@@ -2846,6 +2865,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         renderCalendar();
         renderUpcoming();
         renderFlexible();
+      });
+    });
+    Array.prototype.forEach.call(catManageList.querySelectorAll('.detail-cat'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openCategoryDetail(btn.getAttribute('data-id'));
       });
     });
     Array.prototype.forEach.call(catManageList.querySelectorAll('.edit-cat'), function(btn){
@@ -4457,6 +4482,55 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     closeDayPanel();
     openAddForm(d);
   });
+
+  // ---------- Rincian kategori (Pengaturan → Kategori → 🔍) ----------
+  // Menampilkan semua pengingat yang memakai kategori tertentu, supaya
+  // bisa langsung dibuka & dipindah ke kategori lain lewat form ubah
+  // pengingat yang sudah ada (tombol ✎ di tiap baris).
+  var catDetailOverlay = document.getElementById('catDetailOverlay');
+  var catDetailList = document.getElementById('catDetailList');
+  var catDetailCurrentId = null;
+
+  function renderCategoryDetailList(){
+    var linked = state.reminders.filter(function(r){ return r.category === catDetailCurrentId; });
+    document.getElementById('catDetailCount').textContent =
+      linked.length === 0 ? 'Tidak ada pengingat yang memakai kategori ini.' :
+      (linked.length === 1 ? '1 pengingat memakai kategori ini.' : linked.length + ' pengingat memakai kategori ini.');
+    if (!linked.length){
+      catDetailList.innerHTML = '<div class="empty-state">Belum ada pengingat pada kategori ini.</div>';
+      return;
+    }
+    catDetailList.innerHTML = linked.map(function(r){
+      var meta = r.flexible ? 'Fleksibel' : (r.time || '--:--') + ' · ' + repeatLabel(r);
+      return '<div class="up-item">' +
+        '<span class="dot" style="background:'+catInfo(r.category).hex+'"></span>' +
+        '<div class="body">' +
+          '<div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
+          '<div class="meta">'+meta+'</div>' +
+        '</div>' +
+        '<div class="acts"><button type="button" class="icon-btn edit-cat-reminder" data-id="'+r.id+'" aria-label="Ubah &amp; pindah kategori">✎</button></div>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(catDetailList.querySelectorAll('.edit-cat-reminder'), function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-id');
+        closeCategoryDetail();
+        openEditForm(id);
+      });
+    });
+  }
+
+  function openCategoryDetail(catId){
+    catDetailCurrentId = catId;
+    var c = catInfo(catId);
+    document.getElementById('catDetailTitle').textContent = c.label;
+    renderCategoryDetailList();
+    catDetailOverlay.hidden = false;
+  }
+  function closeCategoryDetail(){ catDetailOverlay.hidden = true; }
+  document.getElementById('catDetailClose').addEventListener('click', closeCategoryDetail);
+  document.getElementById('closeCatDetail').addEventListener('click', closeCategoryDetail);
+  catDetailOverlay.addEventListener('click', function(e){ if (e.target===catDetailOverlay) closeCategoryDetail(); });
 
   // ---------- Month navigation ----------
   document.getElementById('prevMonth').addEventListener('click', function(){
