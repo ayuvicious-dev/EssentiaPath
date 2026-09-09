@@ -763,14 +763,20 @@
      model fontnya dengan label "Jam hari Sabtu" di atasnya (kecil, tebal,
      warna ink-soft) — bukan mengikuti ukuran font input jam pada umumnya. */
   #dayTypeTimesRow .field input[type="time"]{
-    font-size:0.78rem; font-weight:700; color:var(--ink-soft); text-align:center;
+    font-size:16px; font-weight:700; color:var(--ink-soft); text-align:center;
     -webkit-appearance:none; appearance:none;
+  }
+  @media (min-width:640px){
+    #dayTypeTimesRow .field input[type="time"]{ font-size:0.78rem; }
   }
   .field textarea{resize:vertical; min-height:60px;}
   /* Teks yang diketik di "Judul" & "Catatan" disamakan ukuran & jenis
      fontnya dengan tulisan label "Catatan" (kecil, tebal, warna ink-soft),
      bukan mengikuti ukuran font input pada umumnya. */
-  #fTitle, #fNotes{ font-size:0.78rem; font-weight:700; color:var(--ink-soft); }
+  #fTitle, #fNotes{ font-size:16px; font-weight:700; color:var(--ink-soft); }
+  @media (min-width:640px){
+    #fTitle, #fNotes{ font-size:0.78rem; }
+  }
   .date-field-wrap{position:relative;}
   .date-field-wrap input[type="date"]{color:transparent;}
   .date-field-wrap input[type="date"]::-webkit-datetime-edit,
