@@ -100,7 +100,7 @@
     --today-bg:#3A2A18;
     --travel-bg:#1E2E3D;
   }
-  /* Ukuran font aplikasi (Tampilan → Ukuran Font): mengubah font-size akar
+  /* Ukuran font aplikasi (Setting → Ukuran Font): mengubah font-size akar
      (html), yang otomatis menyesuaikan hampir semua ukuran di aplikasi
      karena nyaris semuanya pakai satuan rem/em relatif terhadap ini.
      Nilainya kontinu (13–20px) lewat slider, disimpan di --user-font-size. */
@@ -523,6 +523,12 @@
   .flex-check svg{width:15px; height:15px; opacity:0; transition:opacity 0.1s ease;}
   .flex-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
   .flex-item.done .flex-check svg{opacity:1;}
+  /* Tombol centang di daftar "Mendatang" dibuat lebih kecil daripada di
+     "Fleksibel" — area sentuh tetap diperlebar lewat ::before supaya masih
+     mudah disentuh di HP. */
+  .up-check{width:18px; height:18px; border-radius:5px;}
+  .up-check::before{inset:-11px;}
+  .up-check svg{width:11px; height:11px;}
   .sub-checklist{list-style:none; margin:0.4rem 0 0 1.3rem; padding:0; display:flex; flex-direction:column; gap:0.28rem;}
   .sub-check-item{display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.7rem; color:var(--ink-soft);}
   .sub-check-box{
@@ -625,22 +631,20 @@
   }
   .nav-btn svg{width:20px; height:20px;}
   .nav-btn.active{color:var(--moss-deep); background:var(--selected-bg);}
-  .nav-btn .nav-dot{
-    position:absolute; top:2px; right:calc(50% - 15px); width:7px; height:7px; border-radius:50%;
-    background:var(--amber-deep); border:1.5px solid var(--paper-raised); display:none;
-  }
-  .nav-btn .nav-dot.show{display:block;}
 
   /* ---------- Settings (Pengaturan) view ---------- */
-  .settings-panel{display:none; padding:0.3rem 0.2rem 1rem;}
-  .settings-block{padding:1rem 1.1rem; border-bottom:1px solid var(--line-soft);}
-  .settings-block:last-child{border-bottom:none;}
+  .settings-panel{display:none; padding:0.3rem 0.2rem 1rem; background:none; box-shadow:none; border:none;}
+  .settings-block{padding:1rem 1.1rem; margin-bottom:0.85rem; background:var(--paper-raised); border:1px solid var(--line-soft); border-radius:var(--radius); box-shadow:var(--shadow);}
+  .settings-block:last-child{margin-bottom:0;}
   .settings-block h2{font-family:var(--font-display); font-size:1.02rem; margin:0 0 0.6rem; font-weight:600;}
   .settings-account-email{font-size:0.9rem; font-weight:600; margin:0 0 0.7rem; word-break:break-word;}
   .settings-block .btn{margin-top:0.2rem;}
   .settings-status{font-size:0.78rem; color:var(--ink-soft); margin:0 0 0.6rem;}
 
   .cat-manage-list{display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.8rem;}
+  .upg-drag-handle{cursor:grab; color:var(--ink-soft); touch-action:none; padding:0.15rem 0.3rem; flex:none; user-select:none; font-size:1rem; line-height:1.4;}
+  .upg-drag-handle:active{cursor:grabbing;}
+  .upg-drag-handle-static{color:var(--ink-soft); opacity:0.25; padding:0.15rem 0.3rem; flex:none; font-size:1rem; line-height:1.4;}
   .cat-manage-row{
     display:flex; align-items:center; justify-content:space-between; gap:0.35rem;
     padding:0.5rem 0.5rem 0.5rem 0.35rem; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft);
@@ -664,33 +668,10 @@
   #catColorPicker::-webkit-color-swatch{border-radius:50%; border:2px solid var(--line);}
   #catColorPicker::-moz-color-swatch{border-radius:50%; border:2px solid var(--line);}
 
-  /* ---------- Upgrade Aplikasi (roadmap checklist) ---------- */
-  .upgrade-progress-wrap{margin-bottom:0.9rem;}
-  .upgrade-progress-bar{width:100%; height:10px; border-radius:999px; background:var(--surface); border:1px solid var(--line-soft); overflow:hidden;}
-  .upgrade-progress-fill{height:100%; background:var(--moss); border-radius:999px; transition:width 0.25s ease;}
-  .upgrade-progress-text{display:flex; justify-content:space-between; font-size:0.78rem; color:var(--ink-soft); margin-top:0.35rem; font-family:var(--font-mono);}
-  .upgrade-list{display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.7rem;}
-  .upg-row{display:flex; align-items:flex-start; gap:0.5rem; padding:0.6rem 0.6rem 0.6rem 0.35rem; border-radius:10px; background:var(--surface); border:1px solid var(--line-soft); touch-action:pan-y;}
-  .upg-row.dragging{box-shadow:var(--shadow); background:var(--paper-raised); position:relative; z-index:5;}
-  .upg-drag-handle{cursor:grab; color:var(--ink-soft); touch-action:none; padding:0.15rem 0.3rem; flex:none; user-select:none; font-size:1rem; line-height:1.4; margin-top:0.1rem;}
-  .upg-drag-handle:active{cursor:grabbing;}
-  .upg-check{flex:none; margin-top:0.2rem; width:18px; height:18px; accent-color:var(--moss); cursor:pointer;}
-  .upg-body{flex:1; min-width:0;}
-  .upg-title{font-weight:700; font-size:0.88rem; word-break:break-word;}
-  .upg-row.done .upg-title{text-decoration:line-through; color:var(--ink-soft);}
-  .upg-desc{font-size:0.78rem; color:var(--ink-soft); margin-top:0.2rem; word-break:break-word; white-space:pre-wrap;}
-  .upg-acts{display:flex; gap:0.2rem; flex:none;}
-  .upgrade-empty{font-size:0.82rem; color:var(--ink-soft); padding:0.4rem 0.1rem 0.8rem;}
   .upgrade-pagination{display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-top:0.2rem;}
   .upgrade-pagination button{border:1px solid rgba(var(--tint-rgb),0.2); background:transparent; color:var(--ink); padding:0.35rem 0.8rem; border-radius:999px; font-size:0.78rem; font-weight:700; cursor:pointer;}
   .upgrade-pagination button:disabled{opacity:0.35; cursor:default;}
   .upgrade-pagination .page-info{font-size:0.76rem; color:var(--ink-soft); font-family:var(--font-mono);}
-  .upgrade-done-toggle{display:flex; align-items:center; justify-content:space-between; width:100%; background:transparent; border:1px dashed var(--line-soft); border-radius:10px; padding:0.55rem 0.75rem; font-size:0.8rem; font-weight:700; color:var(--ink-soft); cursor:pointer; margin:0.6rem 0 0.5rem; font-family:inherit;}
-  .upgrade-done-toggle:hover{color:var(--ink); border-color:var(--line);}
-  .upgrade-done-caret{transition:transform 0.2s ease; display:inline-block;}
-  .upgrade-done-toggle.expanded .upgrade-done-caret{transform:rotate(180deg);}
-  .upgrade-done-list{margin-top:0.5rem;}
-  .upg-drag-handle-static{visibility:hidden;}
 
   .theme-tabs{display:flex; gap:0.4rem; background:var(--surface); padding:4px; border-radius:999px; margin-bottom:0.2rem;}
   .theme-tab{
@@ -725,8 +706,6 @@
   .settings-panel.active{display:block;}
   body:not([data-view="calendar"]) .month-nav{display:none;}
   body:not([data-view="dashboard"]):not([data-view="flexible"]) .add-btn{display:none;}
-  body[data-view="settings"] .toolbar{display:none;}
-  body[data-view="settings"] .layout{display:none;}
   body[data-view="display"] .toolbar{display:none;}
   body[data-view="display"] .layout{display:none;}
   body[data-view="flexible"] .toolbar{display:none;}
@@ -781,28 +760,35 @@
     font-family:inherit; color:var(--ink); pointer-events:none; white-space:nowrap; font-size:16px;
   }
   @media (min-width:640px){ .date-field-display{ font-size:0.9rem; } }
-  .notes-toolbar{display:flex; gap:0.35rem; margin-bottom:0.4rem; flex-wrap:wrap;}
+  .notes-toolbar{display:flex; gap:0.35rem; margin-bottom:0.4rem; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
+  .notes-toolbar::-webkit-scrollbar{display:none;}
   .notes-fmt-btn{
     display:flex; align-items:center; gap:0.3rem; border:1.5px solid var(--line); border-radius:999px;
     background:var(--paper-raised); color:var(--ink-soft); font-size:0.74rem; font-weight:700;
-    padding:0.3rem 0.6rem; cursor:pointer; line-height:1;
+    padding:0.3rem 0.6rem; cursor:pointer; line-height:1; flex:none; white-space:nowrap;
   }
   .notes-fmt-btn svg{width:13px; height:13px; flex:none;}
   .notes-fmt-btn:hover{border-color:var(--moss);}
   .notes-fmt-btn.active{border-color:var(--moss); background:var(--selected-bg); color:var(--moss-deep);}
-  #upgradeDesc{resize:vertical; min-height:80px; overflow-y:auto;}
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;}
   .row-3 .checkbox-field.compact{padding:0.5rem 0.5rem;}
-  /* Baris Tanggal mulai / Waktu / Berakhir pada: seragamkan ukuran ketiga
-     kolom supaya sama kecil & rapat, tidak mengikuti ukuran field biasa. */
-  #dateTimeUntilRow.row-3{align-items:start;}
+  /* Baris Tanggal mulai / Waktu / Berakhir pada: di layar sempit (HP),
+     susun 2 kolom (Tanggal mulai + Waktu) lalu "Berakhir pada" penuh satu
+     baris di bawahnya — supaya ketiga kolom tidak berdesakan/bersinggungan.
+     Di layar lebih lebar, kembali ke 3 kolom sejajar seperti semula. */
+  #dateTimeUntilRow.row-3{align-items:start; grid-template-columns:1fr 1fr; row-gap:0.85rem;}
+  #dateTimeUntilRow.row-3 #untilRow{grid-column:1 / -1;}
   #dateTimeUntilRow.row-3 .field{margin-bottom:0;}
-  #dateTimeUntilRow.row-3 .field label{font-size:0.72rem; margin-bottom:0.25rem;}
+  #dateTimeUntilRow.row-3 .field label{font-size:0.72rem; margin-bottom:0.25rem; min-height:1.9em; display:flex; align-items:flex-end;}
   #dateTimeUntilRow.row-3 .field input,
-  #dateTimeUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem;}
+  #dateTimeUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem; width:100%; box-sizing:border-box;}
   #dateTimeUntilRow.row-3 .date-field-display{font-size:0.8rem; left:0.5rem;}
   #dateTimeUntilRow.row-3 .hint{font-size:0.66rem; margin-top:0.3rem; line-height:1.25;}
+  @media (min-width:480px){
+    #dateTimeUntilRow.row-3{grid-template-columns:1fr 1fr 1fr; row-gap:0;}
+    #dateTimeUntilRow.row-3 #untilRow{grid-column:auto;}
+  }
   @media (min-width:640px){
     #dateTimeUntilRow.row-3 .field input,
     #dateTimeUntilRow.row-3 .field select{ font-size:0.8rem; }
@@ -1146,35 +1132,7 @@
     </div>
   </section>
 
-  <section class="panel view-section settings-panel" data-view="settings" aria-label="Pengaturan">
-    <div class="settings-block">
-      <h2>Upgrade Aplikasi</h2>
-      <p class="hint">Daftar rencana/pembaruan aplikasi. Centang yang sudah selesai, seret ikon <span aria-hidden="true">⠿</span> untuk mengurutkan ulang prioritas. Item yang sudah selesai otomatis disembunyikan di bagian "Selesai" di bawah.</p>
-      <button type="button" class="btn btn-ghost" id="addUpgradeBtn" style="margin-bottom:0.8rem;">+ Tambah item upgrade</button>
-      <div class="upgrade-progress-wrap">
-        <div class="upgrade-progress-bar"><div class="upgrade-progress-fill" id="upgradeProgressFill" style="width:0%;"></div></div>
-        <div class="upgrade-progress-text"><span id="upgradeProgressLabel">0 dari 0 selesai</span><span id="upgradeProgressPct">0%</span></div>
-      </div>
-      <div class="upgrade-list" id="upgradeList"></div>
-      <div class="upgrade-pagination" id="upgradePagination" hidden>
-        <button type="button" id="upgradePrev">‹ Sebelumnya</button>
-        <span class="page-info" id="upgradePageInfo"></span>
-        <button type="button" id="upgradeNext">Selanjutnya ›</button>
-      </div>
-      <button type="button" class="upgrade-done-toggle" id="upgradeDoneToggle" aria-expanded="false" hidden>
-        <span id="upgradeDoneToggleLabel">Selesai (0)</span>
-        <span class="upgrade-done-caret" aria-hidden="true">▾</span>
-      </button>
-      <div class="upgrade-list upgrade-done-list" id="upgradeDoneList" hidden></div>
-      <div class="upgrade-pagination" id="upgradeDonePagination" hidden>
-        <button type="button" id="upgradeDonePrev">‹ Sebelumnya</button>
-        <span class="page-info" id="upgradeDonePageInfo"></span>
-        <button type="button" id="upgradeDoneNext">Selanjutnya ›</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel view-section settings-panel" data-view="display" aria-label="Tampilan">
+  <section class="panel view-section settings-panel" data-view="display" aria-label="Setting">
     <div class="settings-block">
       <h2>Tampilan</h2>
       <div class="theme-tabs" id="themeTabs">
@@ -1196,6 +1154,11 @@
     <div class="settings-block">
       <h2>Kategori</h2>
       <p class="hint">Ketuk kategori untuk menampilkan/menyembunyikannya di kalender dan daftar. Gunakan ✎ untuk mengubah, 🗑 untuk menghapus.</p>
+      <div class="search-box" id="catSearchBox" style="margin-bottom:0.7rem;">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="text" id="catSearchInput" placeholder="Cari kategori…" autocomplete="off">
+        <button type="button" class="search-clear" id="catSearchClear" aria-label="Hapus pencarian">✕</button>
+      </div>
       <div class="cat-manage-list" id="catManageList"></div>
       <div class="upgrade-pagination" id="catPagination" hidden>
         <button type="button" id="catPrev">‹ Sebelumnya</button>
@@ -1206,7 +1169,7 @@
     </div>
     <div class="settings-block">
       <h2>Cadangkan &amp; Pulihkan Data</h2>
-      <p class="hint">Unduh seluruh isi aplikasi (pengingat, kategori, status centang, dan daftar upgrade) sebagai satu file JSON untuk jaga-jaga. File ini bisa dipulihkan kembali kapan saja, misalnya setelah ganti perangkat atau kalau data tidak sengaja berubah.</p>
+      <p class="hint">Unduh seluruh isi aplikasi (pengingat, kategori, dan status centang) sebagai satu file JSON untuk jaga-jaga. File ini bisa dipulihkan kembali kapan saja, misalnya setelah ganti perangkat atau kalau data tidak sengaja berubah.</p>
       <button type="button" class="btn btn-ghost" id="backupJsonBtn">⬇ Unduh backup (.json)</button>
       <button type="button" class="btn btn-ghost" id="restoreJsonBtn" style="margin-top:0.6rem;">⬆ Pulihkan dari file backup…</button>
       <input type="file" id="restoreJsonInput" accept="application/json,.json" hidden>
@@ -1256,14 +1219,9 @@
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="14.5" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <span>Kalender</span>
   </button>
-  <button type="button" class="nav-btn" data-view="settings">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.9 4.9l1.55 1.55M17.55 17.55l1.55 1.55M3 12h2.2M18.8 12H21M4.9 19.1l1.55-1.55M17.55 6.45l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    <span>Pengaturan</span>
-  </button>
   <button type="button" class="nav-btn" data-view="display">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="4.5" width="17" height="12" rx="1.8" stroke="currentColor" stroke-width="2"/><path d="M8.5 20h7M12 16.5V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    <span>Tampilan</span>
-    <span class="nav-dot" id="settingsNavDot"></span>
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.9 4.9l1.55 1.55M17.55 17.55l1.55 1.55M3 12h2.2M18.8 12H21M4.9 19.1l1.55-1.55M17.55 6.45l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>Setting</span>
   </button>
 </nav>
 
@@ -1475,30 +1433,6 @@
       <div class="modal-actions">
         <div style="flex:1;"></div>
         <button type="button" class="btn btn-ghost" id="cancelCatForm">Batal</button>
-        <button type="submit" class="btn btn-primary">Simpan</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Add/Edit upgrade item -->
-<div class="overlay" id="upgradeFormOverlay" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="upgradeFormTitle">
-    <h2 id="upgradeFormTitle">Item upgrade baru</h2>
-    <form id="upgradeForm">
-      <input type="hidden" id="upgradeId">
-      <div class="field">
-        <label for="upgradeTitle">Judul</label>
-        <input type="text" id="upgradeTitle" required maxlength="80" placeholder="Contoh: Notifikasi push saat aplikasi tertutup">
-      </div>
-      <div class="field">
-        <label for="upgradeDesc">Keterangan (opsional)</label>
-        <textarea id="upgradeDesc" placeholder="Detail rencana upgrade…" rows="3"></textarea>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-danger" id="deleteUpgradeBtn" style="display:none;">Hapus</button>
-        <div style="flex:1;"></div>
-        <button type="button" class="btn btn-ghost" id="cancelUpgradeForm">Batal</button>
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>
@@ -2844,20 +2778,48 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var catPageInfoEl = document.getElementById('catPageInfo');
   var catPage = 0;
   var CAT_PAGE_SIZE = 5;
+  var catSearchQuery = '';
+  var catSearchInput = document.getElementById('catSearchInput');
+  var catSearchBox = document.getElementById('catSearchBox');
+  var catSearchClear = document.getElementById('catSearchClear');
+  catSearchInput.addEventListener('input', function(){
+    catSearchQuery = catSearchInput.value.trim().toLowerCase();
+    catSearchBox.classList.toggle('has-value', catSearchQuery.length > 0);
+    catPage = 0;
+    renderCategorySettings();
+  });
+  catSearchClear.addEventListener('click', function(){
+    catSearchInput.value = '';
+    catSearchQuery = '';
+    catSearchBox.classList.remove('has-value');
+    catPage = 0;
+    renderCategorySettings();
+    catSearchInput.focus();
+  });
 
   function renderCategorySettings(){
-    var total = CATS.length;
+    var filtered = catSearchQuery
+      ? CATS.filter(function(c){ return c.label.toLowerCase().indexOf(catSearchQuery) !== -1; })
+      : CATS;
+    var total = filtered.length;
     var totalPages = Math.max(1, Math.ceil(total / CAT_PAGE_SIZE));
     if (catPage >= totalPages) catPage = totalPages - 1;
     if (catPage < 0) catPage = 0;
     var start = catPage * CAT_PAGE_SIZE;
-    var pageItems = CATS.slice(start, start + CAT_PAGE_SIZE);
+    var pageItems = filtered.slice(start, start + CAT_PAGE_SIZE);
+
+    if (!total){
+      catManageList.innerHTML = '<p class="upgrade-empty">Tidak ada kategori yang cocok dengan "'+escapeHTML(catSearchInput.value.trim())+'".</p>';
+      catPaginationEl.hidden = true;
+      return;
+    }
 
     catManageList.innerHTML = pageItems.map(function(c, i){
-      var absIndex = start + i;
+      var absIndex = CATS.indexOf(c);
       var active = state.activeFilters.indexOf(c.id) !== -1;
+      var canDrag = !catSearchQuery;
       return '<div class="cat-manage-row" data-index="'+absIndex+'" data-id="'+c.id+'">' +
-        '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>' +
+        (canDrag ? '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>' : '<span class="upg-drag-handle-static">⠿</span>') +
         '<button type="button" class="cat-manage-toggle'+(active?' active':'')+'" data-id="'+c.id+'" aria-label="Tampilkan/sembunyikan '+escapeHTML(c.label)+'">' +
           '<span class="dot" style="background:'+c.hex+'"></span><span class="label">'+escapeHTML(c.label)+'</span>' +
         '</button>' +
@@ -2898,21 +2860,26 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         deleteCategory(btn.getAttribute('data-id'));
       });
     });
-    Array.prototype.forEach.call(catManageList.querySelectorAll('.upg-drag-handle'), function(handle){
-      handle.addEventListener('pointerdown', function(e){ startCategoryDrag(e, handle); });
-    });
+    if (!catSearchQuery){
+      Array.prototype.forEach.call(catManageList.querySelectorAll('.upg-drag-handle'), function(handle){
+        handle.addEventListener('pointerdown', function(e){ startCategoryDrag(e, handle); });
+      });
+    }
   }
 
   document.getElementById('catPrev').addEventListener('click', function(){
     if (catPage > 0){ catPage--; renderCategorySettings(); }
   });
   document.getElementById('catNext').addEventListener('click', function(){
-    var totalPages = Math.max(1, Math.ceil(CATS.length / CAT_PAGE_SIZE));
+    var filteredTotal = catSearchQuery
+      ? CATS.filter(function(c){ return c.label.toLowerCase().indexOf(catSearchQuery) !== -1; }).length
+      : CATS.length;
+    var totalPages = Math.max(1, Math.ceil(filteredTotal / CAT_PAGE_SIZE));
     if (catPage < totalPages - 1){ catPage++; renderCategorySettings(); }
   });
 
-  // Drag-to-reorder for categories — same pointer-based approach as the
-  // Upgrade Aplikasi list, restricted to the current page.
+  // Drag-to-reorder for categories — pointer-based approach, restricted to
+  // the current page.
   function startCategoryDrag(e, handle){
     if (!currentUser) return;
     e.preventDefault();
@@ -3073,365 +3040,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     }).catch(function(err){
       console.error(err);
       showToast('Gagal menghapus kategori. Coba lagi.');
-    });
-  }
-
-  // ---------- Upgrade Aplikasi (roadmap checklist, Pengaturan) ----------
-  var UPGRADES = [];
-  var unsubscribeUpgrades = null;
-  var upgradePage = 0;
-  var UPGRADE_PAGE_SIZE = 5;
-  var upgradeListEl = document.getElementById('upgradeList');
-  var upgradePaginationEl = document.getElementById('upgradePagination');
-  var upgradePageInfoEl = document.getElementById('upgradePageInfo');
-  var upgradeProgressFillEl = document.getElementById('upgradeProgressFill');
-  var upgradeProgressLabelEl = document.getElementById('upgradeProgressLabel');
-  var upgradeProgressPctEl = document.getElementById('upgradeProgressPct');
-  // "Selesai" section is collapsed (auto-hidden) by default; user toggles it open.
-  var upgradeDoneExpanded = false;
-  var upgradeDonePage = 0;
-  var upgradeDoneToggleEl = document.getElementById('upgradeDoneToggle');
-  var upgradeDoneToggleLabelEl = document.getElementById('upgradeDoneToggleLabel');
-  var upgradeDoneListEl = document.getElementById('upgradeDoneList');
-  var upgradeDonePaginationEl = document.getElementById('upgradeDonePagination');
-  var upgradeDonePageInfoEl = document.getElementById('upgradeDonePageInfo');
-
-  function upgradesDocRef(){
-    return doc(db, 'users', currentUser.uid, 'settings', 'upgrades');
-  }
-  function subscribeUpgrades(){
-    if (unsubscribeUpgrades) unsubscribeUpgrades();
-    unsubscribeUpgrades = onSnapshot(upgradesDocRef(), function(snap){
-      UPGRADES = (snap.exists() && Array.isArray(snap.data().list)) ? snap.data().list : [];
-      if (upgradePage > 0 && upgradePage * UPGRADE_PAGE_SIZE >= UPGRADES.length){
-        upgradePage = Math.max(0, Math.ceil(UPGRADES.length / UPGRADE_PAGE_SIZE) - 1);
-      }
-      renderUpgradeSettings();
-      markSynced();
-    }, function(err){
-      console.error('Firestore upgrades sync error', err);
-      showToast('Gagal memuat daftar upgrade dari server');
-    });
-  }
-  function saveUpgradesToCloud(list){
-    return setDoc(upgradesDocRef(), { list: list });
-  }
-  function upgUid(){ return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
-
-  function copyUpgradeItemText(id){
-    var it = UPGRADES.find(function(u){ return u.id === id; });
-    if (!it) return;
-    var text = it.desc ? (it.title + '\n' + it.desc) : it.title;
-    function fallbackCopy(){
-      var ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      try { document.execCommand('copy'); showToast('Disalin ke clipboard'); }
-      catch (err) { showToast('Gagal menyalin'); }
-      document.body.removeChild(ta);
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(function(){
-        showToast('Disalin ke clipboard');
-      }).catch(fallbackCopy);
-    } else {
-      fallbackCopy();
-    }
-  }
-
-  function upgradeRowHtml(it, absIndex, draggable){
-    return '<div class="upg-row'+(it.done?' done':'')+'" data-index="'+absIndex+'" data-id="'+it.id+'">' +
-      (draggable
-        ? '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>'
-        : '<span class="upg-drag-handle upg-drag-handle-static" aria-hidden="true">⠿</span>') +
-      '<input type="checkbox" class="upg-check" data-id="'+it.id+'"'+(it.done?' checked':'')+' aria-label="Tandai selesai">' +
-      '<div class="upg-body">' +
-        '<div class="upg-title">'+escapeHTML(it.title)+'</div>' +
-        (it.desc ? '<div class="upg-desc">'+escapeHTML(it.desc)+'</div>' : '') +
-      '</div>' +
-      '<div class="upg-acts">' +
-        '<button type="button" class="icon-btn copy-upgrade" data-id="'+it.id+'" aria-label="Salin judul dan keterangan">⧉</button>' +
-        '<button type="button" class="icon-btn edit-upgrade" data-id="'+it.id+'" aria-label="Ubah item">✎</button>' +
-        '<button type="button" class="icon-btn delete-upgrade" data-id="'+it.id+'" aria-label="Hapus item">🗑</button>' +
-      '</div>' +
-    '</div>';
-  }
-
-  function bindUpgradeRowEvents(container, draggable){
-    Array.prototype.forEach.call(container.querySelectorAll('.upg-check'), function(cb){
-      cb.addEventListener('change', function(){
-        var id = cb.getAttribute('data-id');
-        var newList = UPGRADES.map(function(it){ return it.id===id ? Object.assign({}, it, { done: cb.checked }) : it; });
-        saveUpgradesToCloud(newList).catch(function(err){
-          console.error(err);
-          showToast('Gagal memperbarui status. Coba lagi.');
-        });
-      });
-    });
-    Array.prototype.forEach.call(container.querySelectorAll('.copy-upgrade'), function(btn){
-      btn.addEventListener('click', function(e){
-        e.stopPropagation();
-        copyUpgradeItemText(btn.getAttribute('data-id'));
-      });
-    });
-    Array.prototype.forEach.call(container.querySelectorAll('.edit-upgrade'), function(btn){
-      btn.addEventListener('click', function(e){
-        e.stopPropagation();
-        openEditUpgradeForm(btn.getAttribute('data-id'));
-      });
-    });
-    Array.prototype.forEach.call(container.querySelectorAll('.delete-upgrade'), function(btn){
-      btn.addEventListener('click', function(e){
-        e.stopPropagation();
-        deleteUpgradeItem(btn.getAttribute('data-id'));
-      });
-    });
-    if (draggable){
-      Array.prototype.forEach.call(container.querySelectorAll('.upg-drag-handle'), function(handle){
-        handle.addEventListener('pointerdown', function(e){ startUpgradeDrag(e, handle, container); });
-      });
-    }
-  }
-
-  function renderUpgradeSettings(){
-    var total = UPGRADES.length;
-    var doneCount = UPGRADES.filter(function(it){ return it.done; }).length;
-    var pct = total ? Math.round((doneCount / total) * 100) : 0;
-    upgradeProgressFillEl.style.width = pct + '%';
-    upgradeProgressLabelEl.textContent = doneCount + ' dari ' + total + ' selesai';
-    upgradeProgressPctEl.textContent = pct + '%';
-
-    var pending = UPGRADES.filter(function(it){ return !it.done; });
-    var doneItems = UPGRADES.filter(function(it){ return it.done; });
-
-    // ---- Belum selesai ----
-    if (!pending.length){
-      upgradeListEl.innerHTML = '<p class="upgrade-empty">' +
-        (total ? 'Semua item upgrade sudah selesai. 🎉' : 'Belum ada item upgrade. Tambahkan rencana pembaruan aplikasi di bawah.') +
-        '</p>';
-      upgradePaginationEl.hidden = true;
-    } else {
-      var totalPages = Math.max(1, Math.ceil(pending.length / UPGRADE_PAGE_SIZE));
-      if (upgradePage >= totalPages) upgradePage = totalPages - 1;
-      if (upgradePage < 0) upgradePage = 0;
-      var start = upgradePage * UPGRADE_PAGE_SIZE;
-      var pageItems = pending.slice(start, start + UPGRADE_PAGE_SIZE);
-
-      upgradeListEl.innerHTML = pageItems.map(function(it, i){
-        return upgradeRowHtml(it, start + i, true);
-      }).join('');
-
-      upgradePaginationEl.hidden = pending.length <= UPGRADE_PAGE_SIZE;
-      upgradePageInfoEl.textContent = 'Halaman ' + (upgradePage + 1) + ' dari ' + totalPages;
-      document.getElementById('upgradePrev').disabled = upgradePage <= 0;
-      document.getElementById('upgradeNext').disabled = upgradePage >= totalPages - 1;
-      bindUpgradeRowEvents(upgradeListEl, true);
-    }
-
-    // ---- Selesai (auto-hide, collapsed by default) ----
-    if (!doneItems.length){
-      upgradeDoneToggleEl.hidden = true;
-      upgradeDoneListEl.hidden = true;
-      upgradeDoneListEl.innerHTML = '';
-      upgradeDonePaginationEl.hidden = true;
-      return;
-    }
-
-    upgradeDoneToggleEl.hidden = false;
-    upgradeDoneToggleLabelEl.textContent = 'Selesai (' + doneItems.length + ')';
-    upgradeDoneToggleEl.setAttribute('aria-expanded', upgradeDoneExpanded ? 'true' : 'false');
-    upgradeDoneToggleEl.classList.toggle('expanded', upgradeDoneExpanded);
-
-    if (!upgradeDoneExpanded){
-      upgradeDoneListEl.hidden = true;
-      upgradeDoneListEl.innerHTML = '';
-      upgradeDonePaginationEl.hidden = true;
-      return;
-    }
-
-    upgradeDoneListEl.hidden = false;
-    var dTotalPages = Math.max(1, Math.ceil(doneItems.length / UPGRADE_PAGE_SIZE));
-    if (upgradeDonePage >= dTotalPages) upgradeDonePage = dTotalPages - 1;
-    if (upgradeDonePage < 0) upgradeDonePage = 0;
-    var dStart = upgradeDonePage * UPGRADE_PAGE_SIZE;
-    var dPageItems = doneItems.slice(dStart, dStart + UPGRADE_PAGE_SIZE);
-
-    upgradeDoneListEl.innerHTML = dPageItems.map(function(it, i){
-      return upgradeRowHtml(it, dStart + i, false);
-    }).join('');
-
-    upgradeDonePaginationEl.hidden = doneItems.length <= UPGRADE_PAGE_SIZE;
-    upgradeDonePageInfoEl.textContent = 'Halaman ' + (upgradeDonePage + 1) + ' dari ' + dTotalPages;
-    document.getElementById('upgradeDonePrev').disabled = upgradeDonePage <= 0;
-    document.getElementById('upgradeDoneNext').disabled = upgradeDonePage >= dTotalPages - 1;
-    bindUpgradeRowEvents(upgradeDoneListEl, false);
-  }
-
-  document.getElementById('upgradePrev').addEventListener('click', function(){
-    if (upgradePage > 0){ upgradePage--; renderUpgradeSettings(); }
-  });
-  document.getElementById('upgradeNext').addEventListener('click', function(){
-    var pendingCount = UPGRADES.filter(function(it){ return !it.done; }).length;
-    var totalPages = Math.max(1, Math.ceil(pendingCount / UPGRADE_PAGE_SIZE));
-    if (upgradePage < totalPages - 1){ upgradePage++; renderUpgradeSettings(); }
-  });
-  document.getElementById('upgradeDonePrev').addEventListener('click', function(){
-    if (upgradeDonePage > 0){ upgradeDonePage--; renderUpgradeSettings(); }
-  });
-  document.getElementById('upgradeDoneNext').addEventListener('click', function(){
-    var doneCount = UPGRADES.filter(function(it){ return it.done; }).length;
-    var totalPages = Math.max(1, Math.ceil(doneCount / UPGRADE_PAGE_SIZE));
-    if (upgradeDonePage < totalPages - 1){ upgradeDonePage++; renderUpgradeSettings(); }
-  });
-  upgradeDoneToggleEl.addEventListener('click', function(){
-    upgradeDoneExpanded = !upgradeDoneExpanded;
-    if (upgradeDoneExpanded) upgradeDonePage = 0;
-    renderUpgradeSettings();
-  });
-
-  // Drag-to-reorder: pointer-based (mouse + touch), swaps items whose
-  // vertical position the dragged row crosses, restricted to the current
-  // page (pages stay contiguous slices of the underlying UPGRADES array).
-  function startUpgradeDrag(e, handle, container){
-    if (!currentUser) return;
-    e.preventDefault();
-    var row = handle.closest('.upg-row');
-    if (!row) return;
-    var siblings = Array.prototype.slice.call(container.querySelectorAll('.upg-row'));
-    var startY = e.clientY;
-    row.classList.add('dragging');
-    try { handle.setPointerCapture(e.pointerId); } catch(err){}
-
-    function onMove(ev){
-      var dy = ev.clientY - startY;
-      row.style.transform = 'translateY(' + dy + 'px)';
-      for (var i=0; i<siblings.length; i++){
-        var sib = siblings[i];
-        if (sib === row) continue;
-        var r = sib.getBoundingClientRect();
-        if (ev.clientY > r.top && ev.clientY < r.bottom){
-          var curIndex = parseInt(row.getAttribute('data-index'), 10);
-          var sibIndex = parseInt(sib.getAttribute('data-index'), 10);
-          // Rows only show a filtered slice (belum selesai / selesai) of
-          // UPGRADES, so swap by id — the two dragged items' real positions
-          // in the underlying array, wherever they are — not by data-index.
-          var rowId = row.getAttribute('data-id');
-          var sibId = sib.getAttribute('data-id');
-          var iA = UPGRADES.findIndex(function(x){ return x.id === rowId; });
-          var iB = UPGRADES.findIndex(function(x){ return x.id === sibId; });
-          if (iA > -1 && iB > -1){
-            var tmp = UPGRADES[iA];
-            UPGRADES[iA] = UPGRADES[iB];
-            UPGRADES[iB] = tmp;
-          }
-          row.setAttribute('data-index', sibIndex);
-          sib.setAttribute('data-index', curIndex);
-          if (curIndex < sibIndex) container.insertBefore(row, sib.nextSibling);
-          else container.insertBefore(row, sib);
-          row.style.transform = 'translateY(0px)';
-          startY = ev.clientY;
-          break;
-        }
-      }
-    }
-    function onUp(){
-      row.classList.remove('dragging');
-      row.style.transform = '';
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      saveUpgradesToCloud(UPGRADES).catch(function(err){
-        console.error(err);
-        showToast('Gagal menyimpan urutan. Coba lagi.');
-      });
-    }
-    document.addEventListener('pointermove', onMove);
-    document.addEventListener('pointerup', onUp);
-  }
-
-  // ---------- Add/Edit upgrade item form ----------
-  var upgradeFormOverlay = document.getElementById('upgradeFormOverlay');
-  var upgradeForm = document.getElementById('upgradeForm');
-  var upgradeTitleEl = document.getElementById('upgradeTitle');
-  var upgradeDescEl = document.getElementById('upgradeDesc');
-  var deleteUpgradeBtn = document.getElementById('deleteUpgradeBtn');
-
-  // Textarea "Keterangan" tumbuh mengikuti panjang ketikan, supaya seluruh
-  // teks langsung terlihat tanpa perlu scroll di dalam kotaknya.
-  function autoGrowUpgradeDesc(){
-    upgradeDescEl.style.height = 'auto';
-    upgradeDescEl.style.height = upgradeDescEl.scrollHeight + 'px';
-  }
-  upgradeDescEl.addEventListener('input', autoGrowUpgradeDesc);
-
-  function openAddUpgradeForm(){
-    document.getElementById('upgradeFormTitle').textContent = 'Item upgrade baru';
-    document.getElementById('upgradeId').value = '';
-    upgradeTitleEl.value = '';
-    upgradeDescEl.value = '';
-    deleteUpgradeBtn.style.display = 'none';
-    upgradeFormOverlay.hidden = false;
-    setTimeout(function(){ upgradeTitleEl.focus(); autoGrowUpgradeDesc(); }, 30);
-  }
-  function openEditUpgradeForm(id){
-    var it = UPGRADES.find(function(x){ return x.id===id; });
-    if (!it) return;
-    document.getElementById('upgradeFormTitle').textContent = 'Ubah item upgrade';
-    document.getElementById('upgradeId').value = it.id;
-    upgradeTitleEl.value = it.title;
-    upgradeDescEl.value = it.desc || '';
-    deleteUpgradeBtn.style.display = '';
-    upgradeFormOverlay.hidden = false;
-    setTimeout(function(){ upgradeTitleEl.focus(); autoGrowUpgradeDesc(); }, 30);
-  }
-  function closeUpgradeForm(){ upgradeFormOverlay.hidden = true; }
-  document.getElementById('addUpgradeBtn').addEventListener('click', openAddUpgradeForm);
-  document.getElementById('cancelUpgradeForm').addEventListener('click', closeUpgradeForm);
-  upgradeFormOverlay.addEventListener('click', function(e){ if (e.target===upgradeFormOverlay) closeUpgradeForm(); });
-
-  upgradeForm.addEventListener('submit', function(e){
-    e.preventDefault();
-    if (!currentUser) return;
-    var id = document.getElementById('upgradeId').value;
-    var title = upgradeTitleEl.value.trim();
-    if (!title) return;
-    var desc = upgradeDescEl.value.trim();
-    var newList;
-    if (id){
-      newList = UPGRADES.map(function(it){ return it.id===id ? Object.assign({}, it, { title: title, desc: desc }) : it; });
-    } else {
-      newList = UPGRADES.concat([{ id: upgUid(), title: title, desc: desc, done: false }]);
-    }
-    closeUpgradeForm();
-    saveUpgradesToCloud(newList).then(function(){
-      showToast(id ? 'Item upgrade diperbarui' : 'Item upgrade ditambahkan');
-    }).catch(function(err){
-      console.error(err);
-      showToast('Gagal menyimpan item upgrade. Coba lagi.');
-    });
-  });
-
-  deleteUpgradeBtn.addEventListener('click', function(){
-    var id = document.getElementById('upgradeId').value;
-    if (!id) return;
-    closeUpgradeForm();
-    deleteUpgradeItem(id);
-  });
-
-  function deleteUpgradeItem(id){
-    if (!currentUser) return;
-    var it = UPGRADES.find(function(x){ return x.id===id; });
-    if (!it) return;
-    if (!confirm('Hapus item upgrade "'+it.title+'"?')) return;
-    var newList = UPGRADES.filter(function(x){ return x.id !== id; });
-    saveUpgradesToCloud(newList).then(function(){
-      showToast('Item upgrade dihapus');
-    }).catch(function(err){
-      console.error(err);
-      showToast('Gagal menghapus item upgrade. Coba lagi.');
     });
   }
 
@@ -4513,8 +4121,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     closeCatDropdown();
     catDropdownWrap.classList.remove('invalid');
     renderCatOptions();
-    document.getElementById('fDate').value = prefillDate || toISODate(new Date());
-    document.getElementById('fTime').value = '09:00';
+    document.getElementById('fDate').value = prefillDate || '';
+    document.getElementById('fTime').value = '';
     updateDateDisplay(fDateEl, fDateDisplay);
     fUntilEl.value = '';
     updateDateDisplay(fUntilEl, fUntilDisplay);
@@ -4964,7 +4572,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var notifyNotice = document.getElementById('notifyNotice');
   var settingsNotifyStatus = document.getElementById('settingsNotifyStatus');
   var enableNotifySettings = document.getElementById('enableNotifySettings');
-  var settingsNavDot = document.getElementById('settingsNavDot');
   function refreshNotifyBanner(){
     var dismissed = sessionStorage.getItem('essentiapath.notifyDismissed');
     if ('Notification' in window && Notification.permission === 'default' && !dismissed){
@@ -4988,12 +4595,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       settingsNotifyStatus.textContent = 'Notifikasi belum diaktifkan.';
       enableNotifySettings.style.display = 'inline-block';
     }
-    refreshSettingsNavDot();
-  }
-  function refreshSettingsNavDot(){
-    var needsAttention = ('Notification' in window && Notification.permission === 'default')
-      || (deferredPrompt && !sessionStorage.getItem('essentiapath.installDismissed'));
-    settingsNavDot.classList.toggle('show', !!needsAttention);
   }
   document.getElementById('enableNotify').addEventListener('click', function(){
     if (!('Notification' in window)) return;
@@ -5062,24 +4663,20 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     e.preventDefault();
     deferredPrompt = e;
     if (!sessionStorage.getItem('essentiapath.installDismissed')) installNotice.hidden = false;
-    refreshSettingsNavDot();
   });
   document.getElementById('installBtn').addEventListener('click', function(){
     installNotice.hidden = true;
     if (deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; }
-    refreshSettingsNavDot();
   });
   document.getElementById('dismissInstall').addEventListener('click', function(){
     sessionStorage.setItem('essentiapath.installDismissed','1');
     installNotice.hidden = true;
-    refreshSettingsNavDot();
   });
   installBtnSettings.addEventListener('click', function(){
     installNotice.hidden = true;
     if (deferredPrompt){
       deferredPrompt.prompt();
       deferredPrompt = null;
-      refreshSettingsNavDot();
     } else {
       showToast('Aplikasi sudah terpasang atau tidak didukung browser ini.');
     }
@@ -5088,7 +4685,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // ---------- Backup & Restore (Pengaturan → Cadangkan & Pulihkan Data) ----------
   // Backup: kumpulkan seluruh data pengguna yang tersimpan di Firestore
   // (pengingat, kategori, status centang "Saat Ini"/Fleksibel, status
-  // centang sub-checklist, dan daftar upgrade) jadi satu file JSON yang
+  // centang sub-checklist) jadi satu file JSON yang
   // bisa diunduh. Restore: baca file JSON tsb kembali dan timpa data di
   // Firestore supaya persis sama seperti isi file — dilindungi konfirmasi
   // karena ini operasi merusak (menimpa data yang ada sekarang).
@@ -5105,8 +4702,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         reminders: state.reminders,
         categories: CATS,
         completions: state.completions,
-        checklistProgress: state.checklistProgress,
-        upgrades: UPGRADES
+        checklistProgress: state.checklistProgress
       }
     };
   }
@@ -5141,14 +4737,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   // Validasi ringan: pastikan file yang dipilih memang berformat backup
   // aplikasi ini (bukan JSON sembarangan), tapi tetap toleran kalau ada
-  // bagian data yang hilang/kosong (mis. backup lama sebelum fitur upgrade
-  // ditambahkan) — bagian yang hilang cukup dilewati, bukan digagalkan.
+  // bagian data yang hilang/kosong — bagian yang hilang cukup dilewati,
+  // bukan digagalkan.
   function validateBackupPayload(parsed){
     if (!parsed || typeof parsed !== 'object') return 'File bukan JSON yang valid.';
     if (!parsed.data || typeof parsed.data !== 'object') return 'File ini bukan file backup EssentiaPath (struktur data tidak ditemukan).';
     if (parsed.data.reminders && !Array.isArray(parsed.data.reminders)) return 'Data pengingat di file rusak (bukan daftar).';
     if (parsed.data.categories && !Array.isArray(parsed.data.categories)) return 'Data kategori di file rusak (bukan daftar).';
-    if (parsed.data.upgrades && !Array.isArray(parsed.data.upgrades)) return 'Data upgrade di file rusak (bukan daftar).';
     return null;
   }
 
@@ -5171,9 +4766,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     }
     tasks.push(setDoc(completionsDocRef(), { map: (b.completions && typeof b.completions === 'object') ? b.completions : {} }));
     tasks.push(setDoc(checklistProgressDocRef(), { map: (b.checklistProgress && typeof b.checklistProgress === 'object') ? b.checklistProgress : {} }));
-    if (Array.isArray(b.upgrades)){
-      tasks.push(saveUpgradesToCloud(b.upgrades));
-    }
     return Promise.all(tasks);
   }
 
@@ -5193,7 +4785,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var reminderCount = Array.isArray(parsed.data.reminders) ? parsed.data.reminders.length : 0;
       var exportedInfo = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString('id-ID') : 'tidak diketahui';
       var sure = confirm(
-        'Pulihkan backup ini akan MENIMPA seluruh data akun ini (pengingat, kategori, status centang, dan daftar upgrade) dengan isi file.\n\n' +
+        'Pulihkan backup ini akan MENIMPA seluruh data akun ini (pengingat, kategori, dan status centang) dengan isi file.\n\n' +
         'File dibuat: ' + exportedInfo + '\n' +
         'Jumlah pengingat di file: ' + reminderCount + '\n\n' +
         'Lanjutkan pulihkan?'
@@ -5350,7 +4942,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       settingsEmailEl.textContent = user.email || '';
       subscribeReminders();
       subscribeCategories();
-      subscribeUpgrades();
       subscribeCompletions();
       subscribeChecklistProgress();
       refreshNotifyBanner();
@@ -5366,16 +4957,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     } else {
       if (unsubscribeReminders){ unsubscribeReminders(); unsubscribeReminders = null; }
       if (unsubscribeCategories){ unsubscribeCategories(); unsubscribeCategories = null; }
-      if (unsubscribeUpgrades){ unsubscribeUpgrades(); unsubscribeUpgrades = null; }
       if (unsubscribeCompletions){ unsubscribeCompletions(); unsubscribeCompletions = null; }
       if (unsubscribeChecklistProgress){ unsubscribeChecklistProgress(); unsubscribeChecklistProgress = null; }
       state.reminders = [];
       state.completions = {};
       state.checklistProgress = {};
       CATS = DEFAULT_CATS.slice();
-      UPGRADES = [];
-      upgradePage = 0;
-      renderUpgradeSettings();
       accountChip.hidden = true;
       syncIndicatorEl.hidden = true;
       settingsEmailEl.textContent = '—';
@@ -5463,7 +5050,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   applyFontSize(getFontSizePref());
   updateFontSizeUi(getFontSizePref());
 
-  // ---------- View navigation (Dashboard / Kalender / Pengaturan) ----------
+  // ---------- View navigation (Dashboard / Kalender / Setting) ----------
   function setView(view){
     document.body.setAttribute('data-view', view);
     Array.prototype.forEach.call(document.querySelectorAll('.view-section'), function(el){
@@ -5482,7 +5069,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function renderAll(){
     renderCalendar();
     renderCategorySettings();
-    renderUpgradeSettings();
     renderCurrentActivity();
     renderUpcoming();
     renderRecentAdded();
@@ -5496,7 +5082,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (e.key === 'Escape'){
       if (!catFormOverlay.hidden) closeCatForm();
       else if (!formOverlay.hidden) closeForm();
-      else if (!upgradeFormOverlay.hidden) closeUpgradeForm();
       else if (!dayOverlay.hidden) closeDayPanel();
     }
   });
