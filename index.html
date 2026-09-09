@@ -589,7 +589,7 @@
     border-radius:10px; padding:0.6rem 0.7rem; margin-bottom:0.9rem;
   }
   .checkbox-field input[type="checkbox"]{width:auto; margin:2px 0 0;}
-  .checkbox-field label{font-size:0.82rem; font-weight:600; color:var(--ink); margin:0; cursor:pointer;}
+  .checkbox-field label{font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin:0; cursor:pointer;}
   /* Versi ringkas: cuma centang + label sebaris, tanpa deskripsi panjang di
      bawahnya — dipakai untuk toggle yang sudah jelas dari labelnya sendiri
      (fleksibel, prioritas), supaya form input pengingat lebih ringkas. */
@@ -751,10 +751,28 @@
     width:100%; border:1px solid var(--line); border-radius:9px; padding:0.55rem 0.65rem; font-size:16px;
     font-family:inherit; background:var(--surface); color:var(--ink); line-height:1.3;
   }
+  /* Native <select> di beberapa browser (terutama Chrome Android & Safari)
+     mengabaikan font-family kustom pada teks yang tampil di kotak select
+     yang tertutup, walau sudah diberi font-family:inherit — sehingga
+     tulisan seperti "Tidak berulang" terlihat pakai font sistem, beda
+     sendiri dari input lain. Matikan tampilan native (appearance:none)
+     lalu gambar ulang panah dropdown-nya sendiri lewat background-image,
+     supaya font & tampilannya konsisten di semua browser. */
+  .field select{
+    -webkit-appearance:none; -moz-appearance:none; appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'><path d='M6 9l6 6 6-6' stroke='%238F8374' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat; background-position:right 0.65rem center; background-size:16px;
+    padding-right:2.1rem;
+  }
   .field select{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
   @media (min-width:640px){
     .field input, .field select, .field textarea{ font-size:0.9rem; }
   }
+  /* Samakan ukuran & model font teks di dalam select "Ulangi" dengan label
+     checkbox di sebelahnya ("Jam Khusus" dkk), sesuai permintaan — jadi
+     lebih kecil & tebal daripada input teks biasa, bukan mengikuti aturan
+     font input pada umumnya di atas. */
+  .field select{ font-size:0.78rem; font-weight:700; color:var(--ink-soft); }
   .field textarea{resize:vertical; min-height:60px;}
   .date-field-wrap{position:relative;}
   .date-field-wrap input[type="date"]{color:transparent;}
@@ -790,7 +808,7 @@
      ketiga kolom tidak bersinggungan langsung. */
   #dateTimeUntilRow.row-3{align-items:start; grid-template-columns:1fr 1fr 1fr; gap:0.85rem; row-gap:0.85rem;}
   #dateTimeUntilRow.row-3 .field{margin-bottom:0; min-width:0;}
-  #dateTimeUntilRow.row-3 .field label{font-size:0.66rem; margin-bottom:0.25rem; min-height:1.7em; display:flex; align-items:flex-end; white-space:normal; line-height:1.15;}
+  #dateTimeUntilRow.row-3 .field label{font-size:0.78rem; margin-bottom:0.25rem; min-height:2.1em; display:flex; align-items:flex-end; white-space:normal; line-height:1.15;}
   #dateTimeUntilRow.row-3 .field input,
   #dateTimeUntilRow.row-3 .field select{padding:0.4rem 0.35rem; font-size:0.72rem; width:100%; box-sizing:border-box;}
   #dateTimeUntilRow.row-3 .date-field-wrap svg,
@@ -804,17 +822,28 @@
      ini kita lepas tampilan ikon bawaan input tanggal (toh sudah ada teks
      tanggal kustom sendiri lewat .date-field-display) dan kecilkan sisa
      padding kanan input waktu, supaya ruang yang terbebas cukup untuk
-     ketiga kolom muat sejajar tanpa saling menimpa. */
+     ketiga kolom muat sejajar tanpa saling menimpa.
+     Kolom "Waktu" juga disamakan perlakuannya (appearance:none) dengan
+     kolom tanggal di sini — sebelumnya cuma input tanggal yang dilepas
+     tampilan bawaannya, sedangkan input waktu tetap pakai kontrol native
+     iOS/Android yang punya tinggi sendiri (lebih tinggi & teksnya lebih
+     besar, mengabaikan padding/font-size kustom kita) — makanya kolom
+     "Waktu" terlihat lebih tinggi dari "Tanggal mulai" & "Berakhir pada".
+     Dengan appearance:none + tinggi eksplisit yang sama di ketiganya,
+     ketiga kolom jadi sama tinggi persis, hanya lebarnya yang tetap
+     menyesuaikan porsi masing-masing (grid 1fr dengan gap tetap ada). */
   @media (max-width:479px){
-    #dateTimeUntilRow.row-3 .date-field-wrap input[type="date"]{
+    #dateTimeUntilRow.row-3 .date-field-wrap input[type="date"],
+    #dateTimeUntilRow.row-3 input[type="time"]{
       -webkit-appearance:none; appearance:none;
     }
+    #dateTimeUntilRow.row-3 .field input{ height:2.15rem; box-sizing:border-box; }
     #dateTimeUntilRow.row-3 input[type="time"]{ padding-right:0.35rem; }
     #dateTimeUntilRow.row-3 .date-field-display{ right:0.35rem; }
   }
   @media (min-width:480px){
     #dateTimeUntilRow.row-3{gap:1rem;}
-    #dateTimeUntilRow.row-3 .field label{font-size:0.72rem; min-height:1.9em;}
+    #dateTimeUntilRow.row-3 .field label{font-size:0.78rem; min-height:1.9em;}
     #dateTimeUntilRow.row-3 .field input,
     #dateTimeUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem;}
     #dateTimeUntilRow.row-3 .date-field-display{font-size:0.8rem; left:0.5rem;}
