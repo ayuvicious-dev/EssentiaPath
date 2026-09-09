@@ -2250,6 +2250,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return out;
   }
 
+  // Sama seperti itemsForDate(), tapi TIDAK menyaring berdasarkan
+  // state.activeFilters. Dipakai khusus oleh autoSizeDayColumns() supaya
+  // lebar kolom kalender dihitung dari seluruh pengingat (independen dari
+  // kategori yang sedang difilter) — jadi tata letak kalender tetap
+  // konsisten baik saat difilter satu kategori, semua, maupun kosong sama
+  // sekali, alih-alih menyempit ke lebar minimum saat filter mengosongkan
+  // isi hari.
+  function itemsForDateAll(dateStr){
+    var out = [];
+    state.reminders.forEach(function(r){
+      var times = occurrencesOnDate(r, dateStr);
+      times.forEach(function(t){ out.push({ reminder:r, time:t, date:dateStr }); });
+    });
+    out.sort(function(a,b){ return a.time.localeCompare(b.time); });
+    return out;
+  }
+
   // ---------- Calendar rendering ----------
   var monthLabel = document.getElementById('monthLabel');
   var dayGrid = document.getElementById('dayGrid');
@@ -2290,6 +2307,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     probe.removeChild(clone);
     return w;
   }
+  var CAL_DAY_ITEMS_LIMIT = 5; // sama dengan DAY_ITEMS_LIMIT di renderCalendar()
   function autoSizeDayColumns(){
     if (!dayGrid) return;
     var cells = dayGrid.querySelectorAll('.day-cell');
@@ -2304,19 +2322,32 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(cells, function(cell, idx){
       var col = idx % 7;
       var needed = 0;
-      Array.prototype.forEach.call(cell.querySelectorAll('.chip'), function(chip){
+      // Ukur berdasarkan SEMUA pengingat hari itu (itemsForDateAll),
+      // bukan cuma chip yang sedang benar-benar tampil di DOM — supaya
+      // lebar kolom tidak ikut menyempit saat filter kategori aktif
+      // menyembunyikan sebagian/seluruh pengingat hari tersebut.
+      var dateStr = cell.getAttribute('data-date');
+      var allItems = dateStr ? itemsForDateAll(dateStr) : [];
+      var shown = allItems.slice(0, CAL_DAY_ITEMS_LIMIT);
+      shown.forEach(function(it){
+        var c = catInfo(it.reminder.category);
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.innerHTML = '<span class="dot" style="background:'+c.hex+'"></span><span class="t">'+it.time+'</span><span class="title">'+escapeHTML(it.reminder.title)+'</span>';
         var w = measureNaturalWidth(chip, probe);
         if (w > needed) needed = w;
       });
+      if (allItems.length > CAL_DAY_ITEMS_LIMIT){
+        var moreLink = document.createElement('span');
+        moreLink.className = 'more-link';
+        moreLink.textContent = '+'+(allItems.length-CAL_DAY_ITEMS_LIMIT)+' lainnya';
+        var wM = measureNaturalWidth(moreLink, probe);
+        if (wM > needed) needed = wM;
+      }
       var holidayTag = cell.querySelector('.day-holiday-tag');
       if (holidayTag){
         var wH = measureNaturalWidth(holidayTag, probe);
         if (wH > needed) needed = wH;
-      }
-      var moreLink = cell.querySelector('.more-link');
-      if (moreLink){
-        var wM = measureNaturalWidth(moreLink, probe);
-        if (wM > needed) needed = wM;
       }
       if (needed > 0){
         var cs = getComputedStyle(cell);
@@ -3721,7 +3752,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       applyCalFilterChange();
     });
     document.getElementById('calFilterNone').addEventListener('click', function(){
-      state.activeFilters = CATS.length ? [CATS[0].id] : []; // minimal satu kategori tetap tampil
+      // Sama seperti "Hapus semua" di Fleksibel: benar-benar kosongkan semua
+      // centang (bukan menyisakan satu kategori pertama), supaya pengguna
+      // bisa langsung mencentang kategori tujuan tanpa perlu batalkan
+      // centang kategori lain satu-satu.
+      state.activeFilters = [];
       applyCalFilterChange();
     });
   }
