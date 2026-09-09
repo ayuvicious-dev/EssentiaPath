@@ -894,7 +894,15 @@
   }
   .cat-dropdown-field input{
     flex:1; min-width:0; border:none; background:transparent; padding:0.55rem 0; margin:0;
-    font:inherit; font-size:0.78rem; font-weight:700; color:var(--ink-soft); outline:none; text-align:center;
+    font:inherit; font-size:16px; font-weight:700; color:var(--ink-soft); outline:none; text-align:center;
+  }
+  /* 16px di atas mencegah browser mobile (iOS/Android) auto-zoom saat
+     field ini difokus untuk mengetik/mencari kategori — font di bawah
+     16px pada field yang bisa diketik memicu zoom otomatis. Ukuran yang
+     lebih kecil (sesuai desain) baru dipakai di layar lebar (desktop),
+     yang tidak kena masalah auto-zoom ini. */
+  @media (min-width:640px){
+    .cat-dropdown-field input{ font-size:0.78rem; }
   }
   .cat-dropdown-caret{flex:none; color:var(--ink-soft); transition:transform .15s ease;}
   .cat-dropdown.open .cat-dropdown-caret{transform:rotate(180deg);}
@@ -4216,6 +4224,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     scheduledFields.style.display = isFlexible ? 'none' : 'block';
     fDateEl.required = !isFlexible;
     fTimeEl.required = !isFlexible;
+    // fRepeat juga wajib dilepas required-nya saat Fleksibel dicentang —
+    // kalau tidak, select "Ulangi" yang tersembunyi (di dalam
+    // scheduledFields) tetap dianggap wajib diisi oleh validasi native
+    // browser, sehingga klik "Simpan" tidak berefek apa pun tanpa pesan
+    // error yang terlihat (karena elemennya tersembunyi, bubble validasi
+    // browser tidak bisa ditampilkan).
+    fRepeat.required = !isFlexible;
     // Travel cuma berlaku untuk pengingat terjadwal (bukan Fleksibel) —
     // begitu Fleksibel dicentang, sembunyikan & lepas centang Travel juga,
     // supaya tidak ada centang yang kelihatan aktif tapi diabaikan saat
