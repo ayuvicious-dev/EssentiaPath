@@ -394,6 +394,8 @@
   .up-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
   .up-item .meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
   .up-item .acts{display:flex; gap:0.3rem; flex:none;}
+  .up-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
+  .up-item.done .flex-check svg{opacity:1;}
   .recent-added-list{max-height:none; overflow:visible;}
   .recent-added-list .up-item .meta{font-style:normal;}
   #recentAddedPagination{margin:0 0.6rem 0.9rem;}
@@ -792,20 +794,24 @@
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;}
   .row-3 .checkbox-field.compact{padding:0.5rem 0.5rem;}
-  /* Baris Ulangi / Jam Khusus / Berakhir pada: seragamkan ukuran ketiga
+  /* Baris Tanggal mulai / Waktu / Berakhir pada: seragamkan ukuran ketiga
      kolom supaya sama kecil & rapat, tidak mengikuti ukuran field biasa. */
-  #repeatUntilRow.row-3{align-items:start;}
-  #repeatUntilRow.row-3 .field{margin-bottom:0;}
-  #repeatUntilRow.row-3 .field label{font-size:0.72rem; margin-bottom:0.25rem;}
-  #repeatUntilRow.row-3 .field input,
-  #repeatUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem;}
-  #repeatUntilRow.row-3 .date-field-display{font-size:0.8rem; left:0.5rem;}
-  #repeatUntilRow.row-3 .checkbox-field.compact{padding:0.45rem 0.5rem; gap:0.4rem; height:100%; box-sizing:border-box;}
-  #repeatUntilRow.row-3 .checkbox-field.compact label{font-size:0.72rem; line-height:1.2;}
-  #repeatUntilRow.row-3 .hint{font-size:0.66rem; margin-top:0.3rem; line-height:1.25;}
+  #dateTimeUntilRow.row-3{align-items:start;}
+  #dateTimeUntilRow.row-3 .field{margin-bottom:0;}
+  #dateTimeUntilRow.row-3 .field label{font-size:0.72rem; margin-bottom:0.25rem;}
+  #dateTimeUntilRow.row-3 .field input,
+  #dateTimeUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem;}
+  #dateTimeUntilRow.row-3 .date-field-display{font-size:0.8rem; left:0.5rem;}
+  #dateTimeUntilRow.row-3 .hint{font-size:0.66rem; margin-top:0.3rem; line-height:1.25;}
   @media (min-width:640px){
-    #repeatUntilRow.row-3 .field input,
-    #repeatUntilRow.row-3 .field select{ font-size:0.8rem; }
+    #dateTimeUntilRow.row-3 .field input,
+    #dateTimeUntilRow.row-3 .field select{ font-size:0.8rem; }
+  }
+  /* Baris Ulangi / Jam Khusus: dua kolom sejajar */
+  #repeatUntilRow.row-2{align-items:start;}
+  #repeatUntilRow.row-2 .checkbox-field.compact{
+    padding:0.55rem 0.65rem; border-radius:9px; box-sizing:border-box;
+    margin-top:1.3rem; margin-bottom:0;
   }
 
   /* Tombol info (i) kecil di sebelah label, membuka penjelasan singkat */
@@ -1166,25 +1172,6 @@
         <button type="button" id="upgradeDoneNext">Selanjutnya ›</button>
       </div>
     </div>
-    <div class="settings-block">
-      <h2>Kategori</h2>
-      <p class="hint">Ketuk kategori untuk menampilkan/menyembunyikannya di kalender dan daftar. Gunakan ✎ untuk mengubah, 🗑 untuk menghapus.</p>
-      <div class="cat-manage-list" id="catManageList"></div>
-      <div class="upgrade-pagination" id="catPagination" hidden>
-        <button type="button" id="catPrev">‹ Sebelumnya</button>
-        <span class="page-info" id="catPageInfo"></span>
-        <button type="button" id="catNext">Selanjutnya ›</button>
-      </div>
-      <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
-    </div>
-    <div class="settings-block">
-      <h2>Cadangkan &amp; Pulihkan Data</h2>
-      <p class="hint">Unduh seluruh isi aplikasi (pengingat, kategori, status centang, dan daftar upgrade) sebagai satu file JSON untuk jaga-jaga. File ini bisa dipulihkan kembali kapan saja, misalnya setelah ganti perangkat atau kalau data tidak sengaja berubah.</p>
-      <button type="button" class="btn btn-ghost" id="backupJsonBtn">⬇ Unduh backup (.json)</button>
-      <button type="button" class="btn btn-ghost" id="restoreJsonBtn" style="margin-top:0.6rem;">⬆ Pulihkan dari file backup…</button>
-      <input type="file" id="restoreJsonInput" accept="application/json,.json" hidden>
-      <p class="hint" id="backupLastInfo" style="margin-top:0.6rem;"></p>
-    </div>
   </section>
 
   <section class="panel view-section settings-panel" data-view="display" aria-label="Tampilan">
@@ -1205,6 +1192,25 @@
         </button>
       </div>
       <p class="hint">"Sistem" mengikuti pengaturan terang/gelap perangkat Anda secara otomatis.</p>
+    </div>
+    <div class="settings-block">
+      <h2>Kategori</h2>
+      <p class="hint">Ketuk kategori untuk menampilkan/menyembunyikannya di kalender dan daftar. Gunakan ✎ untuk mengubah, 🗑 untuk menghapus.</p>
+      <div class="cat-manage-list" id="catManageList"></div>
+      <div class="upgrade-pagination" id="catPagination" hidden>
+        <button type="button" id="catPrev">‹ Sebelumnya</button>
+        <span class="page-info" id="catPageInfo"></span>
+        <button type="button" id="catNext">Selanjutnya ›</button>
+      </div>
+      <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
+    </div>
+    <div class="settings-block">
+      <h2>Cadangkan &amp; Pulihkan Data</h2>
+      <p class="hint">Unduh seluruh isi aplikasi (pengingat, kategori, status centang, dan daftar upgrade) sebagai satu file JSON untuk jaga-jaga. File ini bisa dipulihkan kembali kapan saja, misalnya setelah ganti perangkat atau kalau data tidak sengaja berubah.</p>
+      <button type="button" class="btn btn-ghost" id="backupJsonBtn">⬇ Unduh backup (.json)</button>
+      <button type="button" class="btn btn-ghost" id="restoreJsonBtn" style="margin-top:0.6rem;">⬆ Pulihkan dari file backup…</button>
+      <input type="file" id="restoreJsonInput" accept="application/json,.json" hidden>
+      <p class="hint" id="backupLastInfo" style="margin-top:0.6rem;"></p>
     </div>
     <div class="settings-block">
       <h2>Ukuran Font</h2>
@@ -1283,18 +1289,24 @@
         <label for="fTitle">Judul</label>
         <input type="text" id="fTitle" required placeholder="Contoh: Bayar tagihan listrik" maxlength="80">
       </div>
-      <div class="field">
-        <label id="catButtonLabel" for="catInput">Kategori</label>
-        <div class="cat-select-row">
-          <div class="cat-dropdown" id="catDropdown">
-            <div class="cat-dropdown-field">
-              <span class="cat-dropdown-dot" id="catButtonDot" hidden></span>
-              <input type="text" class="cat-dropdown-input" id="catInput" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="catDropdownList" aria-autocomplete="list" aria-labelledby="catButtonLabel" autocomplete="off" placeholder="Ketik untuk cari…">
-              <svg class="cat-dropdown-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="row-2">
+        <div class="field">
+          <label id="catButtonLabel" for="catInput">Kategori</label>
+          <div class="cat-select-row">
+            <div class="cat-dropdown" id="catDropdown">
+              <div class="cat-dropdown-field">
+                <span class="cat-dropdown-dot" id="catButtonDot" hidden></span>
+                <input type="text" class="cat-dropdown-input" id="catInput" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="catDropdownList" aria-autocomplete="list" aria-labelledby="catButtonLabel" autocomplete="off" placeholder="Ketik untuk cari…">
+                <svg class="cat-dropdown-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <ul class="cat-dropdown-list" id="catDropdownList" role="listbox" aria-labelledby="catButtonLabel" hidden></ul>
             </div>
-            <ul class="cat-dropdown-list" id="catDropdownList" role="listbox" aria-labelledby="catButtonLabel" hidden></ul>
+            <button type="button" class="btn-add-cat" id="catOptionAdd" aria-label="Tambah kategori" title="Tambah kategori">+</button>
           </div>
-          <button type="button" class="btn-add-cat" id="catOptionAdd" aria-label="Tambah kategori" title="Tambah kategori">+</button>
+        </div>
+        <div class="field">
+          <label for="fLink">Link (opsional)</label>
+          <input type="text" id="fLink" maxlength="500" placeholder="Contoh: https://zoom.us/j/...">
         </div>
       </div>
       <div class="row-3" id="flexPriorityRow">
@@ -1306,14 +1318,15 @@
           <input type="checkbox" id="fFlexible">
           <label for="fFlexible">Fleksibel</label>
         </div>
-        <div class="checkbox-field compact" id="fTravelField">
+        <div class="checkbox-field compact" id="fTravelField" style="position:relative;">
           <input type="checkbox" id="fTravel">
           <label for="fTravel">Travel</label>
+          <button type="button" class="info-tip-btn" id="travelInfoBtn" aria-label="Info Travel" aria-expanded="false">i</button>
+          <div class="info-tip-popover" id="travelInfoPopover" hidden>Kalau "Travel" dicentang, kotak tanggalnya di kalender akan berwarna biru pastel.</div>
         </div>
       </div>
-      <p class="hint" id="fTravelHint" style="margin-top:-0.4rem;">Kalau "Travel" dicentang, kotak tanggalnya di kalender akan berwarna biru pastel.</p>
       <div id="scheduledFields">
-        <div class="row-2">
+        <div class="row-3" id="dateTimeUntilRow">
           <div class="field">
             <label for="fDate">Tanggal mulai</label>
             <div class="date-field-wrap">
@@ -1325,8 +1338,15 @@
             <label for="fTime">Waktu</label>
             <input type="time" id="fTime">
           </div>
+          <div class="field" id="untilRow">
+            <label for="fUntil">Berakhir pada (opsional)</label>
+            <div class="date-field-wrap">
+              <input type="date" id="fUntil">
+              <span class="date-field-display" id="fUntilDisplay" aria-hidden="true"></span>
+            </div>
+          </div>
         </div>
-        <div class="row-3" id="repeatUntilRow">
+        <div class="row-2" id="repeatUntilRow">
           <div class="field">
             <label for="fRepeat">Ulangi</label>
             <select id="fRepeat">
@@ -1351,14 +1371,6 @@
             <label for="fByDayType">Jam Khusus</label>
             <button type="button" class="info-tip-btn" id="dayTypeInfoBtn" aria-label="Info Jam Khusus" aria-expanded="false">i</button>
             <div class="info-tip-popover" id="dayTypeInfoPopover" hidden>Khusus Sabtu dan hari libur.</div>
-          </div>
-          <div class="field" id="untilRow">
-            <label for="fUntil">Berakhir pada (opsional)</label>
-            <div class="date-field-wrap">
-              <input type="date" id="fUntil">
-              <span class="date-field-display" id="fUntilDisplay" aria-hidden="true"></span>
-            </div>
-            <p class="hint">Kosongkan agar pengingat berulang terus tanpa batas.</p>
           </div>
         </div>
         <div class="row-2" id="hourlyRow" style="display:none;">
@@ -1429,12 +1441,6 @@
           </button>
         </div>
         <textarea id="fNotes" placeholder="Detail tambahan…"></textarea>
-        <p class="hint">Pilih format lalu ketik. Tekan Enter untuk baris baru dalam list, Enter dua kali untuk keluar dari list.</p>
-      </div>
-      <div class="field">
-        <label for="fLink">Link (opsional)</label>
-        <input type="text" id="fLink" maxlength="500" placeholder="Contoh: https://zoom.us/j/...">
-        <p class="hint">Kalau diisi, judul pengingat bisa diklik dan langsung membuka halaman ini. Boleh tanpa "https://", nanti ditambahkan otomatis.</p>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger icon-only" id="deleteBtn" style="display:none;" aria-label="Hapus" title="Hapus">🗑</button>
@@ -3679,7 +3685,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             cur.current.date===it.date && cur.current.time===it.time;
           var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
             : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
+          var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
           html += '<li class="up-item'+(isDone?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+            '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
+              '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</button>' +
             '<span class="dot" style="background:'+c.hex+'"></span>' +
             '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
             '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge+'</div>' +
@@ -3690,6 +3700,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
     });
     upcomingList.innerHTML = html;
+    Array.prototype.forEach.call(upcomingList.querySelectorAll('.up-check'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        var date = btn.getAttribute('data-date');
+        var time = btn.getAttribute('data-time');
+        if (btn.getAttribute('data-has-checklist') === '1'){
+          onChecklistToggleAll(id, { type:'current', date: date, time: time });
+        } else {
+          toggleCompletion(id, date, time);
+        }
+      });
+    });
     Array.prototype.forEach.call(upcomingList.querySelectorAll('.edit-up'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
@@ -4224,6 +4247,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       }
     });
   }
+  var travelInfoBtn = document.getElementById('travelInfoBtn');
+  var travelInfoPopover = document.getElementById('travelInfoPopover');
+  if (travelInfoBtn && travelInfoPopover){
+    travelInfoBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      var open = travelInfoPopover.hidden;
+      travelInfoPopover.hidden = !open;
+      travelInfoBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e){
+      if (!travelInfoPopover.hidden && !travelInfoPopover.contains(e.target) && e.target !== travelInfoBtn){
+        travelInfoPopover.hidden = true;
+        travelInfoBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
   var workdaySatToggleRow = document.getElementById('workdaySatToggleRow');
   var workdaySatTimeRow = document.getElementById('workdaySatTimeRow');
   var fWorkdaySatSpecial = document.getElementById('fWorkdaySatSpecial');
@@ -4326,7 +4366,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var fPriorityField = document.getElementById('fPriorityField');
   var fFlexibleField = document.getElementById('fFlexibleField');
   var fTravelField = document.getElementById('fTravelField');
-  var fTravelHint = document.getElementById('fTravelHint');
   function toggleFlexibleUI(isFlexible){
     scheduledFields.style.display = isFlexible ? 'none' : 'block';
     fDateEl.required = !isFlexible;
@@ -4336,7 +4375,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // supaya tidak ada centang yang kelihatan aktif tapi diabaikan saat
     // disimpan (lihat data.travel di listener 'submit' di bawah).
     fTravelField.hidden = isFlexible;
-    fTravelHint.style.display = isFlexible ? 'none' : 'block';
     if (isFlexible) fTravel.checked = false;
     // Prioritas & Fleksibel sekarang selalu tampil sebaris berdampingan,
     // tidak lagi disembunyikan/menunggu Fleksibel dicentang.
