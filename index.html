@@ -106,7 +106,7 @@
      Nilainya kontinu (13–20px) lewat slider, disimpan di --user-font-size. */
   :root{ font-size:var(--user-font-size, 16px); }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0; overflow-x:hidden;}
+  html,body{margin:0;padding:0; overflow-x:hidden; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
   body{
     background:var(--paper);
     color:var(--ink);
@@ -490,6 +490,9 @@
   .search-box.has-value .search-clear{display:inline-flex; align-items:center; justify-content:center;}
   .search-box .search-clear:hover{color:var(--ink);}
   .cal-search{position:relative; padding:0.9rem 0.9rem 0;}
+  .cal-search-row{display:flex; align-items:center; gap:0.5rem;}
+  .cal-search-row .search-box{flex:1; min-width:0;}
+  .cal-filter-wrap{position:relative; flex:none;}
   .cal-search-results{
     position:absolute; top:calc(100% - 0.1rem); left:0.9rem; right:0.9rem; background:var(--paper-raised);
     border:1px solid var(--line-soft); border-radius:12px; box-shadow:var(--shadow); max-height:300px; overflow:auto; z-index:6; padding:0.4rem;
@@ -649,12 +652,21 @@
   }
   .cat-manage-row.dragging{box-shadow:var(--shadow); background:var(--paper-raised); position:relative; z-index:5;}
   .cat-manage-toggle{
-    display:flex; align-items:center; gap:0.55rem; border:none; background:transparent; padding:0;
-    font-size:0.85rem; font-weight:700; color:var(--ink); cursor:pointer; opacity:0.4; text-align:left; min-width:0;
+    display:flex; align-items:center; gap:0.3rem; opacity:0.4; min-width:0; flex:1;
   }
-  .cat-manage-toggle span.label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .cat-manage-toggle.active{opacity:1;}
-  .cat-manage-toggle .dot{width:11px; height:11px; border-radius:50%; flex:none;}
+  .cat-manage-dot{
+    width:24px; height:24px; border-radius:50%; border:none; background:transparent; padding:0;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .cat-manage-dot:hover{background:var(--line-soft);}
+  .cat-manage-dot .dot{width:11px; height:11px; border-radius:50%; flex:none; display:block;}
+  .cat-manage-label{
+    border:none; background:transparent; padding:0.2rem 0.1rem; margin:0; border-radius:6px;
+    font-size:0.85rem; font-weight:700; color:var(--ink); cursor:pointer; text-align:left; min-width:0; flex:1;
+  }
+  .cat-manage-label:hover{background:var(--line-soft);}
+  .cat-manage-label .label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;}
   .cat-manage-row .acts{display:flex; gap:0.2rem; flex:none;}
   .cat-color-row{display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap;}
   .cat-swatches{display:flex; gap:0.4rem; flex-wrap:wrap;}
@@ -702,7 +714,8 @@
   .sidebar.view-section.active{display:flex;}
   .settings-panel.active{display:block;}
   body:not([data-view="calendar"]) .month-nav{display:none;}
-  body:not([data-view="dashboard"]):not([data-view="flexible"]) .add-btn{display:none;}
+  /* Tombol "+" (add-btn) sengaja SELALU tampil di semua tab (Dashboard,
+     Fleksibel, Kalender, Setting) — tidak disembunyikan per-view. */
   body[data-view="display"] .toolbar{display:none;}
   body[data-view="display"] .layout{display:none;}
   body[data-view="flexible"] .toolbar{display:none;}
@@ -713,13 +726,13 @@
 
   /* ---------- Modal ---------- */
   .overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:flex-end;
-    justify-content:center; z-index:50; padding:0;
+    position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center;
+    justify-content:center; z-index:50; padding:1rem;
   }
-  @media (min-width:640px){ .overlay{align-items:center; padding:1.5rem;} }
+  @media (min-width:640px){ .overlay{padding:1.5rem;} }
   .overlay[hidden]{display:none;}
   .modal{
-    background:var(--paper-raised); width:100%; max-width:480px; border-radius:18px 18px 0 0;
+    background:var(--paper-raised); width:100%; max-width:480px; border-radius:18px;
     max-height:92vh; overflow:auto; padding:1.3rem 1.3rem 1.6rem; box-shadow:0 30px 60px -20px rgba(0,0,0,0.35);
   }
   @media (min-width:640px){ .modal{border-radius:16px;} }
@@ -736,8 +749,9 @@
   .field label{display:block; font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin-bottom:0.3rem;}
   .field input, .field select, .field textarea{
     width:100%; border:1px solid var(--line); border-radius:9px; padding:0.55rem 0.65rem; font-size:16px;
-    font-family:inherit; background:var(--surface); color:var(--ink);
+    font-family:inherit; background:var(--surface); color:var(--ink); line-height:1.3;
   }
+  .field select{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
   @media (min-width:640px){
     .field input, .field select, .field textarea{ font-size:0.9rem; }
   }
@@ -774,7 +788,7 @@
      dalam satu baris, termasuk di layar sempit (HP) — ukuran font, padding,
      dan ikon dikecilkan supaya tetap muat, dengan gap yang cukup supaya
      ketiga kolom tidak bersinggungan langsung. */
-  #dateTimeUntilRow.row-3{align-items:start; grid-template-columns:1fr 1fr 1fr; gap:0.4rem; row-gap:0.85rem;}
+  #dateTimeUntilRow.row-3{align-items:start; grid-template-columns:1fr 1fr 1fr; gap:0.85rem; row-gap:0.85rem;}
   #dateTimeUntilRow.row-3 .field{margin-bottom:0; min-width:0;}
   #dateTimeUntilRow.row-3 .field label{font-size:0.66rem; margin-bottom:0.25rem; min-height:1.7em; display:flex; align-items:flex-end; white-space:normal; line-height:1.15;}
   #dateTimeUntilRow.row-3 .field input,
@@ -784,7 +798,7 @@
   #dateTimeUntilRow.row-3 .date-field-display{font-size:0.72rem; left:0.35rem; right:1.6rem;}
   #dateTimeUntilRow.row-3 .hint{font-size:0.62rem; margin-top:0.3rem; line-height:1.25;}
   @media (min-width:480px){
-    #dateTimeUntilRow.row-3{gap:0.5rem;}
+    #dateTimeUntilRow.row-3{gap:1rem;}
     #dateTimeUntilRow.row-3 .field label{font-size:0.72rem; min-height:1.9em;}
     #dateTimeUntilRow.row-3 .field input,
     #dateTimeUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem;}
@@ -1007,10 +1021,28 @@
   <div class="layout">
     <section class="panel calendar view-section" data-view="calendar" aria-label="Kalender">
       <div class="cal-search" id="calSearchWrap">
-        <div class="search-box" id="calSearchBox">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <input type="text" id="calSearchInput" placeholder="Cari pengingat di kalender…" autocomplete="off">
-          <button type="button" class="search-clear" id="calSearchClear" aria-label="Hapus pencarian">✕</button>
+        <div class="cal-search-row">
+          <div class="search-box" id="calSearchBox">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" id="calSearchInput" placeholder="Cari pengingat di kalender…" autocomplete="off">
+            <button type="button" class="search-clear" id="calSearchClear" aria-label="Hapus pencarian">✕</button>
+          </div>
+          <div class="cal-filter-wrap">
+            <button type="button" class="icon-btn flex-filter-btn" id="calFilterBtn" aria-label="Filter berdasarkan kategori" aria-expanded="false" title="Filter berdasarkan kategori">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10.5 18h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span class="filter-dot"></span>
+            </button>
+            <div class="flex-filter-popover" id="calFilterPopover" hidden>
+              <div class="flex-filter-popover-head">
+                <span>Filter kategori</span>
+              </div>
+              <div class="flex-filter-bulk-acts">
+                <button type="button" class="flex-filter-all" id="calFilterAll">Centang semua</button>
+                <button type="button" class="flex-filter-all" id="calFilterNone">Hapus semua</button>
+              </div>
+              <div class="flex-filter-options" id="calFilterOptions"></div>
+            </div>
+          </div>
         </div>
         <div class="cal-search-results" id="calSearchResults" hidden></div>
       </div>
@@ -1710,6 +1742,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       state.reminders = snapshot.docs.map(function(d){ return d.data(); });
       migrateLegacyChecklistState();
       renderAll();
+      if (catDetailOverlay && !catDetailOverlay.hidden) renderCategoryDetailList();
       checkDueReminders();
       markSynced();
     }, function(err){
@@ -2306,6 +2339,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function syncWeekdayRowColumns(){ autoSizeDayColumns(); }
 
   function renderCalendar(){
+    renderCalFilterUI();
     var y = state.viewDate.getFullYear(), m = state.viewDate.getMonth();
     monthLabel.textContent = MONTH_NAMES[m] + ' ' + y;
 
@@ -2838,11 +2872,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var canDrag = !catSearchQuery;
       return '<div class="cat-manage-row" data-index="'+absIndex+'" data-id="'+c.id+'">' +
         (canDrag ? '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>' : '<span class="upg-drag-handle-static">⠿</span>') +
-        '<button type="button" class="cat-manage-toggle'+(active?' active':'')+'" data-id="'+c.id+'" aria-label="Tampilkan/sembunyikan '+escapeHTML(c.label)+'">' +
-          '<span class="dot" style="background:'+c.hex+'"></span><span class="label">'+escapeHTML(c.label)+'</span>' +
-        '</button>' +
+        '<div class="cat-manage-toggle'+(active?' active':'')+'" data-id="'+c.id+'">' +
+          '<button type="button" class="cat-manage-dot" data-id="'+c.id+'" aria-label="Tampilkan/sembunyikan '+escapeHTML(c.label)+'"><span class="dot" style="background:'+c.hex+'"></span></button>' +
+          '<button type="button" class="cat-manage-label detail-cat" data-id="'+c.id+'" aria-label="Rincian kategori '+escapeHTML(c.label)+'" title="Lihat pengingat di kategori ini"><span class="label">'+escapeHTML(c.label)+'</span></button>' +
+        '</div>' +
         '<div class="acts">' +
-          '<button type="button" class="icon-btn detail-cat" data-id="'+c.id+'" aria-label="Rincian kategori '+escapeHTML(c.label)+'" title="Lihat pengingat di kategori ini">🔍</button>' +
           '<button type="button" class="icon-btn edit-cat" data-id="'+c.id+'" aria-label="Ubah kategori">✎</button>' +
           '<button type="button" class="icon-btn delete-cat" data-id="'+c.id+'" aria-label="Hapus kategori">🗑</button>' +
         '</div>' +
@@ -2854,8 +2888,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('catPrev').disabled = catPage <= 0;
     document.getElementById('catNext').disabled = catPage >= totalPages - 1;
 
-    Array.prototype.forEach.call(catManageList.querySelectorAll('.cat-manage-toggle'), function(btn){
-      btn.addEventListener('click', function(){
+    Array.prototype.forEach.call(catManageList.querySelectorAll('.cat-manage-dot'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
         var id = btn.getAttribute('data-id');
         var idx = state.activeFilters.indexOf(id);
         if (idx===-1) state.activeFilters.push(id); else state.activeFilters.splice(idx,1);
@@ -3578,7 +3613,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   if (flexFilterBtn){
     flexFilterBtn.addEventListener('click', function(e){
       e.stopPropagation();
-      if (flexFilterPopover.hidden) openFlexFilterPopover(); else closeFlexFilterPopover();
+      if (flexFilterPopover.hidden){
+        // Setiap kali filter dibuka, kosongkan dulu semua centang kategori
+        // (tidak langsung disimpan ke localStorage) supaya pengguna bisa
+        // langsung mencentang satu atau beberapa kategori yang diinginkan,
+        // tanpa perlu menekan "Tidak ada" secara manual terlebih dahulu.
+        state.flexFilters = [];
+        resetFlexPages();
+        renderFlexFilterUI();
+        renderFlexible();
+        openFlexFilterPopover();
+      } else {
+        closeFlexFilterPopover();
+      }
     });
     document.addEventListener('click', function(e){
       if (!flexFilterPopover.hidden && !flexFilterPopover.contains(e.target) && e.target !== flexFilterBtn){
@@ -3618,6 +3665,84 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         resetFlexPages();
         saveFlexFilters();
         renderFlexible();
+      });
+    });
+  }
+
+  // ---------- Filter kategori untuk halaman "Kalender" ----------
+  // Memakai state.activeFilters yang sama dengan toggle tampilkan/sembunyikan
+  // di Pengaturan → Kategori — jadi memilih kategori di sini otomatis
+  // tersinkron dengan Pengaturan, dan sebaliknya. itemsForDate() (dipakai
+  // kalender bulanan, "Mendatang", "Sedang berlangsung", & panel harian)
+  // sudah memfilter berdasarkan state.activeFilters, jadi cukup panggil
+  // render ulang bagian-bagian itu setelah filter berubah.
+  var calFilterBtn = document.getElementById('calFilterBtn');
+  var calFilterPopover = document.getElementById('calFilterPopover');
+  var calFilterOptions = document.getElementById('calFilterOptions');
+  function openCalFilterPopover(){
+    calFilterPopover.hidden = false;
+    calFilterBtn.setAttribute('aria-expanded', 'true');
+  }
+  function closeCalFilterPopover(){
+    calFilterPopover.hidden = true;
+    calFilterBtn.setAttribute('aria-expanded', 'false');
+  }
+  function applyCalFilterChange(){
+    saveFilters();
+    renderCalendar();
+    renderCategorySettings();
+    renderUpcoming();
+    renderCurrentActivity();
+    renderCalFilterUI();
+  }
+  if (calFilterBtn){
+    calFilterBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (calFilterPopover.hidden){
+        // Sama seperti filter di Fleksibel: setiap kali filter dibuka,
+        // kosongkan dulu semua centang kategori (tidak langsung disimpan)
+        // supaya pengguna bisa langsung mencentang kategori tujuan.
+        state.activeFilters = [];
+        renderCalendar();
+        renderUpcoming();
+        renderCurrentActivity();
+        openCalFilterPopover();
+      } else {
+        closeCalFilterPopover();
+      }
+    });
+    document.addEventListener('click', function(e){
+      if (!calFilterPopover.hidden && !calFilterPopover.contains(e.target) && e.target !== calFilterBtn){
+        closeCalFilterPopover();
+      }
+    });
+    document.getElementById('calFilterAll').addEventListener('click', function(){
+      state.activeFilters = CATS.map(function(c){ return c.id; });
+      applyCalFilterChange();
+    });
+    document.getElementById('calFilterNone').addEventListener('click', function(){
+      state.activeFilters = CATS.length ? [CATS[0].id] : []; // minimal satu kategori tetap tampil
+      applyCalFilterChange();
+    });
+  }
+  function renderCalFilterUI(){
+    if (!calFilterBtn) return;
+    var allSelected = CATS.length > 0 && CATS.every(function(c){ return state.activeFilters.indexOf(c.id) !== -1; });
+    calFilterBtn.classList.toggle('has-active', !allSelected);
+    calFilterOptions.innerHTML = CATS.map(function(c){
+      var active = state.activeFilters.indexOf(c.id) !== -1;
+      return '<div class="flex-filter-option'+(active?' active':'')+'" data-id="'+c.id+'">' +
+        '<span class="dot" style="background:'+c.hex+'"></span><span>'+escapeHTML(c.label)+'</span>' +
+        '<span class="check"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(calFilterOptions.querySelectorAll('.flex-filter-option'), function(opt){
+      opt.addEventListener('click', function(){
+        var id = opt.getAttribute('data-id');
+        var idx = state.activeFilters.indexOf(id);
+        if (idx===-1) state.activeFilters.push(id); else state.activeFilters.splice(idx,1);
+        if (state.activeFilters.length===0) state.activeFilters = [id]; // minimal satu kategori tetap tampil
+        applyCalFilterChange();
       });
     });
   }
@@ -4508,7 +4633,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
           '<div class="meta">'+meta+'</div>' +
         '</div>' +
-        '<div class="acts"><button type="button" class="icon-btn edit-cat-reminder" data-id="'+r.id+'" aria-label="Ubah &amp; pindah kategori">✎</button></div>' +
+        '<div class="acts">' +
+          '<button type="button" class="icon-btn edit-cat-reminder" data-id="'+r.id+'" aria-label="Ubah &amp; pindah kategori">✎</button>' +
+          '<button type="button" class="icon-btn delete-cat-reminder" data-id="'+r.id+'" aria-label="Hapus pengingat">🗑</button>' +
+        '</div>' +
       '</div>';
     }).join('');
     Array.prototype.forEach.call(catDetailList.querySelectorAll('.edit-cat-reminder'), function(btn){
@@ -4516,6 +4644,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var id = btn.getAttribute('data-id');
         closeCategoryDetail();
         openEditForm(id);
+      });
+    });
+    Array.prototype.forEach.call(catDetailList.querySelectorAll('.delete-cat-reminder'), function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-id');
+        if (!id || !currentUser) return;
+        if (!confirm('Hapus pengingat ini?')) return;
+        deleteReminderFromCloud(id).then(function(){
+          showToast('Pengingat dihapus');
+        }).catch(function(err){
+          console.error(err);
+          showToast('Gagal menghapus pengingat. Coba lagi.');
+        });
       });
     });
   }
