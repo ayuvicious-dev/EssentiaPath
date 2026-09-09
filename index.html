@@ -759,16 +759,31 @@
      lebih kecil & tebal daripada input teks biasa, bukan mengikuti aturan
      font input pada umumnya di atas. */
   .field select{ font-size:0.78rem; font-weight:700; color:var(--ink-soft); text-align:center; }
+  /* Rata tengah pada teks select "Ulangi" di atas cuma mempengaruhi kotak
+     select yang tertutup — daftar pilihan (dropdown) yang terbuka di HP
+     dirender sendiri oleh browser/OS dan text-align pada elemen <select>
+     tidak diwariskan ke situ. Beberapa jenis "Ulangi" yang teksnya
+     panjang (mis. "Hari kerja (Sen–Jum)") jadi terlihat rata kiri saat
+     daftar dibuka. Targetkan <option>-nya langsung (dan disamakan lewat
+     atribut style inline di HTML untuk browser yang mengabaikan aturan
+     CSS eksternal pada <option>) supaya semua baris ikut rata tengah. */
+  .field select option{ text-align:center; }
   /* Teks jam di "Jam hari Sabtu" & "Jam hari libur" disamakan ukuran &
-     model fontnya dengan label "Jam hari Sabtu" di atasnya (kecil, tebal,
-     warna ink-soft) — bukan mengikuti ukuran font input jam pada umumnya. */
+     model fontnya dengan label "Ulangi"/"Jam hari Sabtu" di atasnya (kecil,
+     tebal, warna ink-soft) — bukan mengikuti ukuran font input jam pada
+     umumnya, dan tanpa pengecualian 16px di layar sempit (beda dari field
+     lain yang butuh 16px untuk mencegah auto-zoom iOS), karena field ini
+     memang diminta selalu kecil di semua lebar layar. */
   #dayTypeTimesRow .field input[type="time"]{
-    font-size:16px; font-weight:700; color:var(--ink-soft); text-align:center;
+    font-size:0.78rem; font-weight:700; color:var(--ink-soft); text-align:center;
     -webkit-appearance:none; appearance:none;
   }
-  @media (min-width:640px){
-    #dayTypeTimesRow .field input[type="time"]{ font-size:0.78rem; }
-  }
+  /* Angka di "Setiap berapa jam/hari/minggu" (field turunan dari pilihan
+     "Ulangi") disamakan ukuran, model font, dan perataan tengah dengan
+     label "Ulangi" di atasnya (kecil, tebal, warna ink-soft, rata
+     tengah) — bukan mengikuti ukuran font input angka pada umumnya
+     (16px, rata kiri). */
+  #fHourly, #fEveryNDays, #fEveryNWeeks{ font-size:0.78rem; font-weight:700; color:var(--ink-soft); text-align:center; }
   .field textarea{resize:vertical; min-height:60px;}
   /* Teks yang diketik di "Judul" & "Catatan" disamakan ukuran & jenis
      fontnya dengan tulisan label "Catatan" (kecil, tebal, warna ink-soft),
@@ -1439,20 +1454,20 @@
             <label for="fRepeat">Ulangi</label>
             <select id="fRepeat" required>
               <option value="" disabled selected hidden></option>
-              <option value="none">Tidak berulang</option>
-              <option value="hourly">Tiap beberapa jam</option>
-              <option value="daily">Harian</option>
-              <option value="everyNDays">Setiap X hari sekali</option>
-              <option value="everyNWeeks">Setiap X minggu sekali</option>
-              <option value="weekday">Hari kerja (Sen–Jum)</option>
-              <option value="workdaySat">Hari Kerja (Sen–Sab)</option>
-              <option value="weekend">Akhir pekan (Sab–Min)</option>
-              <option value="weekly">Mingguan</option>
-              <option value="biweekly">Dua mingguan</option>
-              <option value="monthly">Bulanan</option>
-              <option value="endOfMonth">Akhir bulan</option>
-              <option value="quarterly">Triwulanan (tiap 3 bulan)</option>
-              <option value="annually">Tahunan</option>
+              <option value="none" style="text-align:center;">Tidak berulang</option>
+              <option value="hourly" style="text-align:center;">Tiap beberapa jam</option>
+              <option value="daily" style="text-align:center;">Harian</option>
+              <option value="everyNDays" style="text-align:center;">Setiap X hari sekali</option>
+              <option value="everyNWeeks" style="text-align:center;">Setiap X minggu sekali</option>
+              <option value="weekday" style="text-align:center;">Hari kerja (Sen–Jum)</option>
+              <option value="workdaySat" style="text-align:center;">Hari Kerja (Sen–Sab)</option>
+              <option value="weekend" style="text-align:center;">Akhir pekan (Sab–Min)</option>
+              <option value="weekly" style="text-align:center;">Mingguan</option>
+              <option value="biweekly" style="text-align:center;">Dua mingguan</option>
+              <option value="monthly" style="text-align:center;">Bulanan</option>
+              <option value="endOfMonth" style="text-align:center;">Akhir bulan</option>
+              <option value="quarterly" style="text-align:center;">Triwulanan (tiap 3 bulan)</option>
+              <option value="annually" style="text-align:center;">Tahunan</option>
             </select>
           </div>
           <div class="checkbox-field compact" id="dayTypeToggleRow" style="position:relative;">
