@@ -340,7 +340,6 @@
   @media (min-width:860px){
     .chip{font-size:0.76rem; padding:4px 7px 5px; gap:0.4rem;}
   }
-  .chip .dot{width:6px; height:6px; border-radius:50%; flex:none;}
   .chip .t{font-family:var(--font-mono); color:var(--ink-soft); flex:none;}
   .chip .title{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto;}
   .more-link{font-size:0.68rem; color:var(--moss-deep); font-weight:700; padding-left:2px;}
@@ -382,7 +381,6 @@
     display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:var(--surface);
     border:1px solid var(--line-soft);
   }
-  .up-item .dot{width:8px; height:8px; border-radius:50%; margin-top:5px; flex:none;}
   .up-item .body{flex:1; min-width:0;}
   .up-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
   .title-link{color:inherit; text-decoration:none; display:inline-flex; align-items:baseline; gap:3px;}
@@ -442,7 +440,6 @@
     cursor:pointer; color:var(--ink-soft);
   }
   .flex-filter-option:hover{background:var(--surface);}
-  .flex-filter-option .dot{width:8px; height:8px; border-radius:50%; flex:none;}
   .flex-filter-option .check{
     width:15px; height:15px; border-radius:4px; border:1.5px solid var(--line); flex:none; margin-left:auto;
     display:flex; align-items:center; justify-content:center; background:var(--surface);
@@ -468,7 +465,6 @@
   .current-item.done .current-check svg{opacity:1;}
   .current-item .body{flex:1; min-width:0;}
   .current-item .cat-line{display:flex; align-items:center; gap:0.35rem; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); font-weight:700; margin-bottom:0.15rem;}
-  .current-item .cat-line .dot{width:7px; height:7px; border-radius:50%; flex:none;}
   .current-item .title{font-size:0.98rem; font-weight:700; line-height:1.32; word-break:break-word;}
   .current-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:600;}
   .current-item .meta{font-size:0.76rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:0.3rem;}
@@ -499,7 +495,6 @@
   }
   .cal-search-item{display:flex; align-items:center; gap:0.55rem; padding:0.5rem 0.55rem; border-radius:9px; cursor:pointer; background:none; border:none; width:100%; text-align:left; font-family:inherit;}
   .cal-search-item:hover, .cal-search-item:focus{background:var(--surface);}
-  .cal-search-item .dot{width:8px; height:8px; border-radius:50%; flex:none;}
   .cal-search-item .csi-body{flex:1; min-width:0;}
   .cal-search-item .csi-title{font-size:0.85rem; font-weight:600; color:var(--ink); word-break:break-word;}
   .cal-search-item .csi-meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
@@ -551,7 +546,6 @@
   .flex-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
   .flex-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
   .flex-item .meta{font-size:0.72rem; color:var(--ink-soft); margin-top:2px; display:flex; align-items:center; gap:0.3rem;}
-  .flex-item .meta .dot{width:6px; height:6px; border-radius:50%; flex:none;}
   .flex-item .acts{display:flex; gap:0.3rem; flex:none;}
   .flex-item.missed-item{background:var(--notice-bg); border-color:var(--notice-border);}
   .flex-item.priority-item{box-shadow:inset 3px 0 0 var(--amber-deep);}
@@ -660,7 +654,7 @@
     cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none;
   }
   .cat-manage-dot:hover{background:var(--line-soft);}
-  .cat-manage-dot .dot{width:11px; height:11px; border-radius:50%; flex:none; display:block;}
+  .cat-manage-dot svg{width:15px; height:15px; flex:none; display:block; color:var(--ink-soft);}
   .cat-manage-label{
     border:none; background:transparent; padding:0.2rem 0.1rem; margin:0; border-radius:6px;
     font-size:0.85rem; font-weight:700; color:var(--ink); cursor:pointer; text-align:left; min-width:0; flex:1;
@@ -668,14 +662,6 @@
   .cat-manage-label:hover{background:var(--line-soft);}
   .cat-manage-label .label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;}
   .cat-manage-row .acts{display:flex; gap:0.2rem; flex:none;}
-  .cat-color-row{display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap;}
-  .cat-swatches{display:flex; gap:0.4rem; flex-wrap:wrap;}
-  .cat-swatch{width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0;}
-  .cat-swatch.selected{border-color:var(--ink);}
-  #catColorPicker{width:30px; height:30px; padding:0; border:none; border-radius:50%; background:none; cursor:pointer; flex:none;}
-  #catColorPicker::-webkit-color-swatch-wrapper{padding:0;}
-  #catColorPicker::-webkit-color-swatch{border-radius:50%; border:2px solid var(--line);}
-  #catColorPicker::-moz-color-swatch{border-radius:50%; border:2px solid var(--line);}
 
   .upgrade-pagination{display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-top:0.2rem;}
   .upgrade-pagination button{border:1px solid rgba(var(--tint-rgb),0.2); background:transparent; color:var(--ink); padding:0.35rem 0.8rem; border-radius:999px; font-size:0.78rem; font-weight:700; cursor:pointer;}
@@ -800,7 +786,7 @@
     font-family:inherit; color:var(--ink); pointer-events:none; white-space:nowrap; font-size:16px;
   }
   @media (min-width:640px){ .date-field-display{ font-size:0.9rem; } }
-  .notes-toolbar{display:flex; gap:0.35rem; margin-bottom:0.4rem; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
+  .notes-toolbar{display:flex; justify-content:center; gap:0.35rem; margin-bottom:0.4rem; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
   .notes-toolbar::-webkit-scrollbar{display:none;}
   .notes-fmt-btn{
     display:flex; align-items:center; gap:0.3rem; border:1.5px solid var(--line); border-radius:999px;
@@ -904,7 +890,6 @@
     flex:1; min-width:0; border:none; background:transparent; padding:0.55rem 0; margin:0;
     font:inherit; font-size:0.78rem; font-weight:700; color:var(--ink-soft); outline:none; text-align:center;
   }
-  .cat-dropdown-dot{display:none;}
   .cat-dropdown-caret{flex:none; color:var(--ink-soft); transition:transform .15s ease;}
   .cat-dropdown.open .cat-dropdown-caret{transform:rotate(180deg);}
   .cat-dropdown.invalid .cat-dropdown-field{border-color:var(--danger);}
@@ -919,7 +904,6 @@
   }
   .cat-dropdown-list li:hover, .cat-dropdown-list li.active{background:var(--selected-bg);}
   .cat-dropdown-list li.selected{font-weight:700; background:var(--selected-bg);}
-  .cat-dropdown-list li .dot{width:9px; height:9px; border-radius:50%; flex:none;}
   .cat-dropdown-list .cat-dropdown-empty{color:var(--ink-soft); cursor:default;}
   .cat-dropdown-list .cat-dropdown-empty:hover{background:transparent;}
   .cat-select-row .btn-add-cat{align-self:stretch;}
@@ -1385,7 +1369,6 @@
           <div class="cat-select-row">
             <div class="cat-dropdown" id="catDropdown">
               <div class="cat-dropdown-field">
-                <span class="cat-dropdown-dot" id="catButtonDot" hidden></span>
                 <input type="text" class="cat-dropdown-input" id="catInput" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="catDropdownList" aria-autocomplete="list" aria-labelledby="catButtonLabel" autocomplete="off" placeholder="">
                 <svg class="cat-dropdown-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
@@ -1524,7 +1507,7 @@
             <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="17" height="17" rx="4" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <button type="button" class="notes-fmt-btn" data-fmt="number" aria-label="List angka" title="List angka">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h1.6M4 6V4.5M4 18h1.6v-1.4H4M5.6 16.6H4M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 24 24" fill="none"><text x="1.5" y="8" font-size="7.5" font-weight="700" fill="currentColor" font-family="inherit">1</text><text x="1.5" y="14.5" font-size="7.5" font-weight="700" fill="currentColor" font-family="inherit">2</text><text x="1.5" y="21" font-size="7.5" font-weight="700" fill="currentColor" font-family="inherit">3</text><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           </button>
           <button type="button" class="notes-fmt-btn" data-fmt="bullet" aria-label="List bullet" title="List bullet">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="4.5" cy="6" r="1.7" fill="currentColor"/><circle cx="4.5" cy="12" r="1.7" fill="currentColor"/><circle cx="4.5" cy="18" r="1.7" fill="currentColor"/><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -1554,13 +1537,6 @@
       <div class="field">
         <label for="catLabel">Nama kategori</label>
         <input type="text" id="catLabel" required maxlength="24" placeholder="Contoh: Belajar">
-      </div>
-      <div class="field" hidden>
-        <label>Warna</label>
-        <div class="cat-color-row">
-          <div class="cat-swatches" id="catSwatches"></div>
-          <input type="color" id="catColorPicker" value="#93AF9E" aria-label="Warna kustom">
-        </div>
       </div>
       <div class="modal-actions">
         <div style="flex:1;"></div>
@@ -1677,15 +1653,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // yang sebenarnya berasal dari Firestore (bisa ditambah/ubah/hapus di
   // Pengaturan) dan disimpan ke variabel CATS di bawah.
   var DEFAULT_CATS = [
-    { id:"kerja",     label:"Kerja",     hex:"#93AF9E" },
-    { id:"pribadi",   label:"Pribadi",   hex:"#E3A97C" },
-    { id:"kesehatan", label:"Kesehatan", hex:"#C6A6C4" },
-    { id:"keuangan",  label:"Keuangan",  hex:"#A3BED1" },
-    { id:"lainnya",   label:"Lainnya",   hex:"#CDBF92" }
-  ];
-  var CAT_PALETTE = [
-    "#93AF9E","#E3A97C","#C6A6C4","#A3BED1","#CDBF92",
-    "#B79C8C","#8FB8A8","#D9A0A0","#A9A0D9","#7C9484"
+    { id:"kerja",     label:"Kerja" },
+    { id:"pribadi",   label:"Pribadi" },
+    { id:"kesehatan", label:"Kesehatan" },
+    { id:"keuangan",  label:"Keuangan" },
+    { id:"lainnya",   label:"Lainnya" }
   ];
   var CATS = DEFAULT_CATS.slice();
 
@@ -2431,10 +2403,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var allItems = dateStr ? itemsForDateAll(dateStr) : [];
       var shown = allItems.slice(0, CAL_DAY_ITEMS_LIMIT);
       shown.forEach(function(it){
-        var c = catInfo(it.reminder.category);
         var chip = document.createElement('span');
         chip.className = 'chip';
-        chip.innerHTML = '<span class="dot" style="background:'+c.hex+'"></span><span class="t">'+it.time+'</span><span class="title">'+escapeHTML(it.reminder.title)+'</span>';
+        chip.innerHTML = '<span class="t">'+it.time+'</span><span class="title">'+escapeHTML(it.reminder.title)+'</span>';
         var w = measureNaturalWidth(chip, probe);
         if (w > needed) needed = w;
       });
@@ -2544,8 +2515,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (inMonth){
         var shown = items.slice(0, DAY_ITEMS_LIMIT);
         shown.forEach(function(it){
-          var c = catInfo(it.reminder.category);
-          html += '<span class="chip"><span class="dot" style="background:'+c.hex+'"></span><span class="t">'+it.time+'</span><span class="title">'+escapeHTML(it.reminder.title)+'</span></span>';
+          html += '<span class="chip"><span class="t">'+it.time+'</span><span class="title">'+escapeHTML(it.reminder.title)+'</span></span>';
         });
         if (items.length > DAY_ITEMS_LIMIT){
           html += '<span class="more-link">+'+(items.length-DAY_ITEMS_LIMIT)+' lainnya</span>';
@@ -3005,7 +2975,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       return '<div class="cat-manage-row" data-index="'+absIndex+'" data-id="'+c.id+'">' +
         (canDrag ? '<span class="upg-drag-handle" aria-label="Seret untuk mengurutkan">⠿</span>' : '<span class="upg-drag-handle-static">⠿</span>') +
         '<div class="cat-manage-toggle'+(active?' active':'')+'" data-id="'+c.id+'">' +
-          '<button type="button" class="cat-manage-dot" data-id="'+c.id+'" aria-label="Tampilkan/sembunyikan '+escapeHTML(c.label)+'"><span class="dot" style="background:'+c.hex+'"></span></button>' +
+          '<button type="button" class="cat-manage-dot" data-id="'+c.id+'" aria-label="Tampilkan/sembunyikan '+escapeHTML(c.label)+'"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></button>' +
           '<button type="button" class="cat-manage-label detail-cat" data-id="'+c.id+'" aria-label="Rincian kategori '+escapeHTML(c.label)+'" title="Lihat pengingat di kategori ini"><span class="label">'+escapeHTML(c.label)+'</span></button>' +
         '</div>' +
         '<div class="acts">' +
@@ -3123,40 +3093,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var catFormOverlay = document.getElementById('catFormOverlay');
   var catForm = document.getElementById('catForm');
   var catLabelEl = document.getElementById('catLabel');
-  var catSwatchesEl = document.getElementById('catSwatches');
-  var catColorPicker = document.getElementById('catColorPicker');
-  var selectedCatHex = CAT_PALETTE[0];
   // Dipakai saat kategori baru dibuat lewat chip "+ Tambah" di form
   // pengingat (bukan dari Pengaturan): supaya kategori yang baru dibuat
   // langsung otomatis terpilih begitu selesai disimpan.
   var catFormOpenedFromReminder = false;
   var pendingSelectCatId = null;
 
-  function renderCatSwatches(){
-    catSwatchesEl.innerHTML = CAT_PALETTE.map(function(hex){
-      var sel = hex.toLowerCase() === selectedCatHex.toLowerCase();
-      return '<button type="button" class="cat-swatch'+(sel?' selected':'')+'" data-hex="'+hex+'" style="background:'+hex+';" aria-label="Pilih warna '+hex+'"></button>';
-    }).join('');
-    Array.prototype.forEach.call(catSwatchesEl.querySelectorAll('.cat-swatch'), function(btn){
-      btn.addEventListener('click', function(){
-        selectedCatHex = btn.getAttribute('data-hex');
-        catColorPicker.value = selectedCatHex;
-        renderCatSwatches();
-      });
-    });
-  }
-  catColorPicker.addEventListener('input', function(){
-    selectedCatHex = catColorPicker.value;
-    renderCatSwatches();
-  });
-
   function openAddCategoryForm(){
     document.getElementById('catFormTitle').textContent = 'Kategori baru';
     document.getElementById('catId').value = '';
     catLabelEl.value = '';
-    selectedCatHex = CAT_PALETTE[CATS.length % CAT_PALETTE.length];
-    catColorPicker.value = selectedCatHex;
-    renderCatSwatches();
     catFormOverlay.hidden = false;
     setTimeout(function(){ catLabelEl.focus(); }, 30);
   }
@@ -3174,9 +3120,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('catFormTitle').textContent = 'Ubah kategori';
     document.getElementById('catId').value = cat.id;
     catLabelEl.value = cat.label;
-    selectedCatHex = cat.hex;
-    catColorPicker.value = cat.hex;
-    renderCatSwatches();
     catFormOverlay.hidden = false;
     setTimeout(function(){ catLabelEl.focus(); }, 30);
   }
@@ -3191,14 +3134,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var id = document.getElementById('catId').value;
     var label = catLabelEl.value.trim();
     if (!label) return;
-    var hex = selectedCatHex;
     var isNew = !id;
     var newCatId = id || catUid();
     var newList;
     if (id){
-      newList = CATS.map(function(c){ return c.id===id ? { id:id, label:label, hex:hex } : c; });
+      newList = CATS.map(function(c){ return c.id===id ? { id:id, label:label } : c; });
     } else {
-      newList = CATS.concat([{ id:newCatId, label:label, hex:hex }]);
+      newList = CATS.concat([{ id:newCatId, label:label }]);
     }
     var selectAfterSave = isNew && catFormOpenedFromReminder;
     closeCatForm();
@@ -3291,7 +3233,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
-      '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · '+it.time+'</div>' +
+      '<div class="meta">'+c.label+' · '+it.time+'</div>' +
       renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
       '</div>' +
       '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
@@ -3370,7 +3312,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
         '<div class="body">' +
-          '<div class="cat-line"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</div>' +
+          '<div class="cat-line">'+c.label+'</div>' +
           '<div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
           '<div class="meta">Mulai '+it.time+' · '+repeatLabel(it.reminder)+(res.next ? ' · berikutnya '+res.next.time : '')+'</div>' +
           renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
@@ -3490,7 +3432,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
               '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' +
-            '<span class="dot" style="background:'+c.hex+'"></span>' +
             '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
             '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge+'</div>' +
             '<div class="acts">' +
@@ -3587,7 +3528,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var c = catInfo(r.category);
       var ms = reminderCreatedAtMs(r);
       return '<li class="up-item" data-id="' + r.id + '">' +
-        '<span class="dot" style="background:' + c.hex + '"></span>' +
         '<div class="body"><div class="title">' + titleWithLinkHTML(r.title, r.link) + '</div>' +
         '<div class="meta">Ditambahkan ' + (ms ? formatDMYHM(ms) : 'tidak diketahui') + '</div></div>' +
         '<div class="acts">' +
@@ -3784,7 +3724,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     flexFilterOptions.innerHTML = CATS.map(function(c){
       var active = state.flexFilters.indexOf(c.id) !== -1;
       return '<div class="flex-filter-option'+(active?' active':'')+'" data-id="'+c.id+'">' +
-        '<span class="dot" style="background:'+c.hex+'"></span><span>'+escapeHTML(c.label)+'</span>' +
+        '<span>'+escapeHTML(c.label)+'</span>' +
         '<span class="check"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
       '</div>';
     }).join('');
@@ -3868,7 +3808,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     calFilterOptions.innerHTML = CATS.map(function(c){
       var active = state.activeFilters.indexOf(c.id) !== -1;
       return '<div class="flex-filter-option'+(active?' active':'')+'" data-id="'+c.id+'">' +
-        '<span class="dot" style="background:'+c.hex+'"></span><span>'+escapeHTML(c.label)+'</span>' +
+        '<span>'+escapeHTML(c.label)+'</span>' +
         '<span class="check"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
       '</div>';
     }).join('');
@@ -3900,7 +3840,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
-      '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+(freeText?' · '+escapeHTML(freeText):'')+'</div>' +
+      '<div class="meta">'+c.label+(freeText?' · '+escapeHTML(freeText):'')+'</div>' +
       renderNotesOrderedHTML(r.notes) +
       '</div>' +
       '<div class="acts">' +
@@ -3981,7 +3921,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</button>' +
           '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
-          '<div class="meta"><span class="dot" style="background:'+c.hex+'"></span>'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
+          '<div class="meta">'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
           renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
           '</div>' +
           '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
@@ -4115,7 +4055,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var reminderForm = document.getElementById('reminderForm');
   var catDropdownWrap = document.getElementById('catDropdown');
   var catInput = document.getElementById('catInput');
-  var catButtonDot = document.getElementById('catButtonDot');
   var catDropdownList = document.getElementById('catDropdownList');
   var fRepeat = document.getElementById('fRepeat');
   var hourlyRow = document.getElementById('hourlyRow');
@@ -4195,11 +4134,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // ketik beberapa huruf).
   function renderCatList(query){
     var q = (query || '').trim().toLowerCase();
-    var filtered = q ? CATS.filter(function(c){ return c.label.toLowerCase().indexOf(q) !== -1; }) : CATS;
+    // Kategori yang disembunyikan lewat toggle mata di Pengaturan tidak
+    // ditampilkan di sini — kecuali kategori yang sedang terpilih pada
+    // pengingat yang sedang diedit, supaya nilainya tidak hilang begitu
+    // saja dari tampilan saat membuka form edit.
+    var visible = CATS.filter(function(c){ return state.activeFilters.indexOf(c.id) !== -1 || c.id === selectedCat; });
+    var filtered = q ? visible.filter(function(c){ return c.label.toLowerCase().indexOf(q) !== -1; }) : visible;
     catDropdownList.innerHTML = filtered.length
       ? filtered.map(function(c){
           return '<li role="option" data-cat="'+c.id+'" aria-selected="'+(c.id===selectedCat?'true':'false')+'"'+(c.id===selectedCat?' class="selected"':'')+'>' +
-            '<span class="dot" style="background:'+c.hex+'"></span>'+c.label+'</li>';
+            c.label+'</li>';
         }).join('')
       : '<li class="cat-dropdown-empty">Tidak ada kategori yang cocok</li>';
   }
@@ -4233,7 +4177,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // supaya tidak bisa "menyimpan" nama kategori bebas hasil ketikan.
     setTimeout(function(){
       var typed = catInput.value.trim().toLowerCase();
-      var exact = CATS.find(function(c){ return c.label.toLowerCase() === typed; });
+      var visible = CATS.filter(function(c){ return state.activeFilters.indexOf(c.id) !== -1 || c.id === selectedCat; });
+      var exact = visible.find(function(c){ return c.label.toLowerCase() === typed; });
       if (exact) selectedCat = exact.id;
       renderCatOptions();
       closeCatDropdown();
@@ -4287,8 +4232,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // karena ini bukan elemen form native.
     var cat = CATS.find(function(c){ return c.id===selectedCat; });
     catInput.value = cat ? cat.label : '';
-    catButtonDot.hidden = !cat;
-    if (cat) catButtonDot.style.background = cat.hex;
     renderCatList('');
   }
 
@@ -4688,11 +4631,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       return;
     }
     dayPanelList.innerHTML = items.map(function(it){
-      var c = catInfo(it.reminder.category);
       var key = it.reminder.id + '|' + it.time;
       var expanded = !!dayPanelExpanded[key];
       return '<div class="up-item dp-item" data-key="'+escapeHTML(key)+'">' +
-        '<span class="dot" style="background:'+c.hex+'"></span>' +
         '<div class="body">' +
           '<div class="title dp-title" role="button" tabindex="0" aria-expanded="'+(expanded?'true':'false')+'">' +
             titleWithLinkHTML(it.reminder.title, it.reminder.link) +
@@ -4771,7 +4712,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     catDetailList.innerHTML = linked.map(function(r){
       var meta = r.flexible ? 'Fleksibel' : (r.time || '--:--') + ' · ' + repeatLabel(r);
       return '<div class="up-item">' +
-        '<span class="dot" style="background:'+catInfo(r.category).hex+'"></span>' +
         '<div class="body">' +
           '<div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
           '<div class="meta">'+meta+'</div>' +
@@ -4870,12 +4810,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       return;
     }
     calSearchResultsEl.innerHTML = matches.map(function(m){
-      var c = catInfo(m.r.category);
       var metaLabel = m.date
         ? (dayLabel(parseISODate(m.date)) + ' ' + (m.r.time || '') + (m.isPast ? ' · sudah lewat' : ''))
         : 'Belum ada tanggal';
       return '<button type="button" class="cal-search-item" data-date="'+(m.date||'')+'">' +
-        '<span class="dot" style="background:'+c.hex+'"></span>' +
         '<span class="csi-body"><span class="csi-title">'+escapeHTML(m.r.title)+'</span>' +
         '<span class="csi-meta">'+escapeHTML(metaLabel)+'</span></span>' +
       '</button>';
