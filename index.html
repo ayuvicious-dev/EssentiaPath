@@ -342,6 +342,11 @@
   }
   .chip .t{font-family:var(--font-mono); color:var(--ink-soft); flex:none;}
   .chip .title{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto;}
+  /* Tanggal yang sudah lewat (sebelum hari ini): teks chip pengingat
+     dibuat transparan/pudar, supaya sekilas terlihat mana hari yang
+     sudah lewat vs yang belum, tanpa perlu baca tanggalnya satu-satu. */
+  .day-cell.is-past-day .chip{opacity:0.45;}
+  .day-cell.is-past-day .more-link{opacity:0.45;}
   .more-link{font-size:0.68rem; color:var(--moss-deep); font-weight:700; padding-left:2px;}
   @media (min-width:860px){ .more-link{font-size:0.74rem;} }
 
@@ -1834,7 +1839,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     flexFilters: loadFlexFilters(),
     dayPanelDate: null,
     completions: {},
-    checklistProgress: {}
+    checklistProgress: {},
+    occurrenceNotes: {}
   };
 
   // ---------- Firestore-backed reminder storage (per signed-in user) ----------
@@ -2149,7 +2155,94 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       showToast('Gagal menyimpan status centang ke cloud — dikembalikan seperti semula. Cek koneksi internet / aturan Firestore.', 6000);
     });
   }
-  // Membungkus handler klik tombol centang supaya kalau satu ketukan/klik
+  // ---------- Firestore-backed per-tanggal isi Catatan (bukan cuma status
+  // centang, tapi TEKS Catatan itu sendiri: teks bebas, list bullet/angka,
+  // maupun checklist) ----------
+  // `notes` pada dokumen reminder tetap dipakai sebagai isi Catatan untuk
+  // kemunculan ASLI (tanggal r.date, saat reminder itu pertama dibuat) —
+  // supaya reminder lama yang sudah ada tidak kehilangan Catatan yang sudah
+  // ditulis sebelum fitur per-tanggal ini ada. Untuk kemunculan-kemunculan
+  // lain dari reminder berulang, isi Catatan disimpan TERPISAH per
+  // (reminder + tanggal) di sini, mirip pola checklistProgress di atas: satu
+  // dokumen kecil berisi map, tiap kemunculan sendiri kosong ("") sampai
+  // pengguna benar-benar mengisi Catatan untuk tanggal itu, dan begitu
+  // diisi, isinya HANYA berlaku untuk tanggal itu saja (tidak "menempel" ke
+  // kemunculan lain, dan tidak ikut hilang kalau kemunculan lain diubah).
+  var unsubscribeOccurrenceNotes = null;
+  function occurrenceNotesDocRef(){
+    return doc(db, 'users', currentUser.uid, 'settings', 'occurrenceNotes');
+  }
+  function subscribeOccurrenceNotes(){
+    if (unsubscribeOccurrenceNotes) unsubscribeOccurrenceNotes();
+    unsubscribeOccurrenceNotes = onSnapshot(occurrenceNotesDocRef(), function(snap){
+      var raw = snap.exists() ? snap.data() : {};
+      var map = Object.assign({}, raw.map || {});
+      // Perbaikan yang sama seperti pada completions/checklistProgress:
+      // setDoc(ref, {'map.'+key: value}, {merge:true}) kadang menyimpan
+      // field literal "map.xxx" alih-alih nested di dalam `map`.
+      var strayKeys = Object.keys(raw).filter(function(k){ return k !== 'map' && k.indexOf('map.') === 0; });
+      strayKeys.forEach(function(k){
+        var realKey = k.slice(4);
+        if (typeof raw[k] === 'string') map[realKey] = raw[k];
+      });
+      state.occurrenceNotes = map;
+      renderAll();
+      if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+      if (strayKeys.length) repairStrayMapFields(occurrenceNotesDocRef(), strayKeys, raw);
+    }, function(err){
+      console.error('Firestore occurrence notes sync error', err);
+    });
+  }
+  function occurrenceNotesKey(reminderId, dateStr){
+    return reminderId + '|' + dateStr;
+  }
+  // Isi Catatan yang berlaku untuk SATU kemunculan bertanggal tertentu.
+  // Urutan prioritas: (1) entri eksplisit di state.occurrenceNotes untuk
+  // (reminder, tanggal) itu — termasuk kalau isinya sengaja dikosongkan
+  // lagi oleh pengguna; (2) kalau reminder tidak berulang, atau tanggalnya
+  // adalah tanggal asli (r.date), pakai `notes` pada dokumen reminder;
+  // (3) selain itu (kemunculan berulang yang belum pernah diisi
+  // Catatan-nya sendiri), kosong.
+  function getNotesForOccurrence(reminderId, dateStr){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return '';
+    if (!dateStr) return r.notes || '';
+    var key = occurrenceNotesKey(reminderId, dateStr);
+    if (Object.prototype.hasOwnProperty.call(state.occurrenceNotes, key)){
+      return state.occurrenceNotes[key];
+    }
+    if (!r.repeat || r.repeat === 'none' || dateStr === r.date) return r.notes || '';
+    return '';
+  }
+  // Menyimpan isi Catatan untuk SATU kemunculan bertanggal. Kalau
+  // kemunculannya adalah tanggal asli (atau reminder tidak berulang),
+  // simpan seperti biasa ke field `notes` pada dokumen reminder (perilaku
+  // lama, tidak berubah). Selain itu, simpan ke map occurrenceNotes supaya
+  // hanya berlaku untuk tanggal itu saja.
+  function setNotesForOccurrence(reminderId, dateStr, text){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return Promise.resolve();
+    if (!dateStr || !r.repeat || r.repeat === 'none' || dateStr === r.date){
+      var updated = Object.assign({}, r, { notes: text });
+      var idx = state.reminders.findIndex(function(x){ return x.id === reminderId; });
+      if (idx !== -1){ state.reminders = state.reminders.slice(); state.reminders[idx] = updated; }
+      return saveReminderToCloud(updated);
+    }
+    if (!currentUser) return Promise.resolve();
+    var key = occurrenceNotesKey(reminderId, dateStr);
+    var previous = state.occurrenceNotes;
+    var next = Object.assign({}, state.occurrenceNotes);
+    next[key] = text;
+    state.occurrenceNotes = next;
+    return writeDotPatch(occurrenceNotesDocRef(), ['map.' + key, text]).catch(function(err){
+      console.error(err);
+      state.occurrenceNotes = previous;
+      renderAll();
+      if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+      showToast('Gagal menyimpan Catatan ke cloud — dikembalikan seperti semula. Cek koneksi internet / aturan Firestore.', 6000);
+      throw err;
+    });
+  }
   // sempat terdaftar dua kali (umum terjadi di layar sentuh tanpa
   // touch-action, browser mengirim event "touch" lalu "click" susulan untuk
   // ketukan yang sama), pendaftaran kedua diabaikan alih-alih membalik lagi
@@ -2415,7 +2508,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     probe.removeChild(clone);
     return w;
   }
-  var CAL_DAY_ITEMS_LIMIT = 5; // sama dengan DAY_ITEMS_LIMIT di renderCalendar()
+  var CAL_DAY_ITEMS_LIMIT = 10; // sama dengan DAY_ITEMS_LIMIT di renderCalendar()
   function autoSizeDayColumns(){
     if (!dayGrid) return;
     var cells = dayGrid.querySelectorAll('.day-cell');
@@ -2524,7 +2617,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       // kalah dari .today (lihat komentar di CSS).
       var hasTravel = items.some(function(it){ return !!(it.reminder && it.reminder.travel); });
       if (hasTravel) cellBgCls += ' is-travel';
-      var cls = 'day-cell' + (inMonth?'':' muted') + (isToday?' today':'') + cellBgCls;
+      var cls = 'day-cell' + (inMonth?'':' muted') + (isToday?' today':'') + (dateStr < todayStr ? ' is-past-day' : '') + cellBgCls;
       var numCls = 'day-num';
       var titleAttr = '';
       if ((holidayInfo && holidayInfo.type === 'libur') || dow === 0){
@@ -2552,7 +2645,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         html += '<div class="day-holiday-tag'+(holidayInfo.type==='cuti'?' cuti':'')+'">'+escapeHTML(holidayInfo.name)+'</div>';
       }
       html += '<div class="day-items">';
-      var DAY_ITEMS_LIMIT = 5;
+      var DAY_ITEMS_LIMIT = 10;
       // Chip pengingat hanya ditampilkan untuk tanggal yang ada di bulan
       // yang sedang dilihat (inMonth). Sel dari bulan sebelumnya/berikutnya
       // (yang tampil pudar di ujung grid) tetap menunjukkan angka tanggalnya
@@ -2662,11 +2755,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return items.length>0 && items.every(function(it){ return it.checked; });
   }
   // Status centang checklist untuk SATU kemunculan bertanggal (reminder +
-  // tanggal tertentu). `notes` dipakai sebagai templat item (teks + baris
-  // mana yang berupa checklist), tapi status centangnya diambil dari
-  // state.checklistProgress per (reminder, tanggal, baris) — bukan dari
-  // marker ☑/☐ di dalam notes itu sendiri — supaya tiap kemunculan baru
-  // (tanggal baru) otomatis mulai kosong lagi.
+  // tanggal tertentu). `reminderId`+`dateStr`, kalau diisi, dipakai untuk
+  // mengambil isi Catatan yang BENAR-BENAR berlaku untuk kemunculan itu
+  // lewat getNotesForOccurrence() (bukan `notes` yang dioper apa adanya —
+  // lihat komentar di getNotesForOccurrence soal kenapa tiap kemunculan
+  // berulang punya isi Catatan sendiri-sendiri, bukan templat yang dipakai
+  // bersama). Status centangnya sendiri diambil dari state.checklistProgress
+  // per (reminder, tanggal, baris) — bukan dari marker ☑/☐ di dalam teks
+  // Catatan itu sendiri — supaya tiap kemunculan baru (tanggal baru)
+  // otomatis mulai kosong lagi.
   //
   // Migrasi data lama: kalau untuk (reminder, tanggal, baris) itu belum ada
   // entri sama sekali di checklistProgress, dipakai status ☑/☐ apa adanya
@@ -2674,6 +2771,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // dicentang lewat sistem lama (sebelum fitur reset-per-tanggal ini ada)
   // tidak mendadak hilang begitu saja.
   function checklistItemsForDate(notes, reminderId, dateStr){
+    if (reminderId && dateStr) notes = getNotesForOccurrence(reminderId, dateStr);
     var items = checklistLines(notes);
     if (!items.length || !dateStr) return items;
     return items.map(function(it){
@@ -2682,6 +2780,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         ? !!state.checklistProgress[key]
         : it.checked;
       return { idx: it.idx, text: it.text, checked: checked };
+
     });
   }
   // Migrasi satu kali (self-healing, aman dipanggil berulang) untuk data
@@ -2920,6 +3019,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // berdekatan, TAPI kelompok-kelompok itu sendiri tetap tersusun sesuai
   // urutan kemunculan barisnya di `notes`.
   function renderNotesOrderedHTML(notes, reminderId, dateStr){
+    if (reminderId && dateStr) notes = getNotesForOccurrence(reminderId, dateStr);
     if (!notes) return '';
     var checklistItems = (reminderId && dateStr) ? checklistItemsForDate(notes, reminderId, dateStr) : checklistLines(notes);
     var checklistByIdx = {};
@@ -3283,7 +3383,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '<div class="meta">'+c.label+' · '+it.time+'</div>' +
       renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
       '</div>' +
-      '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
+      '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button></div></li>';
   }
   function renderCurrentOverdue(current){
     var overdue = getTodayOverdueItems(current);
@@ -3317,7 +3417,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
     });
     Array.prototype.forEach.call(currentOverdueList.querySelectorAll('.edit-flex'), function(btn){
-      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id'), null, btn.getAttribute('data-date'), btn.getAttribute('data-time')); });
     });
     bindChecklistClicks(currentOverdueList, function(host){
       return { type:'current', date: host.getAttribute('data-date'), time: host.querySelector('.flex-check').getAttribute('data-time') };
@@ -4232,11 +4332,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // ketik beberapa huruf).
   function renderCatList(query){
     var q = (query || '').trim().toLowerCase();
-    // Kategori yang disembunyikan lewat toggle mata di Pengaturan tidak
-    // ditampilkan di sini — kecuali kategori yang sedang terpilih pada
-    // pengingat yang sedang diedit, supaya nilainya tidak hilang begitu
-    // saja dari tampilan saat membuka form edit.
-    var visible = CATS.filter(function(c){ return state.activeFilters.indexOf(c.id) !== -1 || c.id === selectedCat; });
+    // Semua kategori selalu bisa dipilih di sini, terlepas dari filter
+    // kalender ("Filter kalender") maupun toggle tampilkan/sembunyikan di
+    // Pengaturan yang sedang aktif — supaya menambah/mengubah pengingat
+    // tidak "terkunci" cuma ke kategori yang kebetulan sedang difilter di
+    // tampilan kalender saat itu.
+    var visible = CATS;
     var filtered = q ? visible.filter(function(c){ return c.label.toLowerCase().indexOf(q) !== -1; }) : visible;
     catDropdownList.innerHTML = filtered.length
       ? filtered.map(function(c){
@@ -4275,8 +4376,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // supaya tidak bisa "menyimpan" nama kategori bebas hasil ketikan.
     setTimeout(function(){
       var typed = catInput.value.trim().toLowerCase();
-      var visible = CATS.filter(function(c){ return state.activeFilters.indexOf(c.id) !== -1 || c.id === selectedCat; });
-      var exact = visible.find(function(c){ return c.label.toLowerCase() === typed; });
+      var exact = CATS.find(function(c){ return c.label.toLowerCase() === typed; });
       if (exact) selectedCat = exact.id;
       renderCatOptions();
       closeCatDropdown();
@@ -4451,6 +4551,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('endBtn').style.display = 'none';
     document.getElementById('restoreBtn').style.display = 'none';
     formOccurrence = null;
+    formOccurrenceDate = null;
     reminderForm.reset();
     selectedCat = '';
     closeCatDropdown();
@@ -4492,10 +4593,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // tertentu (mis. "Mendatang") — dipakai tombol "↺ Kembalikan ke Saat
   // Ini" untuk tahu status/selesai kemunculan mana yang mau dibatalkan.
   var formOccurrence = null; // { reminderId, date, time } atau null
+  // Tanggal kemunculan yang sedang dibuka di form (kalau ada) — dipakai
+  // supaya kolom Catatan menampilkan & menyimpan isi Catatan milik
+  // kemunculan tersebut secara khusus (lihat getNotesForOccurrence /
+  // setNotesForOccurrence), bukan cuma untuk tombol "↺" seperti
+  // formOccurrence di atas. Beda dengan formOccurrence, ini selalu terisi
+  // begitu form dibuka dari kemunculan bertanggal, apa pun status selesainya.
+  var formOccurrenceDate = null;
   function openEditForm(id, preloaded, occurrenceDate, occurrenceTime){
     var r = preloaded || state.reminders.find(function(x){ return x.id===id; });
     if (!r) return;
     closeDayPanel();
+    formOccurrenceDate = (occurrenceDate && !r.flexible) ? occurrenceDate : null;
     document.getElementById('formTitle').textContent = 'Ubah pengingat';
     document.getElementById('reminderId').value = r.id;
     document.getElementById('deleteBtn').style.display = 'inline-block';
@@ -4544,10 +4653,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fTimeHoliday.value = r.timeHoliday || r.time || '09:00';
     document.getElementById('fUntil').value = r.until || '';
     updateDateDisplay(fUntilEl, fUntilDisplay);
-    document.getElementById('fNotes').value = r.notes || '';
+    // Isi kolom Catatan dengan isi milik KEMUNCULAN yang sedang dibuka (kalau
+    // form dibuka dari kemunculan bertanggal tertentu) — bukan selalu
+    // r.notes apa adanya — supaya tiap tanggal menampilkan Catatan miliknya
+    // sendiri-sendiri. Lihat getNotesForOccurrence().
+    var effectiveNotes = formOccurrenceDate ? getNotesForOccurrence(r.id, formOccurrenceDate) : (r.notes || '');
+    document.getElementById('fNotes').value = effectiveNotes;
     document.getElementById('fLink').value = r.link || '';
     (function(){
-      var lastLine = (r.notes || '').split('\n').slice(-1)[0] || '';
+      var lastLine = (effectiveNotes || '').split('\n').slice(-1)[0] || '';
       var info = lineMarkerInfo(lastLine);
       setNotesFmtMode(info.type === 'none' ? 'none' : info.type);
     })();
@@ -4584,6 +4698,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       return;
     }
     var existing = id ? state.reminders.find(function(x){ return x.id===id; }) : null;
+    var fNotesValue = document.getElementById('fNotes').value.trim();
     var data;
     if (isFlexible){
       data = {
@@ -4607,7 +4722,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         timeHoliday: null,
         workdaySatSpecial: false,
         timeWorkdaySat: null,
-        notes: document.getElementById('fNotes').value.trim(),
+        notes: fNotesValue,
         link: document.getElementById('fLink').value.trim()
       };
       if (!data.title) return;
@@ -4635,15 +4750,30 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         timeHoliday: useDayType ? (fTimeHoliday.value || baseTime) : null,
         workdaySatSpecial: (fRepeat.value==='workdaySat' && fWorkdaySatSpecial.checked),
         timeWorkdaySat: (fRepeat.value==='workdaySat' && fWorkdaySatSpecial.checked) ? (fTimeWorkdaySat.value || baseTime) : null,
-        notes: document.getElementById('fNotes').value.trim(),
+        notes: fNotesValue,
         link: document.getElementById('fLink').value.trim()
       };
       if (!data.title || !data.date || !data.time) return;
     }
     if (!currentUser) return;
 
+    // Kalau form ini sedang dibuka untuk SATU kemunculan bertanggal yang
+    // BUKAN tanggal asli pengingat berulang, isi Catatan yang baru diketik
+    // ('fNotesValue') adalah milik kemunculan itu SAJA — jangan ditimpakan
+    // ke field `notes` pada dokumen reminder (yang dipakai bersama sebagai
+    // Catatan kemunculan asli). Simpan `data.notes` apa adanya seperti
+    // sebelumnya (tidak berubah), lalu simpan `fNotesValue` secara terpisah
+    // lewat setNotesForOccurrence() setelah dokumen reminder tersimpan.
+    var occDateForNotes = null;
+    if (!isFlexible && data.repeat && data.repeat !== 'none' && formOccurrenceDate && formOccurrenceDate !== data.date){
+      occDateForNotes = formOccurrenceDate;
+      data.notes = existing ? (existing.notes || '') : '';
+    }
+
     closeForm();
     saveReminderToCloud(data).then(function(){
+      if (occDateForNotes) return setNotesForOccurrence(data.id, occDateForNotes, fNotesValue);
+    }).then(function(){
       showToast(id ? 'Pengingat diperbarui' : 'Pengingat disimpan');
     }).catch(function(err){
       console.error(err);
@@ -4749,7 +4879,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
           '</div>' +
         '</div>' +
-        '<div class="acts"><button type="button" class="icon-btn edit-day" data-id="'+it.reminder.id+'" aria-label="Ubah">✎</button></div>' +
+        '<div class="acts"><button type="button" class="icon-btn edit-day" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" aria-label="Ubah">✎</button></div>' +
       '</div>';
     }).join('');
     Array.prototype.forEach.call(dayPanelList.querySelectorAll('.dp-title'), function(titleEl){
@@ -4765,7 +4895,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
     });
     Array.prototype.forEach.call(dayPanelList.querySelectorAll('.edit-day'), function(btn){
-      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id'), null, btn.getAttribute('data-date'), btn.getAttribute('data-time')); });
     });
   }
 
@@ -5375,6 +5505,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       subscribeCategories();
       subscribeCompletions();
       subscribeChecklistProgress();
+      subscribeOccurrenceNotes();
       refreshNotifyBanner();
       // Kalau cache offline Firestore gagal aktif (lihat inisialisasi `db`
       // di atas), tulisan (misalnya centang "Terlewat"/Fleksibel) yang
@@ -5390,9 +5521,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (unsubscribeCategories){ unsubscribeCategories(); unsubscribeCategories = null; }
       if (unsubscribeCompletions){ unsubscribeCompletions(); unsubscribeCompletions = null; }
       if (unsubscribeChecklistProgress){ unsubscribeChecklistProgress(); unsubscribeChecklistProgress = null; }
+      if (unsubscribeOccurrenceNotes){ unsubscribeOccurrenceNotes(); unsubscribeOccurrenceNotes = null; }
       state.reminders = [];
       state.completions = {};
       state.checklistProgress = {};
+      state.occurrenceNotes = {};
       CATS = DEFAULT_CATS.slice();
       accountChip.hidden = true;
       syncIndicatorEl.hidden = true;
