@@ -1149,7 +1149,7 @@
         <div class="cal-search-row">
           <div class="search-box" id="calSearchBox">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            <input type="text" id="calSearchInput" placeholder="Cari pengingat di kalender…" autocomplete="off">
+            <input type="text" id="calSearchInput" placeholder="" autocomplete="off">
             <button type="button" class="search-clear" id="calSearchClear" aria-label="Hapus pencarian">✕</button>
           </div>
           <div class="cal-filter-wrap">
@@ -1246,7 +1246,7 @@
     </div>
     <div class="search-box" id="flexSearchBox" style="margin:0 0.6rem 0.6rem;">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <input type="text" id="flexSearchInput" placeholder="Cari pengingat fleksibel…" autocomplete="off">
+      <input type="text" id="flexSearchInput" placeholder="" autocomplete="off">
       <button type="button" class="search-clear" id="flexSearchClear" aria-label="Hapus pencarian">✕</button>
     </div>
     <ul class="flex-list flex-list-missed" id="flexibleListMissed"></ul>
@@ -1281,6 +1281,16 @@
 
   <section class="panel view-section settings-panel" data-view="display" aria-label="Setting">
     <div class="settings-block">
+      <h2>Riwayat</h2>
+      <p class="hint">Pengingat yang paling baru ditambahkan, lengkap dengan tanggal &amp; jam saat dibuat.</p>
+      <ul class="upcoming-list recent-added-list" id="recentAddedList"></ul>
+      <div class="upgrade-pagination" id="recentAddedPagination" hidden>
+        <button type="button" id="recentAddedPrev">‹ Sebelumnya</button>
+        <span class="page-info" id="recentAddedPageInfo"></span>
+        <button type="button" id="recentAddedNext">Setelahnya ›</button>
+      </div>
+    </div>
+    <div class="settings-block">
       <h2>Tampilan</h2>
       <div class="theme-tabs" id="themeTabs">
         <button type="button" class="theme-tab" data-theme-choice="light">
@@ -1313,16 +1323,6 @@
         <button type="button" id="catNext">Selanjutnya ›</button>
       </div>
       <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
-    </div>
-    <div class="settings-block">
-      <h2>Riwayat</h2>
-      <p class="hint">Pengingat yang paling baru ditambahkan, lengkap dengan tanggal &amp; jam saat dibuat.</p>
-      <ul class="upcoming-list recent-added-list" id="recentAddedList"></ul>
-      <div class="upgrade-pagination" id="recentAddedPagination" hidden>
-        <button type="button" id="recentAddedPrev">‹ Sebelumnya</button>
-        <span class="page-info" id="recentAddedPageInfo"></span>
-        <button type="button" id="recentAddedNext">Setelahnya ›</button>
-      </div>
     </div>
     <div class="settings-block">
       <h2>Cadangkan &amp; Pulihkan Data</h2>
@@ -4086,18 +4086,27 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     bindFlexItemEvents(col.list);
   }
 
+  // Pencarian pengingat: mencocokkan query ke judul MAUPUN isi catatan,
+  // supaya kalimat yang cuma ada di catatan (bukan judul) tetap ketemu.
+  function reminderMatchesQuery(r, q){
+    if (!q) return true;
+    if (r.title && r.title.toLowerCase().indexOf(q) !== -1) return true;
+    if (r.notes && r.notes.toLowerCase().indexOf(q) !== -1) return true;
+    return false;
+  }
+
   function renderFlexible(){
     renderFlexFilterUI();
     renderFlexSortUI();
     var items = state.reminders.filter(function(r){
       if (!r.flexible) return false;
       if (state.flexFilters.indexOf(r.category) === -1) return false;
-      if (flexSearchQuery && r.title.toLowerCase().indexOf(flexSearchQuery) === -1) return false;
+      if (flexSearchQuery && !reminderMatchesQuery(r, flexSearchQuery)) return false;
       if (flexItemIsDone(r)) return false; // sudah dicentang selesai -> otomatis disembunyikan
       return true;
     });
     var missed = getMissedItems().filter(function(it){
-      return !flexSearchQuery || it.reminder.title.toLowerCase().indexOf(flexSearchQuery) !== -1;
+      return !flexSearchQuery || reminderMatchesQuery(it.reminder, flexSearchQuery);
     });
     // Urutkan berdasarkan waktu dibuat (dari id) sesuai flexSortOrder:
     // 'desc' = terbaru→terlama, 'asc' = terlama→terbaru.
@@ -4172,7 +4181,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var doneItems = state.reminders.filter(function(r){
       if (!r.flexible) return false;
       if (state.flexFilters.indexOf(r.category) === -1) return false;
-      if (flexSearchQuery && r.title.toLowerCase().indexOf(flexSearchQuery) === -1) return false;
+      if (flexSearchQuery && !reminderMatchesQuery(r, flexSearchQuery)) return false;
       return flexItemIsDone(r);
     });
     doneItems.sort(function(a,b){ return b.id.localeCompare(a.id); });
@@ -5029,10 +5038,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!q){ calSearchResultsEl.hidden = true; calSearchResultsEl.innerHTML = ''; return; }
     var todayStr = toISODate(new Date());
     var matches = state.reminders.filter(function(r){
-      return !r.flexible && r.title.toLowerCase().indexOf(q) !== -1;
+      return !r.flexible && reminderMatchesQuery(r, q);
     }).map(function(r){
       var nextDate = findNextOccurrenceDate(r, todayStr);
-      return { r: r, date: nextDate || r.date, isPast: !nextDate };
+      var titleHit = r.title && r.title.toLowerCase().indexOf(q) !== -1;
+      return { r: r, date: nextDate || r.date, isPast: !nextDate, notesOnly: !titleHit };
     });
     matches.sort(function(a, b){
       if (a.isPast !== b.isPast) return a.isPast ? 1 : -1;
@@ -5048,6 +5058,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var metaLabel = m.date
         ? (dayLabel(parseISODate(m.date)) + ' ' + (m.r.time || '') + (m.isPast ? ' · sudah lewat' : ''))
         : 'Belum ada tanggal';
+      if (m.notesOnly) metaLabel += ' · cocok di catatan';
       return '<button type="button" class="cal-search-item" data-date="'+(m.date||'')+'">' +
         '<span class="csi-body"><span class="csi-title">'+escapeHTML(m.r.title)+'</span>' +
         '<span class="csi-meta">'+escapeHTML(metaLabel)+'</span></span>' +
