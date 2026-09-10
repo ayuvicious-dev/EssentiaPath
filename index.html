@@ -559,6 +559,12 @@
   .flex-item .acts{display:flex; gap:0.3rem; flex:none;}
   .flex-item.missed-item{background:var(--notice-bg); border-color:var(--notice-border);}
   .flex-item.priority-item{box-shadow:inset 3px 0 0 var(--amber-deep);}
+  /* Item Prioritas yang di-pin: tambahan latar lembut supaya terlihat
+     beda dari item prioritas biasa, selain posisinya yang selalu paling
+     atas di kolom Prioritas (diatur lewat sorting di JS). */
+  .flex-item.pinned-item{background:var(--notice-bg);}
+  .toggle-pin svg{width:15px; height:15px;}
+  .toggle-pin.active{color:var(--amber-deep);}
 
   /* ---------- Fleksibel: kolom Prioritas / Standar ---------- */
   .flex-list-missed{padding-bottom:0;}
@@ -4023,8 +4029,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var hasChecklistR = checklistItemsR.length > 0;
     var doneR = flexItemIsDone(r);
     var freeText = notesFreeTextPreview(r.notes);
-    var hasNotesR = !!(r.notes && r.notes.trim());
-    return '<li class="flex-item'+(doneR?' done':'')+(r.priority?' priority-item':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
+    return '<li class="flex-item'+(doneR?' done':'')+(r.priority?' priority-item':'')+(r.priority && r.pinned?' pinned-item':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
       '<button type="button" class="flex-check" data-id="'+r.id+'" data-has-checklist="'+(hasChecklistR?'1':'0')+'" aria-label="Tandai selesai">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
@@ -4033,12 +4038,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       renderNotesOrderedHTML(r.notes) +
       '</div>' +
       '<div class="acts">' +
+        (r.priority ? (
+        '<button type="button" class="icon-btn toggle-pin'+(r.pinned?' active':'')+'" aria-label="'+(r.pinned?'Lepas sematan':'Sematkan di atas')+'" title="'+(r.pinned?'Lepas sematan':'Sematkan di atas')+'" data-id="'+r.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 10c0 6.5-9 12-9 12s-9-5.5-9-12a9 9 0 0118 0z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="'+(r.pinned?'currentColor':'none')+'" fill-opacity="'+(r.pinned?'0.18':'0')+'"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="1.8" fill="'+(r.pinned?'currentColor':'none')+'"/></svg>' +
+        '</button>') : '') +
         '<button type="button" class="icon-btn toggle-priority" aria-label="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" title="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" data-id="'+r.id+'">'+(r.priority?'★':'☆')+'</button>' +
         '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button>' +
-        (hasNotesR ? (
-        '<button type="button" class="icon-btn flex-copy" aria-label="Salin catatan" title="Salin catatan" data-id="'+r.id+'">' +
+        '<button type="button" class="icon-btn flex-copy" aria-label="Salin" title="Salin" data-id="'+r.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-        '</button>') : '') +
+        '</button>' +
       '</div></li>';
   }
 
@@ -4057,13 +4065,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-priority'), function(btn){
       btn.addEventListener('click', function(){ toggleFlexPriority(btn.getAttribute('data-id')); });
     });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-pin'), function(btn){
+      btn.addEventListener('click', function(){ toggleFlexPin(btn.getAttribute('data-id')); });
+    });
     Array.prototype.forEach.call(listEl.querySelectorAll('.edit-flex'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-copy'), function(btn){
       btn.addEventListener('click', function(){
         var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
-        if (r) copyNotesToClipboard(r.notes, btn);
+        // Kalau catatan kosong, salin judulnya saja sebagai fallback —
+        // supaya tombol Salin tetap berguna untuk pengingat tanpa catatan.
+        if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
       });
     });
     bindChecklistClicks(listEl, function(){ return { type:'flex' }; });
@@ -4172,7 +4185,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<div class="meta">'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
           renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
           '</div>' +
-          '<div class="acts"><button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button></div></li>';
+          '<div class="acts">' +
+            '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button>' +
+            '<button type="button" class="icon-btn flex-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
+              '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+            '</button>' +
+          '</div></li>';
       }).join('');
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.missed-check'), function(btn){
         btn.addEventListener('click', function(){
@@ -4187,6 +4205,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.edit-flex'), function(btn){
         btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+      });
+      Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-copy'), function(btn){
+        btn.addEventListener('click', function(){
+          var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
+          if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
+        });
       });
       bindChecklistClicks(flexibleListMissed, function(host){
         return { type:'missed', date: host.getAttribute('data-date'), time: host.querySelector('.missed-check').getAttribute('data-time') };
@@ -4211,7 +4235,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       renderFlexDoneSection();
       return;
     }
-    var priorityItemsHtml = items.filter(function(r){ return !!r.priority; }).map(flexItemHtml);
+    var priorityItemsRaw = items.filter(function(r){ return !!r.priority; });
+    // Item yang di-pin selalu naik ke paling atas kolom Prioritas — urutan
+    // relatif SELAIN pin (mengikuti flexSortOrder yang sudah diterapkan di
+    // atas) tetap dipertahankan berkat Array.sort yang stabil di JS modern.
+    priorityItemsRaw.sort(function(a,b){
+      var pa = a.pinned ? 1 : 0, pb = b.pinned ? 1 : 0;
+      return pb - pa;
+    });
+    var priorityItemsHtml = priorityItemsRaw.map(flexItemHtml);
     var standardItemsHtml = items.filter(function(r){ return !r.priority; }).map(flexItemHtml);
     renderFlexColumn(flexCols.priority, priorityItemsHtml);
     renderFlexColumn(flexCols.standard, standardItemsHtml);
@@ -4284,6 +4316,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     saveReminderToCloud(updated).catch(function(err){
       console.error(err);
       showToast('Gagal memperbarui prioritas. Coba lagi.');
+    });
+  }
+  // Pin khusus untuk item Fleksibel yang sudah Prioritas: item yang di-pin
+  // selalu ditampilkan paling atas di kolom Prioritas, di atas item
+  // prioritas lain — tidak ikut aturan urut terbaru/terlama biasa.
+  function toggleFlexPin(id){
+    var idx = state.reminders.findIndex(function(x){ return x.id===id; });
+    if (idx === -1) return;
+    var updated = Object.assign({}, state.reminders[idx], { pinned: !state.reminders[idx].pinned });
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
+    renderFlexible();
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyematkan. Coba lagi.');
     });
   }
 
@@ -4757,6 +4804,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         category: selectedCat,
         flexible: true,
         priority: fPriority.checked,
+        // setDoc() di saveReminderToCloud menimpa seluruh dokumen, jadi
+        // field yang tidak dibawa di sini akan hilang saat disimpan ulang
+        // lewat form edit — pinned perlu dipertahankan dari data lama
+        // supaya status "disematkan" tidak ikut hilang tiap kali diedit.
+        pinned: existing ? !!existing.pinned : false,
         travel: false,
         done: existing ? !!existing.done : false,
         createdAt: existing ? (existing.createdAt || null) : Date.now(),
@@ -4785,6 +4837,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         category: selectedCat,
         flexible: false,
         priority: false,
+        pinned: false,
         travel: fTravel.checked,
         done: null,
         createdAt: existing ? (existing.createdAt || null) : Date.now(),
