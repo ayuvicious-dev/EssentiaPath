@@ -1359,6 +1359,8 @@
     <div class="settings-block">
       <h2>Tentang</h2>
       <p class="settings-status">Pengingat Anda tersimpan di akun Firebase Anda dan hanya bisa diakses setelah masuk dengan email &amp; kata sandi.</p>
+      <p class="settings-status">Dirilis pertama kali: 31 Agustus 2026</p>
+      <p class="settings-status">Sudah digunakan selama: <span id="appUsageDuration">—</span></p>
     </div>
   </section>
 </main>
@@ -1838,6 +1840,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     activeFilters: loadFilters(),
     flexFilters: loadFlexFilters(),
     dayPanelDate: null,
+    dayPanelSingle: null,
     completions: {},
     checklistProgress: {},
     occurrenceNotes: {}
@@ -2308,6 +2311,32 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function toISODate(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
   function parseISODate(s){ var p=s.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
 
+  // ---------- Tentang: tanggal rilis pertama & masa pakai ----------
+  // APP_RELEASE_DATE diisi manual sekali (tanggal rilis pertama aplikasi),
+  // lalu "masa pakai" di bawahnya dihitung otomatis setiap aplikasi dibuka
+  // (bukan angka statis), berdasarkan tanggal hari ini vs tanggal rilis.
+  var APP_RELEASE_DATE = '2026-08-31';
+  function humanDurationSince(startStr){
+    var start = parseISODate(startStr);
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var years = today.getFullYear() - start.getFullYear();
+    var months = today.getMonth() - start.getMonth();
+    var days = today.getDate() - start.getDate();
+    if (days < 0){
+      months -= 1;
+      days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+    }
+    if (months < 0){ years -= 1; months += 12; }
+    var parts = [];
+    if (years > 0) parts.push(years + ' tahun');
+    if (months > 0) parts.push(months + ' bulan');
+    if (days > 0 || parts.length === 0) parts.push(days + ' hari');
+    return parts.join(' ');
+  }
+  var appUsageDurationEl = document.getElementById('appUsageDuration');
+  if (appUsageDurationEl) appUsageDurationEl.textContent = humanDurationSince(APP_RELEASE_DATE);
+
   // ---------- Sync indicator (top header) ----------
   var SYNC_MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   var syncIndicatorEl = document.getElementById('syncIndicator');
@@ -2655,7 +2684,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (inMonth){
         var shown = items.slice(0, DAY_ITEMS_LIMIT);
         shown.forEach(function(it){
-          html += '<span class="chip"><span class="t">'+it.time+'</span><span class="title">'+escapeHTML(it.reminder.title)+'</span></span>';
+          html += '<span class="chip" data-rid="'+escapeHTML(it.reminder.id)+'" data-time="'+escapeHTML(it.time)+'"><span class="t">'+it.time+'</span><span class="title">'+escapeHTML(it.reminder.title)+'</span></span>';
         });
         if (items.length > DAY_ITEMS_LIMIT){
           html += '<span class="more-link">+'+(items.length-DAY_ITEMS_LIMIT)+' lainnya</span>';
@@ -2666,7 +2695,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     dayGrid.innerHTML = html;
 
     Array.prototype.forEach.call(dayGrid.querySelectorAll('.day-cell'), function(cell){
-      cell.addEventListener('click', function(){ openDayPanel(cell.getAttribute('data-date')); });
+      cell.addEventListener('click', function(e){
+        var dateStr = cell.getAttribute('data-date');
+        // Kalau yang diklik (atau induknya) adalah satu chip pengingat
+        // tertentu, tampilkan panel HANYA untuk pengingat itu. Klik di
+        // bagian lain sel (nomor tanggal, area kosong, atau "+X lainnya")
+        // tetap membuka panel berisi SEMUA pengingat hari itu seperti biasa.
+        var chipEl = e.target.closest ? e.target.closest('.chip') : null;
+        if (chipEl && cell.contains(chipEl)){
+          openDayPanel(dateStr, { reminderId: chipEl.getAttribute('data-rid'), time: chipEl.getAttribute('data-time') });
+          return;
+        }
+        openDayPanel(dateStr);
+      });
     });
     syncWeekdayRowColumns();
     resetCalScroll();
@@ -4870,6 +4911,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   function renderDayPanelList(){
     var items = itemsForDate(state.dayPanelDate);
+    // Kalau panel dibuka lewat klik satu chip tertentu (bukan "+X lainnya"
+    // atau area lain sel), saring daftar supaya hanya menampilkan satu
+    // pengingat (dan jam) itu saja — bukan seluruh pengingat hari itu.
+    if (state.dayPanelSingle){
+      items = items.filter(function(it){
+        return it.reminder.id === state.dayPanelSingle.reminderId && it.time === state.dayPanelSingle.time;
+      });
+    }
     if (!items.length){
       dayPanelList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini.</div>';
       return;
@@ -4908,9 +4957,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
 
-  function openDayPanel(dateStr){
+  function openDayPanel(dateStr, singleFilter){
     state.dayPanelDate = dateStr;
+    // singleFilter, kalau diisi, berbentuk { reminderId, time } — dipakai
+    // renderDayPanelList() untuk menampilkan hanya satu pengingat, bukan
+    // seluruh pengingat tanggal itu. Diisi null saat panel dibuka dari
+    // "+X lainnya" atau bagian lain sel, supaya daftar lengkap tampil.
+    state.dayPanelSingle = singleFilter || null;
     dayPanelExpanded = {};
+    // Kalau membuka panel untuk satu pengingat spesifik, langsung buka
+    // (expand) keterangannya supaya pengguna tidak perlu klik dua kali.
+    if (singleFilter){
+      dayPanelExpanded[singleFilter.reminderId + '|' + singleFilter.time] = true;
+    }
     var dt = parseISODate(dateStr);
     var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     document.getElementById('dayPanelTitle').textContent = days[dt.getDay()]+', '+dt.getDate()+' '+MONTH_NAMES[dt.getMonth()]+' '+dt.getFullYear();
