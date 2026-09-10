@@ -565,6 +565,8 @@
   .flex-item.pinned-item{background:var(--notice-bg);}
   .toggle-pin svg{width:15px; height:15px;}
   .toggle-pin.active{color:var(--amber-deep);}
+  .toggle-archive svg{width:15px; height:15px;}
+  .toggle-archive.active{color:var(--moss-deep);}
 
   /* ---------- Fleksibel: kolom Prioritas / Standar ---------- */
   .flex-list-missed{padding-bottom:0;}
@@ -1282,6 +1284,13 @@
         <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <ul class="flex-list flex-list-done" id="flexibleListDone" hidden></ul>
+    </div>
+    <div class="flex-done-toggle-wrap" id="flexArchiveToggleWrap" hidden>
+      <button type="button" class="flex-done-toggle" id="flexArchiveToggle" aria-expanded="false">
+        <span id="flexArchiveToggleLabel">Tampilkan yang diarsipkan</span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <ul class="flex-list flex-list-done" id="flexibleListArchive" hidden></ul>
     </div>
   </section>
 
@@ -3812,6 +3821,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     flexShowDone = !flexShowDone;
     renderFlexible();
   });
+  var flexShowArchive = false;
+  var flexArchiveToggleWrap = document.getElementById('flexArchiveToggleWrap');
+  var flexArchiveToggleBtn = document.getElementById('flexArchiveToggle');
+  var flexArchiveToggleLabel = document.getElementById('flexArchiveToggleLabel');
+  var flexibleListArchive = document.getElementById('flexibleListArchive');
+  flexArchiveToggleBtn.addEventListener('click', function(){
+    flexShowArchive = !flexShowArchive;
+    renderFlexible();
+  });
   var flexSearchQuery = '';
   var flexSearchInput = document.getElementById('flexSearchInput');
   var flexSearchBox = document.getElementById('flexSearchBox');
@@ -4038,6 +4056,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       renderNotesOrderedHTML(r.notes) +
       '</div>' +
       '<div class="acts">' +
+        '<button type="button" class="icon-btn toggle-archive'+(r.archived?' active':'')+'" aria-label="'+(r.archived?'Keluarkan dari arsip':'Arsipkan')+'" title="'+(r.archived?'Keluarkan dari arsip':'Arsipkan (untuk item yang mungkin sudah tidak relevan, tapi bisa dilihat lagi nanti)')+'" data-id="'+r.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="4" rx="1.2" stroke="currentColor" stroke-width="1.8" fill="'+(r.archived?'currentColor':'none')+'" fill-opacity="'+(r.archived?'0.18':'0')+'"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 13h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '</button>' +
         (r.priority ? (
         '<button type="button" class="icon-btn toggle-pin'+(r.pinned?' active':'')+'" aria-label="'+(r.pinned?'Lepas sematan':'Sematkan di atas')+'" title="'+(r.pinned?'Lepas sematan':'Sematkan di atas')+'" data-id="'+r.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 10c0 6.5-9 12-9 12s-9-5.5-9-12a9 9 0 0118 0z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="'+(r.pinned?'currentColor':'none')+'" fill-opacity="'+(r.pinned?'0.18':'0')+'"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="1.8" fill="'+(r.pinned?'currentColor':'none')+'"/></svg>' +
@@ -4067,6 +4088,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-pin'), function(btn){
       btn.addEventListener('click', function(){ toggleFlexPin(btn.getAttribute('data-id')); });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-archive'), function(btn){
+      btn.addEventListener('click', function(){ toggleFlexArchive(btn.getAttribute('data-id')); });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.edit-flex'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
@@ -4156,6 +4180,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (!r.flexible) return false;
       if (state.flexFilters.indexOf(r.category) === -1) return false;
       if (flexSearchQuery && !reminderMatchesQuery(r, flexSearchQuery)) return false;
+      if (r.archived) return false; // diarsipkan -> otomatis disembunyikan dari kolom utama
       if (flexItemIsDone(r)) return false; // sudah dicentang selesai -> otomatis disembunyikan
       return true;
     });
@@ -4233,6 +4258,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       flexCols.standard.list.innerHTML = '';
       flexCols.standard.pagination.hidden = true;
       renderFlexDoneSection();
+      renderFlexArchiveSection();
       return;
     }
     var priorityItemsRaw = items.filter(function(r){ return !!r.priority; });
@@ -4248,6 +4274,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderFlexColumn(flexCols.priority, priorityItemsHtml);
     renderFlexColumn(flexCols.standard, standardItemsHtml);
     renderFlexDoneSection();
+    renderFlexArchiveSection();
   }
   // ---------- Selesai (disembunyikan otomatis) — bisa ditampilkan lagi ----------
   function renderFlexDoneSection(){
@@ -4255,6 +4282,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (!r.flexible) return false;
       if (state.flexFilters.indexOf(r.category) === -1) return false;
       if (flexSearchQuery && !reminderMatchesQuery(r, flexSearchQuery)) return false;
+      if (r.archived) return false; // item yang diarsipkan pindah ke bagian "Diarsipkan" sendiri
       return flexItemIsDone(r);
     });
     doneItems.sort(function(a,b){ return b.id.localeCompare(a.id); });
@@ -4276,6 +4304,37 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       bindFlexItemEvents(flexibleListDone);
     } else {
       flexibleListDone.innerHTML = '';
+    }
+  }
+  // ---------- Diarsipkan (disembunyikan otomatis, di bawah "Tampilan yang
+  // selesai") — untuk item yang mungkin sudah tidak relevan tapi masih
+  // ingin bisa dilihat/dikembalikan lagi nanti. ----------
+  function renderFlexArchiveSection(){
+    var archivedItems = state.reminders.filter(function(r){
+      if (!r.flexible) return false;
+      if (state.flexFilters.indexOf(r.category) === -1) return false;
+      if (flexSearchQuery && !reminderMatchesQuery(r, flexSearchQuery)) return false;
+      return !!r.archived;
+    });
+    archivedItems.sort(function(a,b){ return b.id.localeCompare(a.id); });
+    if (!archivedItems.length){
+      flexArchiveToggleWrap.hidden = true;
+      flexShowArchive = false;
+      flexibleListArchive.hidden = true;
+      flexibleListArchive.innerHTML = '';
+      return;
+    }
+    flexArchiveToggleWrap.hidden = false;
+    flexArchiveToggleBtn.setAttribute('aria-expanded', flexShowArchive ? 'true' : 'false');
+    flexArchiveToggleLabel.textContent = flexShowArchive
+      ? 'Sembunyikan yang diarsipkan'
+      : 'Tampilkan yang diarsipkan (' + archivedItems.length + ')';
+    flexibleListArchive.hidden = !flexShowArchive;
+    if (flexShowArchive){
+      flexibleListArchive.innerHTML = archivedItems.map(flexItemHtml).join('');
+      bindFlexItemEvents(flexibleListArchive);
+    } else {
+      flexibleListArchive.innerHTML = '';
     }
   }
   flexCols.priority.prevBtn.addEventListener('click', function(){
@@ -4331,6 +4390,22 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     saveReminderToCloud(updated).catch(function(err){
       console.error(err);
       showToast('Gagal menyematkan. Coba lagi.');
+    });
+  }
+  // Arsipkan: untuk item yang mungkin sudah tidak relevan tapi masih ingin
+  // bisa dilihat lagi nanti. Item yang diarsipkan otomatis disembunyikan
+  // dari kolom Prioritas/Standar (dan dari daftar "selesai"), lalu muncul
+  // di bagian "Tampilkan yang diarsipkan" di bawah "Tampilkan yang selesai".
+  function toggleFlexArchive(id){
+    var idx = state.reminders.findIndex(function(x){ return x.id===id; });
+    if (idx === -1) return;
+    var updated = Object.assign({}, state.reminders[idx], { archived: !state.reminders[idx].archived });
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
+    renderFlexible();
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal memperbarui status arsip. Coba lagi.');
     });
   }
 
@@ -4809,6 +4884,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         // lewat form edit — pinned perlu dipertahankan dari data lama
         // supaya status "disematkan" tidak ikut hilang tiap kali diedit.
         pinned: existing ? !!existing.pinned : false,
+        // sama seperti pinned di atas — archived juga harus dipertahankan
+        // dari data lama supaya item yang sudah diarsipkan tidak tiba-tiba
+        // muncul lagi di kolom utama hanya karena diedit.
+        archived: existing ? !!existing.archived : false,
         travel: false,
         done: existing ? !!existing.done : false,
         createdAt: existing ? (existing.createdAt || null) : Date.now(),
@@ -4905,6 +4984,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var copy = Object.assign({}, r, {
       id: uid(),
       done: r.flexible ? false : null,
+      archived: false,
       createdAt: Date.now()
     });
     saveReminderToCloud(copy).then(function(){
