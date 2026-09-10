@@ -246,10 +246,10 @@
      grid-template-columns:minmax(0,1fr) — bukan cuma 1fr — karena item
      grid punya min-width:auto bawaan yang akan memaksa track melebar
      mengikuti ukuran minimum konten di dalamnya kalau tidak di-nol-kan. */
-  .cal-scroll{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; margin:0 -0.45rem; padding:0 0.45rem;}
+  .cal-scroll{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; margin:0 -0.45rem; padding:0 0.9rem 0 0.45rem;}
   .cal-scroll::-webkit-scrollbar{display:none;}
   @media (min-width:480px){
-    .cal-scroll{margin:0 -1.1rem; padding:0 1.1rem;}
+    .cal-scroll{margin:0 -1.1rem; padding:0 1.8rem 0 1.1rem;}
   }
   .cal-scroll-nav{display:flex; justify-content:center; gap:0.6rem; margin-top:0.6rem;}
   .cal-scroll-btn{
@@ -518,6 +518,11 @@
   .flex-check svg{width:15px; height:15px; opacity:0; transition:opacity 0.1s ease;}
   .flex-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
   .flex-item.done .flex-check svg{opacity:1;}
+  /* Tombol salin catatan di baris ikon aksi (bintang prioritas + pensil
+     ubah), sengaja diletakkan di situ (bukan dekat tombol centang) supaya
+     tidak rawan tersentuh tidak sengaja saat menandai selesai. */
+  .flex-copy svg{width:13px; height:13px;}
+  .flex-copy.copied{color:var(--moss-deep);}
   /* Tombol centang di daftar "Mendatang" dibuat lebih kecil daripada di
      "Fleksibel" — area sentuh tetap diperlebar lewat ::before supaya masih
      mudah disentuh di HP. */
@@ -2460,6 +2465,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
     document.body.removeChild(probe);
 
+    // Dulu tiap kolom (Sen..Min) punya lebarnya sendiri-sendiri, mengikuti
+    // konten terlebar DI KOLOM ITU SAJA — akibatnya kolom yang kebetulan
+    // isinya pendek (mis. Sabtu) jadi terlihat lebih sempit daripada kolom
+    // lain, sehingga grid kalender terlihat "berjenjang" tidak rata.
+    // Sekarang SEMUA kolom memakai satu lebar yang sama, yaitu lebar
+    // terbesar yang dibutuhkan di antara ketujuh hari — supaya ketujuh
+    // kolom selalu sama lebar, sekaligus tetap cukup lebar untuk chip
+    // pengingat terpanjang di hari mana pun.
+    var maxColWidth = 0;
+    colWidths.forEach(function(w){ if (w > maxColWidth) maxColWidth = w; });
+    colWidths = colWidths.map(function(){ return maxColWidth; });
+
     var template = colWidths.map(function(w){
       var px = w > 0 ? Math.min(DAY_COL_MAX, Math.max(DAY_COL_MIN, Math.ceil(w))) : DAY_COL_MIN;
       return px + 'px';
@@ -3865,6 +3882,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var hasChecklistR = checklistItemsR.length > 0;
     var doneR = flexItemIsDone(r);
     var freeText = notesFreeTextPreview(r.notes);
+    var hasNotesR = !!(r.notes && r.notes.trim());
     return '<li class="flex-item'+(doneR?' done':'')+(r.priority?' priority-item':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
       '<button type="button" class="flex-check" data-id="'+r.id+'" data-has-checklist="'+(hasChecklistR?'1':'0')+'" aria-label="Tandai selesai">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -3876,6 +3894,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '<div class="acts">' +
         '<button type="button" class="icon-btn toggle-priority" aria-label="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" title="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" data-id="'+r.id+'">'+(r.priority?'★':'☆')+'</button>' +
         '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button>' +
+        (hasNotesR ? (
+        '<button type="button" class="icon-btn flex-copy" aria-label="Salin catatan" title="Salin catatan" data-id="'+r.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '</button>') : '') +
       '</div></li>';
   }
 
@@ -3897,7 +3919,53 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(listEl.querySelectorAll('.edit-flex'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
     });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-copy'), function(btn){
+      btn.addEventListener('click', function(){
+        var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
+        if (r) copyNotesToClipboard(r.notes, btn);
+      });
+    });
     bindChecklistClicks(listEl, function(){ return { type:'flex' }; });
+  }
+
+  // Salin seluruh isi field "Catatan (opsional)" apa adanya ke clipboard,
+  // lalu beri umpan balik singkat (ikon berubah + toast) supaya pengguna
+  // tahu penyalinan berhasil.
+  function copyNotesToClipboard(notes, btn){
+    var text = notes || '';
+    function onCopied(){
+      showToast('Catatan disalin');
+      if (btn){
+        btn.classList.add('copied');
+        setTimeout(function(){ btn.classList.remove('copied'); }, 1200);
+      }
+    }
+    function onFailed(){
+      showToast('Gagal menyalin catatan');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(onCopied, function(){
+        if (!fallbackCopyText(text)) onFailed(); else onCopied();
+      });
+    } else {
+      if (fallbackCopyText(text)) onCopied(); else onFailed();
+    }
+  }
+  function fallbackCopyText(text){
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e){
+      return false;
+    }
   }
 
   function renderFlexColumn(col, itemsHtml){
