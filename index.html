@@ -106,8 +106,14 @@
      Nilainya kontinu (13–20px) lewat slider, disimpan di --user-font-size. */
   :root{ font-size:var(--user-font-size, 16px); }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0; overflow-x:hidden; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+  html{margin:0;padding:0; overflow-x:hidden; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+  /* PENTING: overflow-x:hidden HANYA di <html>, bukan juga di <body>.
+     Kalau body ikut diberi overflow-x:hidden, body jadi scroll container
+     tersendiri (terpisah dari viewport bawaan browser) — dan itu salah
+     satu penyebab klasik position:sticky gagal nempel (headernya malah
+     ikut discroll/"tenggelam" seperti biasa, bukan diam di atas). */
   body{
+    margin:0;padding:0;
     background:var(--paper);
     color:var(--ink);
     font-family:var(--font-body);
@@ -128,20 +134,24 @@
 
   /* ---------- Header / hero with trail motif ---------- */
   .hero{
-    position:relative;
+    position:-webkit-sticky; position:sticky; top:0; z-index:15;
     overflow:hidden;
     background:linear-gradient(180deg, var(--hero-top), var(--hero-bottom));
     color:var(--ink);
-    padding-bottom:1.5rem;
+    padding-bottom:0.75rem;
   }
-  .hero-inner{position:relative; z-index:1; padding-top:1.5rem;}
+  .hero-inner{position:relative; z-index:1; padding-top:0.85rem;}
   .hero-top{display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
   .brand{display:flex; align-items:center; gap:0.65rem;}
   .brand-mark{width:34px; height:34px; border-radius:9px; background:var(--amber); display:flex; align-items:center; justify-content:center; flex:none;}
   .brand-mark svg{width:18px; height:18px;}
   .brand-name{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.5rem; letter-spacing:0.01em; color:var(--ink);}
   .brand-tag{font-size:0.85rem; color:var(--ink-soft); margin-top:0.15rem;}
-  .sync-indicator{display:flex; align-items:center; gap:0.3rem; font-family:var(--font-mono); font-size:0.72rem;}
+  /* Indikator "Tersinkron · jam" disembunyikan permanen — sengaja dibiarkan
+     tetap diisi lewat JS (markSynced()) untuk jaga-jaga dipakai lagi nanti,
+     tapi tidak ditampilkan supaya header tidak makan tempat & jarak ke
+     konten di bawahnya tidak terlalu jauh. */
+  .sync-indicator{display:none !important;}
   .sync-indicator svg{width:12px; height:12px; flex:none;}
 
   .account-chip{
@@ -157,7 +167,7 @@
 
   .toolbar{
     display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap;
-    margin-top:1.25rem;
+    margin-top:0.75rem;
   }
   .month-nav{display:flex; align-items:center; gap:0.35rem;}
   .month-nav-btn{
@@ -218,15 +228,11 @@
   .notice .ghost{background:transparent; color:var(--ink-soft);}
   .notice[hidden]{display:none;}
 
-  /* Only the topmost VISIBLE element (banner or calendar) should rise up
-     over the header — otherwise the calendar always overlaps whichever
-     banner happens to be showing. These rules check the actual `hidden`
-     state instead of just DOM order. */
-  #notifyNotice:not([hidden]){margin-top:-1rem;}
-  #notifyNotice:not([hidden]) ~ #installNotice{margin-top:1.25rem;}
-  #notifyNotice:not([hidden]) ~ .layout{margin-top:1.25rem;}
-  #notifyNotice[hidden] ~ #installNotice:not([hidden]){margin-top:-1rem;}
-  #notifyNotice[hidden] ~ #installNotice:not([hidden]) ~ .layout{margin-top:1.25rem;}
+  /* Notice banner (kalau tampil) yang naik menutupi header; .layout
+     mengikuti — dorong ke bawah kalau banner tampil, atau pakai margin
+     default (-1rem, naik menutupi header) kalau banner tidak tampil. */
+  #installNotice:not([hidden]){margin-top:-1rem;}
+  #installNotice:not([hidden]) ~ .layout{margin-top:1.25rem;}
 
   /* ---------- Calendar ---------- */
   .calendar{padding:0.6rem 0.45rem;}
@@ -251,6 +257,27 @@
   @media (min-width:480px){
     .cal-scroll{margin:0 -1.1rem; padding:0 1.8rem 0 1.1rem;}
   }
+  /* Baris nama hari (Sen..Min) TIDAK lagi di dalam .cal-scroll — sengaja
+     dipisah jadi wrapper sendiri yang position:sticky, supaya bisa "nempel"
+     di bawah header (.hero, yang juga sticky) saat halaman discroll.
+     .cal-scroll sendiri TIDAK BISA dipakai sebagai induk sticky di sini:
+     karena overflow-x:auto (dikombinasi overflow-y:hidden) menjadikannya
+     scroll container tersendiri secara CSS, sticky di dalamnya jadi
+     "nempel" ke kotak itu (yang tidak pernah discroll secara vertikal),
+     bukan ke viewport — makanya sebelumnya ikut tenggelam biasa.
+     Karena sekarang terpisah dari .cal-scroll, sinkronisasi geser mendatar
+     (kalau kalender digeser ke kiri/kanan di HP) dilakukan manual lewat JS
+     (lihat listener 'scroll' pada calScroll yang menggeser transform
+     weekdayRow) — lebar kolomnya sendiri sudah disamakan lewat
+     autoSizeDayColumns()/syncWeekdayRowColumns() seperti sebelumnya. */
+  .weekday-sticky-wrap{
+    position:-webkit-sticky; position:sticky; top:var(--hero-h, 0px); z-index:10;
+    overflow:hidden; background:var(--paper-raised);
+    margin:0 -0.45rem; padding:0 0.9rem 0 0.45rem;
+  }
+  @media (min-width:480px){
+    .weekday-sticky-wrap{margin:0 -1.1rem; padding:0 1.8rem 0 1.1rem;}
+  }
   .cal-scroll-nav{display:flex; justify-content:center; gap:0.6rem; margin-top:0.6rem;}
   .cal-scroll-btn{
     width:38px; height:38px; border-radius:50%; border:1px solid rgba(var(--tint-rgb),0.18);
@@ -264,6 +291,7 @@
   @media (min-width:480px){ .weekday-row{gap:6px;} }
   .weekday-row span{
     text-align:center; font-size:0.72rem; font-weight:600; color:var(--ink-soft);
+    padding:0.5rem 0;
   }
   .day-grid{display:grid; grid-template-columns:repeat(7, minmax(84px, max-content)); gap:3px;}
   @media (min-width:480px){ .day-grid{gap:6px;} }
@@ -1110,7 +1138,12 @@
     <div class="hero-top">
       <div class="brand">
         <div>
-          <div class="brand-name">EssentiaPath</div>
+          <!-- Nama aplikasi "EssentiaPath" di header sengaja dihilangkan
+               atas permintaan. Div kosong ini dipertahankan sebagai
+               placeholder supaya .account-chip di sebelah kanan tetap rapi
+               menempel ke tepi kanan (hero-top pakai justify-content:
+               space-between antara dua elemen ini) — bukan malah ikut
+               terdorong ke kiri kalau elemen ini dihapus total. -->
           <div class="brand-tag sync-indicator" id="syncIndicator" hidden>
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3v4h-4M7 21v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span id="syncIndicatorText">Tersinkron</span>
@@ -1138,13 +1171,6 @@
 </header>
 
 <main class="shell">
-  <div class="notice" id="notifyNotice" hidden>
-    <p>Aktifkan notifikasi agar EssentiaPath bisa mengingatkan Anda saat aplikasi ini terbuka.</p>
-    <div class="notice-actions">
-      <button class="ghost" id="dismissNotify">Nanti saja</button>
-      <button class="primary" id="enableNotify">Aktifkan notifikasi</button>
-    </div>
-  </div>
   <div class="notice" id="installNotice" hidden>
     <p>Pasang EssentiaPath di perangkat Anda untuk akses lebih cepat, seperti aplikasi biasa.</p>
     <div class="notice-actions">
@@ -1181,11 +1207,13 @@
         </div>
         <div class="cal-search-results" id="calSearchResults" hidden></div>
       </div>
+      <div class="weekday-sticky-wrap" id="weekdayStickyWrap">
+        <div class="weekday-row" id="weekdayRow">
+          <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span class="is-saturday">Sab</span><span class="is-sunday">Min</span>
+        </div>
+      </div>
       <div class="cal-scroll" id="calScroll">
         <div class="cal-scroll-inner">
-          <div class="weekday-row" id="weekdayRow">
-            <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span class="is-saturday">Sab</span><span class="is-sunday">Min</span>
-          </div>
           <div class="day-grid" id="dayGrid"></div>
         </div>
       </div>
@@ -2734,11 +2762,20 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var calScroll = document.getElementById('calScroll');
   var calScrollLeft = document.getElementById('calScrollLeft');
   var calScrollRight = document.getElementById('calScrollRight');
+  // weekday-row sekarang di LUAR .cal-scroll (supaya bisa sticky — lihat
+  // komentar CSS .weekday-sticky-wrap) jadi posisi geser mendatarnya tidak
+  // lagi otomatis ikut lewat scroll bawaan browser; disamakan manual di
+  // sini setiap kali .cal-scroll digeser.
+  function syncWeekdayRowScrollX(){
+    if (!calScroll || !weekdayRow) return;
+    weekdayRow.style.transform = 'translateX(-' + calScroll.scrollLeft + 'px)';
+  }
   function updateCalScrollButtons(){
     if (!calScroll || !calScrollLeft || !calScrollRight) return;
     var max = calScroll.scrollWidth - calScroll.clientWidth;
     calScrollLeft.disabled = calScroll.scrollLeft <= 2;
     calScrollRight.disabled = calScroll.scrollLeft >= max - 2;
+    syncWeekdayRowScrollX();
   }
   // Dipanggil tiap kali kalender digambar ulang (ganti bulan, dsb.) supaya
   // posisi geser selalu kembali ke awal (mulai dari Senin minggu pertama),
@@ -2770,6 +2807,24 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       calScroll.scrollBy({ left: Math.round(calScroll.clientWidth * 0.7), behavior: 'smooth' });
     });
   }
+
+  // ---------- Tinggi header sticky (.hero) buat offset "top" baris nama hari ----------
+  // .weekday-sticky-wrap pakai `top:var(--hero-h)` supaya nempel PAS di
+  // bawah header, bukan numpuk/ada celah. Tinggi header sendiri tidak
+  // tetap (berubah-ubah kalau ukuran font di Pengaturan digeser, atau
+  // saat chip akun tampil/hilang), jadi dihitung ulang otomatis lewat
+  // ResizeObserver setiap kali tinggi .hero benar-benar berubah.
+  var heroEl = document.querySelector('.hero');
+  function updateHeroHeightVar(){
+    if (!heroEl) return;
+    document.documentElement.style.setProperty('--hero-h', heroEl.getBoundingClientRect().height + 'px');
+  }
+  if (heroEl && 'ResizeObserver' in window){
+    new ResizeObserver(updateHeroHeightVar).observe(heroEl);
+  } else {
+    window.addEventListener('resize', updateHeroHeightVar);
+  }
+  updateHeroHeightVar();
 
   function escapeHTML(s){
     return String(s).replace(/[&<>"']/g, function(c){
@@ -5113,6 +5168,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         if (!id || !currentUser) return;
         if (!confirm('Hapus pengingat ini?')) return;
         deleteReminderFromCloud(id).then(function(){
+          closeDayPanel();
           showToast('Pengingat dihapus');
         }).catch(function(err){
           console.error(err);
@@ -5335,16 +5391,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
 
   // ---------- Notifications ----------
-  var notifyNotice = document.getElementById('notifyNotice');
+  // Banner prompt otomatis (id="notifyNotice") di bagian atas halaman sudah
+  // dihapus atas permintaan — mengaktifkan notifikasi browser sekarang
+  // hanya lewat tombol di tab Pengaturan (enableNotifySettings di bawah).
   var settingsNotifyStatus = document.getElementById('settingsNotifyStatus');
   var enableNotifySettings = document.getElementById('enableNotifySettings');
   function refreshNotifyBanner(){
-    var dismissed = sessionStorage.getItem('essentiapath.notifyDismissed');
-    if ('Notification' in window && Notification.permission === 'default' && !dismissed){
-      notifyNotice.hidden = false;
-    } else {
-      notifyNotice.hidden = true;
-    }
     refreshSettingsNotifyStatus();
   }
   function refreshSettingsNotifyStatus(){
@@ -5362,17 +5414,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       enableNotifySettings.style.display = 'inline-block';
     }
   }
-  document.getElementById('enableNotify').addEventListener('click', function(){
-    if (!('Notification' in window)) return;
-    Notification.requestPermission().then(function(){ refreshNotifyBanner(); });
-  });
   enableNotifySettings.addEventListener('click', function(){
     if (!('Notification' in window)) return;
     Notification.requestPermission().then(function(){ refreshNotifyBanner(); });
-  });
-  document.getElementById('dismissNotify').addEventListener('click', function(){
-    sessionStorage.setItem('essentiapath.notifyDismissed','1');
-    refreshNotifyBanner();
   });
 
   function loadNotified(){
