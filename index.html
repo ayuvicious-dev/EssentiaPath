@@ -23,7 +23,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>EssentiaPath</title>
 <meta name="description" content="Pengingat berulang dengan tampilan kalender: per jam, harian, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan.">
-<meta name="theme-color" content="#D9E6D0">
+<meta name="theme-color" content="#FBF7EF">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
@@ -136,7 +136,7 @@
   .hero{
     position:-webkit-sticky; position:sticky; top:0; z-index:15;
     overflow:hidden;
-    background:linear-gradient(180deg, var(--hero-top), var(--hero-bottom));
+    background:var(--paper);
     color:var(--ink);
     padding-bottom:0.75rem;
   }
@@ -379,7 +379,15 @@
   @media (min-width:860px){ .more-link{font-size:0.74rem;} }
 
   /* ---------- Sidebar ---------- */
-  .sidebar{display:flex; flex-direction:column; gap:1rem;}
+  /* margin-top:1rem menetralkan margin-top:-1rem milik .layout (dibuat
+     supaya panel kalender "menjorok naik" tumpang tindih dengan hero).
+     Tanpa ini, panel pertama di sidebar ("Saat Ini") ikut tertarik naik
+     dan sudut atasnya yang membulat jadi ketutup hero sehingga terlihat
+     seperti terpotong/rata — sedangkan panel "Mendatang" di bawahnya
+     tidak terpengaruh karena bukan child pertama. Menggeser seluruh
+     sidebar turun 1rem membuat sudut "Saat Ini" ikut membulat penuh
+     seperti panel lain, tanpa mengubah tampilan tab Kalender. */
+  .sidebar{display:flex; flex-direction:column; gap:1rem; margin-top:1rem;}
   .sidebar-head{padding:1rem 1.1rem 0.4rem; display:flex; align-items:center; justify-content:space-between;}
   .sidebar-head h2{font-family:var(--font-display); font-size:1.05rem; margin:0; font-weight:600;}
   .up-date-control{display:flex; align-items:center; gap:0.3rem;}
@@ -1328,6 +1336,11 @@
     <div class="settings-block">
       <h2>Riwayat</h2>
       <p class="hint">Pengingat yang paling baru ditambahkan, lengkap dengan tanggal &amp; jam saat dibuat.</p>
+      <div class="search-box" id="recentAddedSearchBox" style="margin-bottom:0.7rem;">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="text" id="recentAddedSearchInput" placeholder="" autocomplete="off">
+        <button type="button" class="search-clear" id="recentAddedSearchClear" aria-label="Hapus pencarian">✕</button>
+      </div>
       <ul class="upcoming-list recent-added-list" id="recentAddedList"></ul>
       <div class="upgrade-pagination" id="recentAddedPagination" hidden>
         <button type="button" id="recentAddedPrev">‹ Sebelumnya</button>
@@ -3733,6 +3746,28 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var recentAddedNextBtn = document.getElementById('recentAddedNext');
   var recentAddedPage = 0;
   var RECENT_ADDED_PAGE_SIZE = 5;
+  var recentAddedSearchQuery = '';
+  var recentAddedSearchInput = document.getElementById('recentAddedSearchInput');
+  var recentAddedSearchBox = document.getElementById('recentAddedSearchBox');
+  var recentAddedSearchClear = document.getElementById('recentAddedSearchClear');
+  if (recentAddedSearchInput){
+    recentAddedSearchInput.addEventListener('input', function(){
+      recentAddedSearchQuery = recentAddedSearchInput.value.trim().toLowerCase();
+      recentAddedSearchBox.classList.toggle('has-value', recentAddedSearchQuery.length > 0);
+      recentAddedPage = 0;
+      renderRecentAdded();
+    });
+  }
+  if (recentAddedSearchClear){
+    recentAddedSearchClear.addEventListener('click', function(){
+      recentAddedSearchInput.value = '';
+      recentAddedSearchQuery = '';
+      recentAddedSearchBox.classList.remove('has-value');
+      recentAddedPage = 0;
+      renderRecentAdded();
+      recentAddedSearchInput.focus();
+    });
+  }
   // Rentang tahun wajar untuk validasi hasil decode id lama (lihat di bawah).
   var RECENT_ADDED_MIN_MS = Date.UTC(2020,0,1);
   var RECENT_ADDED_MAX_MS = Date.UTC(2040,0,1);
@@ -3772,9 +3807,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var sorted = state.reminders.slice().sort(function(a, b){
       return reminderCreatedAtMs(b) - reminderCreatedAtMs(a);
     });
+    if (recentAddedSearchQuery){
+      sorted = sorted.filter(function(r){
+        return (r.title || '').toLowerCase().indexOf(recentAddedSearchQuery) !== -1;
+      });
+    }
     var total = sorted.length;
     if (total === 0){
-      recentAddedList.innerHTML = '<div class="empty-state">Belum ada pengingat yang ditambahkan.</div>';
+      recentAddedList.innerHTML = recentAddedSearchQuery
+        ? '<div class="empty-state">Tidak ada pengingat yang cocok dengan "' + escapeHTML(recentAddedSearchInput.value.trim()) + '".</div>'
+        : '<div class="empty-state">Belum ada pengingat yang ditambahkan.</div>';
       recentAddedPaginationEl.hidden = true;
       return;
     }
@@ -3814,7 +3856,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   if (recentAddedNextBtn){
     recentAddedNextBtn.addEventListener('click', function(){
-      var totalPages = Math.max(1, Math.ceil(state.reminders.length / RECENT_ADDED_PAGE_SIZE));
+      var filteredCount = recentAddedSearchQuery
+        ? state.reminders.filter(function(r){ return (r.title || '').toLowerCase().indexOf(recentAddedSearchQuery) !== -1; }).length
+        : state.reminders.length;
+      var totalPages = Math.max(1, Math.ceil(filteredCount / RECENT_ADDED_PAGE_SIZE));
       if (recentAddedPage < totalPages - 1){ recentAddedPage++; renderRecentAdded(); }
     });
   }
@@ -5832,7 +5877,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function applyTheme(pref){
     var resolved = resolveTheme(pref);
     document.documentElement.setAttribute('data-theme', resolved);
-    if (themeMetaEl) themeMetaEl.setAttribute('content', resolved === 'dark' ? '#212E26' : '#D9E6D0');
+    if (themeMetaEl) themeMetaEl.setAttribute('content', resolved === 'dark' ? '#17130F' : '#FBF7EF');
   }
   function updateThemeTabs(pref){
     Array.prototype.forEach.call(document.querySelectorAll('#themeTabs .theme-tab'), function(btn){
