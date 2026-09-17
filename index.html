@@ -607,7 +607,6 @@
   .toggle-archive.active{color:var(--moss-deep);}
 
   /* ---------- Fleksibel: kolom Prioritas / Standar ---------- */
-  .flex-list-missed{padding-bottom:0;}
   .flex-list-missed:empty{display:none;}
   .flex-columns{display:flex; flex-direction:column; gap:1.1rem; padding:0.15rem 0.6rem 0.9rem;}
   .flex-column{display:flex; flex-direction:column; min-width:0;}
@@ -620,6 +619,10 @@
   .flex-column-head .dot{width:7px; height:7px; border-radius:50%; flex:none; background:var(--ink-soft);}
   .flex-column-head.priority{color:var(--amber-deep);}
   .flex-column-head.priority .dot{background:var(--amber-deep);}
+  .flex-column-head.pinned{color:var(--amber-deep);}
+  .flex-column-head.pinned .dot{background:var(--amber-deep);}
+  .flex-column-head.missed{color:var(--danger);}
+  .flex-column-head.missed .dot{background:var(--danger);}
 
   .flex-done-toggle-wrap{padding:0 0.6rem 0.9rem;}
   .flex-done-toggle{
@@ -1295,8 +1298,15 @@
       <input type="text" id="flexSearchInput" placeholder="" autocomplete="off">
       <button type="button" class="search-clear" id="flexSearchClear" aria-label="Hapus pencarian">✕</button>
     </div>
-    <ul class="flex-list flex-list-missed" id="flexibleListMissed"></ul>
     <div class="flex-columns">
+      <div class="flex-column" id="flexMissedBlock" hidden>
+        <div class="flex-column-head missed"><span class="dot"></span>Terlewat</div>
+        <ul class="flex-list flex-list-missed" id="flexibleListMissed"></ul>
+      </div>
+      <div class="flex-column" id="flexPinnedBlock" hidden>
+        <div class="flex-column-head pinned"><span class="dot"></span>Prioritas Pin</div>
+        <ul class="flex-list" id="flexibleListPinned"></ul>
+      </div>
       <div class="flex-column">
         <div class="flex-column-head priority"><span class="dot"></span>Prioritas</div>
         <ul class="flex-list" id="flexibleListPriority"></ul>
@@ -3893,6 +3903,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   // ---------- Flexible (no-date) reminders ----------
   var flexibleListMissed = document.getElementById('flexibleListMissed');
+  var flexMissedBlock = document.getElementById('flexMissedBlock');
+  var flexibleListPinned = document.getElementById('flexibleListPinned');
+  var flexPinnedBlock = document.getElementById('flexPinnedBlock');
   var flexCols = {
     priority: {
       list: document.getElementById('flexibleListPriority'),
@@ -4303,7 +4316,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // Yang terlewat (butuh perhatian) ditampilkan lebih dulu, di atas kedua kolom.
     if (!missed.length){
       flexibleListMissed.innerHTML = '';
+      if (flexMissedBlock) flexMissedBlock.hidden = true;
     } else {
+      if (flexMissedBlock) flexMissedBlock.hidden = false;
       flexibleListMissed.innerHTML = missed.map(function(it){
         var c = catInfo(it.reminder.category);
         var dtLabel = dayLabel(parseISODate(it.date));
@@ -4365,19 +4380,28 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       flexCols.priority.pagination.hidden = true;
       flexCols.standard.list.innerHTML = '';
       flexCols.standard.pagination.hidden = true;
+      flexibleListPinned.innerHTML = '';
+      if (flexPinnedBlock) flexPinnedBlock.hidden = true;
       renderFlexDoneSection();
       renderFlexArchiveSection();
       return;
     }
     var priorityItemsRaw = items.filter(function(r){ return !!r.priority; });
-    // Item yang di-pin selalu naik ke paling atas kolom Prioritas — urutan
-    // relatif SELAIN pin (mengikuti flexSortOrder yang sudah diterapkan di
-    // atas) tetap dipertahankan berkat Array.sort yang stabil di JS modern.
-    priorityItemsRaw.sort(function(a,b){
-      var pa = a.pinned ? 1 : 0, pb = b.pinned ? 1 : 0;
-      return pb - pa;
-    });
-    var priorityItemsHtml = priorityItemsRaw.map(flexItemHtml);
+    // Item yang di-pin sekarang tampil di blok "Prioritas Pin" tersendiri
+    // (di atas kolom Prioritas), bukan lagi disisipkan di baris teratas
+    // kolom Prioritas. Urutan relatif sesama pin mengikuti flexSortOrder
+    // yang sudah diterapkan di atas (Array.sort stabil di JS modern).
+    var pinnedItemsRaw = priorityItemsRaw.filter(function(r){ return !!r.pinned; });
+    var priorityRestRaw = priorityItemsRaw.filter(function(r){ return !r.pinned; });
+    if (!pinnedItemsRaw.length){
+      flexibleListPinned.innerHTML = '';
+      if (flexPinnedBlock) flexPinnedBlock.hidden = true;
+    } else {
+      if (flexPinnedBlock) flexPinnedBlock.hidden = false;
+      flexibleListPinned.innerHTML = pinnedItemsRaw.map(flexItemHtml).join('');
+      bindFlexItemEvents(flexibleListPinned);
+    }
+    var priorityItemsHtml = priorityRestRaw.map(flexItemHtml);
     var standardItemsHtml = items.filter(function(r){ return !r.priority; }).map(flexItemHtml);
     renderFlexColumn(flexCols.priority, priorityItemsHtml);
     renderFlexColumn(flexCols.standard, standardItemsHtml);
