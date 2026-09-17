@@ -3215,6 +3215,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var catPageInfoEl = document.getElementById('catPageInfo');
   var catPage = 0;
   var CAT_PAGE_SIZE = 5;
+  var catDragActive = false;
   var catSearchQuery = '';
   var catSearchInput = document.getElementById('catSearchInput');
   var catSearchBox = document.getElementById('catSearchBox');
@@ -3242,8 +3243,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var totalPages = Math.max(1, Math.ceil(total / CAT_PAGE_SIZE));
     if (catPage >= totalPages) catPage = totalPages - 1;
     if (catPage < 0) catPage = 0;
-    var start = catPage * CAT_PAGE_SIZE;
-    var pageItems = filtered.slice(start, start + CAT_PAGE_SIZE);
+    // Selagi menyeret (drag) kategori, tampilkan SELURUH daftar (lintas
+    // halaman) supaya kategori paling bawah bisa langsung dipindah ke
+    // paling atas tanpa harus gonta-ganti halaman dulu. Paginasi normal
+    // otomatis kembali begitu drag selesai (lihat onUp di startCategoryDrag).
+    var pageItems = catDragActive ? filtered : filtered.slice(catPage * CAT_PAGE_SIZE, catPage * CAT_PAGE_SIZE + CAT_PAGE_SIZE);
 
     if (!total){
       catManageList.innerHTML = '<p class="upgrade-empty">Tidak ada kategori yang cocok dengan "'+escapeHTML(catSearchInput.value.trim())+'".</p>';
@@ -3268,7 +3272,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '</div>';
     }).join('');
 
-    catPaginationEl.hidden = total <= CAT_PAGE_SIZE;
+    catPaginationEl.hidden = catDragActive || total <= CAT_PAGE_SIZE;
     catPageInfoEl.textContent = 'Halaman ' + (catPage + 1) + ' dari ' + totalPages;
     document.getElementById('catPrev').disabled = catPage <= 0;
     document.getElementById('catNext').disabled = catPage >= totalPages - 1;
@@ -3323,17 +3327,29 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (catPage < totalPages - 1){ catPage++; renderCategorySettings(); }
   });
 
-  // Drag-to-reorder for categories — pointer-based approach, restricted to
-  // the current page.
+  // Drag-to-reorder for categories — pointer-based approach. Saat drag
+  // dimulai, seluruh daftar kategori (lintas halaman) ditampilkan supaya
+  // kategori paling bawah bisa langsung diseret ke posisi paling atas,
+  // bukan cuma ditukar dengan kategori lain di halaman yang sama.
   function startCategoryDrag(e, handle){
     if (!currentUser) return;
     e.preventDefault();
     var row = handle.closest('.cat-manage-row');
     if (!row) return;
+    var draggingId = row.getAttribute('data-id');
+    var pointerId = e.pointerId;
+
+    catDragActive = true;
+    renderCategorySettings();
+    // Render ulang mengganti seluruh elemen di catManageList, jadi ambil
+    // ulang referensi row & handle yang baru dibuat (berdasarkan data-id).
+    row = catManageList.querySelector('.cat-manage-row[data-id="'+draggingId+'"]');
+    if (!row){ catDragActive = false; return; }
+    handle = row.querySelector('.upg-drag-handle');
     var siblings = Array.prototype.slice.call(catManageList.querySelectorAll('.cat-manage-row'));
     var startY = e.clientY;
     row.classList.add('dragging');
-    try { handle.setPointerCapture(e.pointerId); } catch(err){}
+    try { if (handle) handle.setPointerCapture(pointerId); } catch(err){}
 
     function onMove(ev){
       var dy = ev.clientY - startY;
@@ -3363,6 +3379,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       row.style.transform = '';
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
+      catDragActive = false;
+      renderCategorySettings();
       saveCategoriesToCloud(CATS).catch(function(err){
         console.error(err);
         showToast('Gagal menyimpan urutan kategori. Coba lagi.');
