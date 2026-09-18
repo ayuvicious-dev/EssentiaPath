@@ -583,13 +583,16 @@
   .notes-plain-list{list-style:none; margin:0.4rem 0 0 1.3rem; padding:0; display:flex; flex-direction:column; gap:0.22rem;}
   .notes-plain-item{display:flex; align-items:baseline; gap:0.4rem; font-size:0.7rem; color:var(--ink-soft);}
   .notes-plain-marker{flex:none; color:var(--moss-deep); font-variant-numeric:tabular-nums;}
-  .notes-plain-text{word-break:break-word;}
+  .notes-plain-text{word-break:break-word; flex:1 1 auto; min-width:0;}
   .notes-freetext{
     margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed var(--line-soft);
     font-size:0.76rem; line-height:1.45; color:var(--ink-soft); word-break:break-word; white-space:pre-line;
   }
   .notes-freetext-line{margin:0 0 0.32rem;}
   .notes-freetext-line:last-child{margin-bottom:0;}
+  .notes-plain-table{width:100%; border-collapse:collapse; margin:0.4rem 0 0; font-size:0.7rem; color:var(--ink-soft); table-layout:fixed;}
+  .notes-plain-table td{border:1px solid var(--line); padding:0.22rem 0.4rem; word-break:break-word; vertical-align:top;}
+  .notes-plain-table tr:first-child td{font-weight:700; color:var(--ink); background:var(--paper-raised);}
   .flex-item .body{flex:1; min-width:0;}
   .flex-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
   .flex-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
@@ -1621,6 +1624,9 @@
           </button>
           <button type="button" class="notes-fmt-btn" data-fmt="bullet" aria-label="List bullet" title="List bullet">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="4.5" cy="6" r="1.7" fill="currentColor"/><circle cx="4.5" cy="12" r="1.7" fill="currentColor"/><circle cx="4.5" cy="18" r="1.7" fill="currentColor"/><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+          <button type="button" class="notes-fmt-btn" data-fmt="table" aria-label="Tabel" title="Tabel">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M3 16h18M9.5 4v16" stroke="currentColor" stroke-width="1.6"/></svg>
           </button>
         </div>
         <textarea id="fNotes" placeholder=""></textarea>
@@ -3092,7 +3098,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // supaya beberapa baris list tetap terbaca ringkas di pratinjau.
   function notesPreview(notes){
     if (!notes) return '';
-    return notes.split('\n').map(function(l){ return l.trim(); }).filter(Boolean).join(' · ');
+    return notes.split('\n').map(function(l){ return l.trim(); }).filter(Boolean).map(function(l){
+      return isTableRow(l) ? parseTableRow(l).join(', ') : l;
+    }).join(' · ');
   }
   // Baris catatan yang diformat sebagai list bullet (•) atau angka ("1. ").
   // Dipakai supaya list ini ditampilkan menurun (satu baris per item),
@@ -3178,12 +3186,22 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         pushToBlock('list', { type:'bullet', text: line.slice(info.markerLen) });
       } else if (info.type === 'number'){
         pushToBlock('list', { type:'number', text: line.slice(info.markerLen), num: info.num });
+      } else if (info.type === 'table'){
+        pushToBlock('table', { text: line });
       } else {
         var trimmed = line.trim();
         if (trimmed) pushToBlock('text', { text: trimmed });
       }
     });
     return blocks.map(function(b){
+      if (b.type === 'table'){
+        return '<table class="notes-plain-table"><tbody>' +
+          b.items.map(function(it){
+            var cells = parseTableRow(it.text);
+            return '<tr>' + cells.map(function(c){ return '<td>'+escapeHTML(c)+'</td>'; }).join('') + '</tr>';
+          }).join('') +
+        '</tbody></table>';
+      }
       if (b.type === 'checklist'){
         return '<ul class="sub-checklist">' +
           b.items.map(function(it){
@@ -4817,6 +4835,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (line.indexOf(CHECK_UNCHECKED) === 0) return { type:'check', markerLen: CHECK_UNCHECKED.length };
     if (line.indexOf(CHECK_CHECKED) === 0) return { type:'check', markerLen: CHECK_CHECKED.length };
     if (line.indexOf(NOTES_MARK.bullet) === 0) return { type:'bullet', markerLen: NOTES_MARK.bullet.length };
+    if (isTableRow(line)) return { type:'table', markerLen: 0 };
     return { type:'none', markerLen: 0 };
   }
   function markerFor(type, num){
@@ -4825,10 +4844,59 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (type==='number') return num + '. ';
     return '';
   }
+  // Baris tabel disimpan sebagai teks polos berbentuk "| sel1 | sel2 |"
+  // (mirip Markdown) supaya tetap tersimpan sebagai satu string di kolom
+  // Catatan seperti format list lain, tanpa perlu struktur data terpisah.
+  function isTableRow(line){
+    var t = line.trim();
+    return t.length >= 2 && t.charAt(0) === '|' && t.charAt(t.length - 1) === '|';
+  }
+  function parseTableRow(line){
+    var t = line.trim();
+    if (t.charAt(0) === '|') t = t.slice(1);
+    if (t.charAt(t.length - 1) === '|') t = t.slice(0, -1);
+    return t.split('|').map(function(c){ return c.trim(); });
+  }
+  function tableRowTemplate(cols, cellTexts){
+    var parts = [];
+    for (var i=0; i<cols; i++){
+      var v = (cellTexts && cellTexts[i]) ? cellTexts[i] : '';
+      parts.push(' ' + v + ' ');
+    }
+    return '|' + parts.join('|') + '|';
+  }
+  // Menyisipkan templat tabel 2x2 (baris judul + satu baris data) di posisi
+  // kursor, lalu memilih teks "Kolom 1" supaya bisa langsung diketik ulang.
+  function insertTableTemplate(){
+    var text = fNotesEl.value;
+    var pos = fNotesEl.selectionStart || 0;
+    var b = lineBounds(text, pos);
+    var line = text.slice(b.start, b.end);
+    var header = tableRowTemplate(2, ['Kolom 1', 'Kolom 2']);
+    var dataRow = tableRowTemplate(2, []);
+    var template = header + '\n' + dataRow;
+    var insertAt;
+    if (line.trim() === ''){
+      fNotesEl.value = text.slice(0, b.start) + template + text.slice(b.end);
+      insertAt = b.start;
+    } else {
+      fNotesEl.value = text.slice(0, b.end) + '\n' + template + text.slice(b.end);
+      insertAt = b.end + 1;
+    }
+    var selStart = insertAt + 2; // setelah "| "
+    var selEnd = selStart + 'Kolom 1'.length;
+    fNotesEl.focus();
+    fNotesEl.setSelectionRange(selStart, selEnd);
+  }
   if (notesFmtBtns.length){
     notesFmtBtns.forEach(function(btn){
       btn.addEventListener('click', function(){
         var mode = btn.getAttribute('data-fmt');
+        if (mode === 'table'){
+          insertTableTemplate();
+          setNotesFmtMode('table');
+          return;
+        }
         setNotesFmtMode(mode);
         var text = fNotesEl.value;
         var pos = fNotesEl.selectionStart || 0;
@@ -4851,6 +4919,30 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var pos = fNotesEl.selectionStart || 0;
       if (pos !== (fNotesEl.selectionEnd||0)) return; // biarkan default kalau ada seleksi
       var b = lineBounds(text, pos);
+      var fullLine = text.slice(b.start, b.end);
+      if (isTableRow(fullLine)){
+        // Deteksi baris tabel dipakai dari isi baris LENGKAP (bukan cuma
+        // sampai posisi kursor) karena tandanya ada di AWAL *dan* AKHIR
+        // baris ("| ... |") — beda dari checklist/bullet/angka yang
+        // tandanya cuma di awal baris.
+        e.preventDefault();
+        var cells = parseTableRow(fullLine);
+        var allEmpty = cells.every(function(c){ return c.trim()===''; });
+        if (allEmpty){
+          // Baris tabel kosong -> keluar dari mode tabel (hapus baris ini).
+          fNotesEl.value = text.slice(0, b.start) + text.slice(pos);
+          var pT = b.start;
+          fNotesEl.setSelectionRange(pT, pT);
+          setNotesFmtMode('none');
+          return;
+        }
+        var newRow = tableRowTemplate(cells.length, []);
+        var insertT = '\n' + newRow;
+        fNotesEl.value = text.slice(0, pos) + insertT + text.slice(pos);
+        var newPosT = pos + 1 + 2; // setelah "\n| "
+        fNotesEl.setSelectionRange(newPosT, newPosT);
+        return;
+      }
       var line = text.slice(b.start, pos);
       var info = lineMarkerInfo(line);
       if (info.type === 'none') return; // baris tanpa marker, biarkan default
@@ -4869,6 +4961,63 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       fNotesEl.value = text.slice(0, pos) + insert + text.slice(pos);
       var p3 = pos + insert.length;
       fNotesEl.setSelectionRange(p3, p3);
+    });
+    // Tab di dalam baris tabel: pindah ke sel berikutnya (memilih isinya
+    // supaya bisa langsung diketik ulang). Di sel terakhir baris terakhir,
+    // Tab menambah baris baru lalu pindah ke sel pertamanya (mengetuk-ngetuk
+    // Tab jadi cara cepat menambah baris, seperti di aplikasi spreadsheet).
+    fNotesEl.addEventListener('keydown', function(e){
+      if (e.key !== 'Tab') return;
+      var text = fNotesEl.value;
+      var pos = fNotesEl.selectionStart || 0;
+      var b = lineBounds(text, pos);
+      var line = text.slice(b.start, b.end);
+      if (!isTableRow(line)) return; // biarkan Tab bawaan browser di luar tabel
+      e.preventDefault();
+      var pipePositions = [];
+      for (var i=0; i<line.length; i++){ if (line.charAt(i)==='|') pipePositions.push(i); }
+      var relPos = (fNotesEl.selectionEnd||pos) - b.start;
+      var nextPipeRel = -1;
+      for (var j=0; j<pipePositions.length; j++){
+        if (pipePositions[j] > relPos){ nextPipeRel = pipePositions[j]; break; }
+      }
+      function selectCell(absStart, absEnd){
+        var raw = text.slice(absStart, absEnd);
+        var lead = raw.length - raw.replace(/^\s+/, '').length;
+        var trail = raw.length - raw.replace(/\s+$/, '').length;
+        var s = absStart + lead, en = absEnd - trail;
+        if (en < s) en = s;
+        fNotesEl.setSelectionRange(s, en);
+      }
+      var isLastCell = (nextPipeRel === -1) || (nextPipeRel === pipePositions[pipePositions.length-1]);
+      if (!isLastCell){
+        var afterPipeRel = nextPipeRel + 1;
+        var followingPipeRel = -1;
+        for (var k=0; k<pipePositions.length; k++){
+          if (pipePositions[k] > nextPipeRel){ followingPipeRel = pipePositions[k]; break; }
+        }
+        selectCell(b.start + afterPipeRel, b.start + followingPipeRel);
+        return;
+      }
+      // Sel terakhir di baris ini -> coba baris tabel berikutnya, kalau
+      // tidak ada, tambah baris baru.
+      var nextLineStart = b.end + 1;
+      var hasNextLine = b.end < text.length;
+      var nextLine = hasNextLine ? text.slice(nextLineStart, (function(){ var e2 = text.indexOf('\n', nextLineStart); return e2===-1 ? text.length : e2; })()) : '';
+      if (hasNextLine && isTableRow(nextLine)){
+        var npPositions = [];
+        for (var m=0; m<nextLine.length; m++){ if (nextLine.charAt(m)==='|') npPositions.push(m); }
+        if (npPositions.length >= 2){
+          selectCell(nextLineStart + npPositions[0] + 1, nextLineStart + npPositions[1]);
+        }
+        return;
+      }
+      var colsCount = pipePositions.length - 1;
+      var newRow = tableRowTemplate(colsCount, []);
+      var insertStr = '\n' + newRow;
+      fNotesEl.value = text.slice(0, b.end) + insertStr + text.slice(b.end);
+      var cellPos = b.end + 1 + 2; // setelah "\n| "
+      fNotesEl.setSelectionRange(cellPos, cellPos);
     });
   }
   function resetNotesToolbar(){ setNotesFmtMode('none'); }
