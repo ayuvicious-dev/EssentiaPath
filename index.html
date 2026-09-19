@@ -592,9 +592,62 @@
   }
   .notes-freetext-line{margin:0 0 0.32rem;}
   .notes-freetext-line:last-child{margin-bottom:0;}
-  .notes-plain-table{width:100%; border-collapse:collapse; margin:0.4rem 0 0; font-size:0.7rem; color:var(--ink-soft); table-layout:fixed;}
-  .notes-plain-table td{border:1px solid var(--line); padding:0.22rem 0.4rem; word-break:break-word; vertical-align:top;}
+  /* Lebar kolom otomatis mengikuti panjang isi selnya (table-layout:auto,
+     width:auto): sel berisi kata pendek jadi sempit, sel berisi kalimat
+     panjang melebar sampai batas lebar kartu, lalu teksnya turun baris.
+     overflow-wrap:break-word (bukan word-break:break-word) supaya lebar
+     minimum kolom = kata terpanjangnya, jadi kata tidak dipotong di tengah
+     selama masih muat; kalau seluruh tabel tetap lebih lebar dari kartu,
+     wrapper (.notes-table-wrap) yang bisa digeser mendatar. */
+  .notes-plain-table{width:auto; max-width:100%; border-collapse:collapse; margin:0.4rem 0 0; font-size:0.7rem; color:var(--ink-soft); table-layout:auto;}
+  .notes-plain-table td{border:1px solid var(--line); padding:0.22rem 0.4rem; word-break:normal; overflow-wrap:break-word; vertical-align:top;}
   .notes-plain-table tr:first-child td{font-weight:700; color:var(--ink); background:var(--paper-raised);}
+  /* Sel tabel yang bisa diketuk untuk diedit langsung (lihat bindNotesTableEdit).
+     height di <td> berfungsi sebagai tinggi minimum, supaya sel kosong tetap
+     punya area ketuk yang layak. */
+  /* Wrapper diberi padding kiri-kanan 10px supaya tombol + di tepi tabel
+     (yang separuhnya keluar dari garis tabel) tidak terpotong kartu. */
+  .notes-table-wrap{margin-top:0.4rem; padding:0 10px; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .notes-table-wrap .notes-plain-table{margin:0;}
+  /* Tombol + kecil di tiap garis sekat antar-kolom pada baris judul (dan di
+     tepi kiri) untuk menyisipkan kolom baru di posisi itu. Tombol ini ada
+     DI DALAM sel judul (td berposisi relative) dan menempel di tepi
+     kanannya, jadi posisinya otomatis mengikuti lebar kolom yang berubah-ubah
+     — tidak perlu menghitung posisi lewat JS. */
+  .notes-col-add{
+    position:absolute; top:3px; right:-7px; width:14px; height:14px; border-radius:50%;
+    border:1px solid var(--moss); background:var(--paper-raised); color:var(--moss-deep);
+    font-size:0.8rem; font-weight:700; line-height:1; padding:0; cursor:pointer; opacity:0.6; z-index:1;
+    display:flex; align-items:center; justify-content:center; transition:background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+  }
+  .notes-col-add.left-edge{right:auto; left:-10px;}
+  .notes-col-add:hover, .notes-col-add:focus-visible{background:var(--moss); color:#fff; opacity:1;}
+  /* Tombol hapus kolom (x) di pojok kanan tiap sel judul, sedikit di kiri
+     garis sekat supaya tidak bertabrakan dengan tombol + di garis itu.
+     Sel judul diberi padding kanan ekstra agar teks tidak tertimpa. */
+  .notes-plain-table tr:first-child td{padding-right:1.7rem;}
+  .notes-col-del, .notes-row-del{
+    position:absolute; top:3px; right:10px; width:14px; height:14px; border-radius:50%;
+    border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft);
+    font-size:0.75rem; line-height:1; padding:0; cursor:pointer; opacity:0.55; z-index:1;
+    display:flex; align-items:center; justify-content:center; transition:background 0.12s ease, color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+  }
+  .notes-col-del:hover, .notes-col-del:focus-visible, .notes-row-del:hover, .notes-row-del:focus-visible{background:var(--danger-bg); color:var(--danger); border-color:var(--danger-border); opacity:1;}
+  /* Tombol hapus baris (x) di tepi kiri tiap baris data (bukan baris judul),
+     separuhnya di luar garis tabel — sama seperti tombol + tepi kiri. */
+  .notes-row-del{right:auto; left:-10px;}
+  .notes-row-add{
+    margin:0.3rem 0 0; border:1px dashed var(--line); background:transparent; color:var(--moss-deep);
+    border-radius:6px; font:inherit; font-size:0.66rem; padding:0.1rem 0.55rem; cursor:pointer; transition:background 0.12s ease;
+  }
+  .notes-row-add:hover{background:var(--surface);}
+  .notes-plain-table td.notes-cell{position:relative; cursor:pointer; height:1.7em; min-width:2.5rem; transition:background 0.12s ease;}
+  .notes-plain-table td.notes-cell:hover{background:var(--surface);}
+  .notes-plain-table td.notes-cell.editing{padding:0.12rem; background:var(--surface); cursor:default;}
+  .notes-plain-table tr:first-child td.notes-cell.editing{padding-right:1.7rem;}
+  /* Lebar kolom input diatur lewat JS (mengikuti panjang ketikan), jadi
+     kolom ikut melebar/menyempit saat mengetik. */
+  .notes-plain-table td.notes-cell .notes-line-input{box-sizing:border-box; display:block; min-width:4ch; max-width:100%;}
   .flex-item .body{flex:1; min-width:0;}
   /* Ditambah lewat JS (bindFlexItemEvents) untuk kartu di tab Fleksibel
      (Pin/Prioritas/Standar/Selesai/Diarsipkan) — menandai bahwa area ini
@@ -610,6 +663,17 @@
      ke kiri dengan sisa area kosong lebar di kanan seperti sebelumnya. */
   .flex-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word; padding-right:9.5rem;}
   .flex-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
+  /* Klik teks judul di kartu Fleksibel = edit judul di tempat (bindFlexTitleEdit).
+     Untuk judul bertautan, teksnya mengedit sedangkan ikon tautannya
+     (diperbesar area ketuknya) yang membuka tautan. */
+  .flex-item .title .title-text{cursor:text; border-radius:5px; padding:0.05rem 0.25rem; margin:0 -0.25rem; transition:background 0.12s ease;}
+  .flex-item .title .title-text:hover{background:var(--surface);}
+  .flex-item .title .title-link:hover, .flex-item .title .title-link:focus{text-decoration:none;}
+  .flex-item .title .title-link .link-ico{box-sizing:content-box; padding:5px; margin:-5px; cursor:pointer;}
+  .flex-item .title .title-edit-input{
+    display:block; width:100%; box-sizing:border-box; font:inherit; font-size:inherit; font-weight:inherit;
+    color:var(--ink); margin-left:-0.25rem;
+  }
   .flex-item .meta{font-size:0.72rem; color:var(--ink-soft); margin-top:2px; display:flex; align-items:center; gap:0.3rem;}
   .flex-item .acts{position:absolute; top:0.5rem; right:0.5rem; display:flex; gap:0.3rem; z-index:1;}
   .flex-item.missed-item{background:var(--notice-bg); border-color:var(--notice-border);}
@@ -2872,7 +2936,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return t;
   }
   function titleWithLinkHTML(title, link){
-    var safeTitle = escapeHTML(title);
+    // Teks judul dibungkus <span class="title-text"> supaya kartu Fleksibel
+    // bisa memasang klik-untuk-edit-judul (lihat bindFlexTitleEdit) tanpa
+    // ikut menangkap klik pada ikon tautan.
+    var safeTitle = '<span class="title-text">' + escapeHTML(title) + '</span>';
     var url = normalizeReminderLink(link);
     if (!url) return safeTitle;
     return '<a class="title-link" href="'+escapeHTML(url)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">' +
@@ -3191,6 +3258,343 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
     });
   }
+  // Mengganti teks SATU sel pada tabel di dalam catatan. Tabel disimpan
+  // sebagai baris teks "| sel1 | sel2 |", jadi yang diubah hanya sel ke-colIdx
+  // pada baris ke-lineIdx, lalu baris itu disusun ulang. Kalau dateStr
+  // diisi (kartu "Terlewat" / panel hari), yang diedit adalah isi Catatan
+  // untuk kemunculan tanggal itu (lewat getNotesForOccurrence/
+  // setNotesForOccurrence), sama seperti yang sedang ditampilkan. Kalau
+  // tidak (kartu Fleksibel), yang diedit adalah `notes` reminder-nya.
+  // Sel boleh dikosongkan. Karakter "|" diganti "/" supaya tidak merusak
+  // pemisah kolom.
+  function setNotesTableCell(reminderId, dateStr, lineIdx, colIdx, newText){
+    newText = (newText || '').replace(/\|/g, '/').replace(/\s+/g, ' ').trim();
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return;
+    var baseNotes = dateStr ? getNotesForOccurrence(reminderId, dateStr) : (r.notes || '');
+    var lines = baseNotes.split('\n');
+    if (lineIdx < 0 || lineIdx >= lines.length) return;
+    var line = lines[lineIdx];
+    if (!isTableRow(line)) return;
+    var cells = parseTableRow(line);
+    if (colIdx < 0 || colIdx >= cells.length) return;
+    if (cells[colIdx] === newText) return;
+    cells[colIdx] = newText;
+    var indent = line.match(/^\s*/)[0];
+    lines[lineIdx] = indent + tableRowTemplate(cells.length, cells);
+    var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
+    renderFlexible();
+    renderUpcoming();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+    if (p && typeof p.catch === 'function'){
+      p.catch(function(err){
+        console.error(err);
+        showToast('Gagal menyimpan perubahan catatan. Coba lagi.');
+      });
+    }
+  }
+  // Ketuk sel tabel -> berubah jadi input kecil di tempat, sudah terisi
+  // teks sel itu. Enter / klik di luar = simpan, Escape = batal. Pola yang
+  // sama dengan startInlineNotesLineEdit (baris list & checklist).
+  function startInlineTableCellEdit(td, reminderId, dateStr, lineIdx, colIdx){
+    if (td.classList.contains('editing')) return;
+    var textEl = td.querySelector('.notes-cell-text');
+    if (!textEl) return;
+    var originalText = textEl.textContent;
+    td.classList.add('editing');
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'notes-line-input';
+    input.value = originalText;
+    input.setAttribute('aria-label', 'Ubah teks sel ini');
+    // Lebar input (dan otomatis lebar kolom) mengikuti panjang teks yang diketik.
+    function fit(){ input.style.width = Math.max(input.value.length + 3, 5) + 'ch'; }
+    fit();
+    textEl.style.display = 'none';
+    td.insertBefore(input, textEl.nextSibling);
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    var done = false;
+    function finish(save){
+      if (done) return;
+      done = true;
+      var val = input.value;
+      if (input.parentNode) input.parentNode.removeChild(input);
+      textEl.style.display = '';
+      td.classList.remove('editing');
+      if (save && val.trim() !== originalText) setNotesTableCell(reminderId, dateStr, lineIdx, colIdx, val);
+    }
+    input.addEventListener('input', fit);
+    input.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter'){ ev.preventDefault(); finish(true); }
+      else if (ev.key === 'Escape'){ ev.preventDefault(); finish(false); }
+    });
+    input.addEventListener('blur', function(){ finish(true); });
+    input.addEventListener('click', function(ev){ ev.stopPropagation(); });
+  }
+  // Menyisipkan baris baru (semua sel kosong) tepat di bawah baris tabel
+  // ke-afterIdx. Karena semua baris di bawahnya bergeser satu nomor, status
+  // centang per-tanggal (checklistProgress, dikunci dengan nomor baris) untuk
+  // checklist yang letaknya di bawah tabel ikut digeser supaya tetap menempel
+  // ke item yang benar. Kartu Fleksibel (dateStr kosong) tidak butuh ini
+  // karena status centangnya tertanam di teks catatan itu sendiri.
+  function shiftChecklistProgress(reminderId, dateStr, fromIdx, delta){
+    delta = delta || 1;
+    if (!currentUser) return;
+    var prefix = reminderId + '|' + dateStr + '|';
+    var oldIdx = [];
+    Object.keys(state.checklistProgress).forEach(function(k){
+      if (k.indexOf(prefix) !== 0) return;
+      var n = parseInt(k.slice(prefix.length), 10);
+      if (isNaN(n) || n < fromIdx) return;
+      if (state.checklistProgress[k]) oldIdx.push(n);
+    });
+    if (!oldIdx.length) return;
+    var newIdx = oldIdx.map(function(n){ return n + delta; });
+    var union = {};
+    oldIdx.concat(newIdx).forEach(function(n){ union[n] = true; });
+    var previous = state.checklistProgress;
+    var next = Object.assign({}, previous);
+    var fieldArgs = [];
+    Object.keys(union).forEach(function(nStr){
+      var n = parseInt(nStr, 10);
+      var key = checklistProgressKey(reminderId, dateStr, n);
+      if (newIdx.indexOf(n) !== -1){ next[key] = true; fieldArgs.push('map.' + key, true); }
+      else { delete next[key]; fieldArgs.push('map.' + key, deleteField()); }
+    });
+    state.checklistProgress = next;
+    writeDotPatch(checklistProgressDocRef(), fieldArgs).catch(function(err){
+      console.error(err);
+      state.checklistProgress = previous;
+      renderFlexible();
+      if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+      showToast('Gagal menggeser status centang. Coba lagi.');
+    });
+  }
+  function addNotesTableRow(reminderId, dateStr, afterIdx, cols){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return null;
+    var baseNotes = dateStr ? getNotesForOccurrence(reminderId, dateStr) : (r.notes || '');
+    var lines = baseNotes.split('\n');
+    if (afterIdx < 0 || afterIdx >= lines.length || !isTableRow(lines[afterIdx])) return null;
+    cols = Math.max(1, cols || parseTableRow(lines[afterIdx]).length);
+    var indent = lines[afterIdx].match(/^\s*/)[0];
+    var insertAt = afterIdx + 1;
+    lines.splice(insertAt, 0, indent + tableRowTemplate(cols, []));
+    if (dateStr) shiftChecklistProgress(reminderId, dateStr, insertAt);
+    var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
+    renderFlexible();
+    renderUpcoming();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+    if (p && typeof p.catch === 'function'){
+      p.catch(function(err){
+        console.error(err);
+        showToast('Gagal menyimpan baris baru. Coba lagi.');
+      });
+    }
+    return insertAt;
+  }
+  // Setelah render ulang, cari sel kolom pertama di baris baru lalu langsung
+  // buka mode edit-nya supaya pengguna bisa mengetik tanpa ketuk lagi.
+  function focusTableCell(reminderId, dateStr, lineIdx, colIdx){
+    var hosts = document.querySelectorAll('[data-checklist-owner]');
+    for (var i = 0; i < hosts.length; i++){
+      var host = hosts[i];
+      if (host.getAttribute('data-checklist-owner') !== reminderId) continue;
+      if ((host.getAttribute('data-date') || null) !== (dateStr || null)) continue;
+      var rows = host.querySelectorAll('.notes-plain-table tr');
+      for (var j = 0; j < rows.length; j++){
+        if (rows[j].getAttribute('data-line') !== String(lineIdx)) continue;
+        var td = rows[j].querySelector('td[data-col="' + colIdx + '"]');
+        if (td && td.offsetParent !== null){ td.click(); return; }
+      }
+    }
+  }
+  // Menyisipkan kolom kosong di posisi colPos (0 = paling kiri, jumlah
+  // kolom = paling kanan) pada SEMUA baris tabel itu (lineIdxList berisi
+  // nomor baris milik tabel tsb). Jumlah baris tidak berubah, jadi nomor
+  // baris di bawahnya (status centang per-tanggal) tidak bergeser.
+  function addNotesTableColumn(reminderId, dateStr, lineIdxList, colPos){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return false;
+    var baseNotes = dateStr ? getNotesForOccurrence(reminderId, dateStr) : (r.notes || '');
+    var lines = baseNotes.split('\n');
+    var changed = false;
+    lineIdxList.forEach(function(li){
+      if (li < 0 || li >= lines.length || !isTableRow(lines[li])) return;
+      var cells = parseTableRow(lines[li]);
+      while (cells.length < colPos) cells.push('');
+      cells.splice(colPos, 0, '');
+      var indent = lines[li].match(/^\s*/)[0];
+      lines[li] = indent + tableRowTemplate(cells.length, cells);
+      changed = true;
+    });
+    if (!changed) return false;
+    var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
+    renderFlexible();
+    renderUpcoming();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+    if (p && typeof p.catch === 'function'){
+      p.catch(function(err){
+        console.error(err);
+        showToast('Gagal menyimpan kolom baru. Coba lagi.');
+      });
+    }
+    return true;
+  }
+  // Menghapus kolom ke-colIdx dari SEMUA baris tabel (lineIdxList). Kalau
+  // kolom itu berisi teks, minta konfirmasi dulu; kalau semua selnya kosong
+  // (mis. kolom yang baru saja ditambahkan), langsung dihapus. Tabel harus
+  // tetap punya minimal 1 kolom. Jumlah baris tidak berubah, jadi nomor
+  // baris di bawahnya (status centang per-tanggal) tidak terpengaruh.
+  function deleteNotesTableColumn(reminderId, dateStr, lineIdxList, colIdx){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return false;
+    var baseNotes = dateStr ? getNotesForOccurrence(reminderId, dateStr) : (r.notes || '');
+    var lines = baseNotes.split('\n');
+    var headerCells = (lineIdxList.length && lineIdxList[0] < lines.length && isTableRow(lines[lineIdxList[0]]))
+      ? parseTableRow(lines[lineIdxList[0]]) : [];
+    if (headerCells.length <= 1){
+      showToast('Tabel minimal punya 1 kolom.');
+      return false;
+    }
+    var hasContent = false;
+    lineIdxList.forEach(function(li){
+      if (li < 0 || li >= lines.length || !isTableRow(lines[li])) return;
+      var cells = parseTableRow(lines[li]);
+      if (colIdx < cells.length && cells[colIdx] !== '') hasContent = true;
+    });
+    if (hasContent){
+      var name = headerCells[colIdx] ? ('"' + headerCells[colIdx] + '"') : 'ini';
+      if (!confirm('Hapus kolom ' + name + ' beserta seluruh isinya?')) return false;
+    }
+    var changed = false;
+    lineIdxList.forEach(function(li){
+      if (li < 0 || li >= lines.length || !isTableRow(lines[li])) return;
+      var cells = parseTableRow(lines[li]);
+      if (colIdx >= cells.length) return;
+      cells.splice(colIdx, 1);
+      var indent = lines[li].match(/^\s*/)[0];
+      lines[li] = indent + tableRowTemplate(cells.length, cells);
+      changed = true;
+    });
+    if (!changed) return false;
+    var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
+    renderFlexible();
+    renderUpcoming();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+    if (p && typeof p.catch === 'function'){
+      p.catch(function(err){
+        console.error(err);
+        showToast('Gagal menghapus kolom. Coba lagi.');
+      });
+    }
+    return true;
+  }
+  // Menghapus SATU baris tabel (baris ke-lineIdx di catatan). Kalau ada isi
+  // di baris itu, minta konfirmasi dulu; baris yang semua selnya kosong
+  // langsung dihapus. Baris di bawahnya naik satu nomor, jadi status centang
+  // per-tanggal untuk checklist yang letaknya di bawah tabel ikut digeser
+  // mundur satu (lihat shiftChecklistProgress). Baris judul tidak punya
+  // tombol hapus.
+  function deleteNotesTableRow(reminderId, dateStr, lineIdx){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return false;
+    var baseNotes = dateStr ? getNotesForOccurrence(reminderId, dateStr) : (r.notes || '');
+    var lines = baseNotes.split('\n');
+    if (lineIdx < 0 || lineIdx >= lines.length || !isTableRow(lines[lineIdx])) return false;
+    var cells = parseTableRow(lines[lineIdx]);
+    var firstFilled = '';
+    for (var i = 0; i < cells.length; i++){ if (cells[i] !== ''){ firstFilled = cells[i]; break; } }
+    if (firstFilled){
+      if (!confirm('Hapus baris "' + firstFilled + '" beserta seluruh isinya?')) return false;
+    }
+    lines.splice(lineIdx, 1);
+    if (dateStr) shiftChecklistProgress(reminderId, dateStr, lineIdx + 1, -1);
+    var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
+    renderFlexible();
+    renderUpcoming();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+    if (p && typeof p.catch === 'function'){
+      p.catch(function(err){
+        console.error(err);
+        showToast('Gagal menghapus baris. Coba lagi.');
+      });
+    }
+    return true;
+  }
+  function bindNotesTableEdit(container){
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-row-del'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = btn.closest('[data-checklist-owner]');
+        var tr = btn.closest('tr');
+        if (!host || !tr) return;
+        deleteNotesTableRow(
+          host.getAttribute('data-checklist-owner'),
+          host.getAttribute('data-date') || null,
+          parseInt(tr.getAttribute('data-line'), 10)
+        );
+      });
+    });
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-col-del'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = btn.closest('[data-checklist-owner]');
+        var wrap = btn.closest('.notes-table-wrap');
+        if (!host || !wrap) return;
+        var id = host.getAttribute('data-checklist-owner');
+        var date = host.getAttribute('data-date') || null;
+        var lineList = (wrap.getAttribute('data-lines') || '').split(',').map(function(x){ return parseInt(x, 10); }).filter(function(x){ return !isNaN(x); });
+        if (!lineList.length) return;
+        deleteNotesTableColumn(id, date, lineList, parseInt(btn.getAttribute('data-col'), 10));
+      });
+    });
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-col-add'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = btn.closest('[data-checklist-owner]');
+        var wrap = btn.closest('.notes-table-wrap');
+        if (!host || !wrap) return;
+        var id = host.getAttribute('data-checklist-owner');
+        var date = host.getAttribute('data-date') || null;
+        var lineList = (wrap.getAttribute('data-lines') || '').split(',').map(function(x){ return parseInt(x, 10); }).filter(function(x){ return !isNaN(x); });
+        if (!lineList.length) return;
+        var pos = parseInt(btn.getAttribute('data-pos'), 10);
+        if (addNotesTableColumn(id, date, lineList, pos)){
+          // Langsung buka sel judul kolom baru supaya bisa diberi nama.
+          focusTableCell(id, date, lineList[0], pos);
+        }
+      });
+    });
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-row-add'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = btn.closest('[data-checklist-owner]');
+        if (!host) return;
+        var id = host.getAttribute('data-checklist-owner');
+        var date = host.getAttribute('data-date') || null;
+        var newIdx = addNotesTableRow(id, date, parseInt(btn.getAttribute('data-after'), 10), parseInt(btn.getAttribute('data-cols'), 10));
+        if (newIdx == null) return;
+        focusTableCell(id, date, newIdx, 0);
+      });
+    });
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-plain-table td[data-col]'), function(td){
+      td.addEventListener('click', function(e){
+        e.stopPropagation();
+        var tr = td.parentNode;
+        var host = td.closest('[data-checklist-owner]');
+        if (!host || !tr) return;
+        startInlineTableCellEdit(
+          td,
+          host.getAttribute('data-checklist-owner'),
+          host.getAttribute('data-date'),
+          parseInt(tr.getAttribute('data-line'), 10),
+          parseInt(td.getAttribute('data-col'), 10)
+        );
+      });
+    });
+  }
   // Ringkasan satu baris untuk catatan yang berisi list (centang/angka/bullet),
   // supaya beberapa baris list tetap terbaca ringkas di pratinjau.
   function notesPreview(notes){
@@ -3284,7 +3688,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       } else if (info.type === 'number'){
         pushToBlock('list', { idx: idx, type:'number', text: line.slice(info.markerLen), num: info.num });
       } else if (info.type === 'table'){
-        pushToBlock('table', { text: line });
+        pushToBlock('table', { idx: idx, text: line });
       } else {
         var trimmed = line.trim();
         if (trimmed) pushToBlock('text', { text: trimmed });
@@ -3292,12 +3696,28 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
     return blocks.map(function(b){
       if (b.type === 'table'){
-        return '<table class="notes-plain-table"><tbody>' +
-          b.items.map(function(it){
+        var tblLastIdx = b.items[b.items.length - 1].idx;
+        var tblCols = parseTableRow(b.items[0].text).length;
+        var tblLines = b.items.map(function(it){ return it.idx; }).join(',');
+        return '<div class="notes-table-wrap" data-lines="'+tblLines+'">' +
+          '<table class="notes-plain-table"><tbody>' +
+          b.items.map(function(it, ri){
             var cells = parseTableRow(it.text);
-            return '<tr>' + cells.map(function(c){ return '<td>'+escapeHTML(c)+'</td>'; }).join('') + '</tr>';
+            return '<tr data-line="'+it.idx+'">' + cells.map(function(c, ci){
+              // Tombol tambah/hapus kolom hanya di sel baris judul (baris pertama tabel).
+              var ctrls = '';
+              if (ri > 0 && ci === 0) ctrls += '<button type="button" class="notes-row-del" aria-label="Hapus baris ini" title="Hapus baris ini">\u00d7</button>';
+              if (ri === 0){
+                if (ci === 0) ctrls += '<button type="button" class="notes-col-add left-edge" data-pos="0" aria-label="Tambah kolom di sini" title="Tambah kolom di sini">+</button>';
+                ctrls += '<button type="button" class="notes-col-add" data-pos="'+(ci + 1)+'" aria-label="Tambah kolom di sini" title="Tambah kolom di sini">+</button>';
+                ctrls += '<button type="button" class="notes-col-del" data-col="'+ci+'" aria-label="Hapus kolom ini" title="Hapus kolom ini">\u00d7</button>';
+              }
+              return '<td class="notes-cell" data-col="'+ci+'" title="Ketuk untuk mengedit sel ini"><span class="notes-cell-text">'+escapeHTML(c)+'</span>'+ctrls+'</td>';
+            }).join('') + '</tr>';
           }).join('') +
-        '</tbody></table>';
+          '</tbody></table>' +
+          '<button type="button" class="notes-row-add" data-after="'+tblLastIdx+'" data-cols="'+tblCols+'" aria-label="Tambah baris" title="Tambah baris">+ baris</button>' +
+        '</div>';
       }
       if (b.type === 'checklist'){
         return '<ul class="sub-checklist">' +
@@ -4244,6 +4664,78 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '</div></li>';
   }
 
+  // Mengganti judul pengingat (dipakai oleh edit judul langsung di kartu
+  // Fleksibel). Judul kosong ditolak; batas panjang sama seperti kolom
+  // Judul di form (80 karakter).
+  function setReminderTitle(reminderId, newTitle){
+    newTitle = (newTitle || '').replace(/\s+/g, ' ').trim();
+    if (!newTitle) return false;
+    if (newTitle.length > 80) newTitle = newTitle.slice(0, 80);
+    var idx = state.reminders.findIndex(function(x){ return x.id === reminderId; });
+    if (idx === -1) return false;
+    var r = state.reminders[idx];
+    if (r.title === newTitle) return false;
+    var updated = Object.assign({}, r, { title: newTitle });
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
+    renderAll();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan judul. Coba lagi.');
+    });
+    return true;
+  }
+  // Klik teks judul -> berubah jadi kolom isian di tempat, sudah terisi judul
+  // lengkap. Enter / klik di luar = simpan, Escape = batal.
+  function startInlineTitleEdit(titleEl, textEl, reminderId){
+    if (titleEl.classList.contains('editing')) return;
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    var originalText = r ? r.title : textEl.textContent;
+    // Yang disembunyikan: seluruh tautan (kalau judulnya bertautan) atau
+    // teks judul saja (kalau tidak) — keduanya anak langsung dari titleEl.
+    var target = titleEl.querySelector('.title-link') || textEl;
+    titleEl.classList.add('editing');
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'notes-line-input title-edit-input';
+    input.maxLength = 80;
+    input.value = originalText;
+    input.setAttribute('aria-label', 'Ubah judul pengingat');
+    target.style.display = 'none';
+    titleEl.insertBefore(input, target.nextSibling);
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    var done = false;
+    function finish(save){
+      if (done) return;
+      done = true;
+      var val = input.value.trim();
+      if (input.parentNode) input.parentNode.removeChild(input);
+      target.style.display = '';
+      titleEl.classList.remove('editing');
+      if (save && val && val !== originalText) setReminderTitle(reminderId, val);
+    }
+    input.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter'){ ev.preventDefault(); finish(true); }
+      else if (ev.key === 'Escape'){ ev.preventDefault(); finish(false); }
+    });
+    input.addEventListener('blur', function(){ finish(true); });
+    input.addEventListener('click', function(ev){ ev.stopPropagation(); });
+  }
+  function bindFlexTitleEdit(container){
+    Array.prototype.forEach.call(container.querySelectorAll('.flex-item .body > .title'), function(titleEl){
+      var textEl = titleEl.querySelector('.title-text');
+      var host = titleEl.closest('.flex-item');
+      if (!textEl || !host) return;
+      textEl.setAttribute('title', 'Ketuk untuk mengedit judul');
+      textEl.addEventListener('click', function(e){
+        e.stopPropagation();
+        e.preventDefault(); // judul bertautan: jangan buka tautan, cukup masuk mode edit
+        startInlineTitleEdit(titleEl, textEl, host.getAttribute('data-id'));
+      });
+    });
+  }
   function bindFlexItemEvents(listEl){
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-check'), function(btn){
       btn.addEventListener('click', function(){
@@ -4294,6 +4786,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     bindChecklistClicks(listEl, function(){ return { type:'flex' }; });
     bindNotesListEdit(listEl);
     bindChecklistLineEdit(listEl);
+    bindNotesTableEdit(listEl);
+    bindFlexTitleEdit(listEl);
   }
 
   // Salin seluruh isi field "Catatan (opsional)" apa adanya ke clipboard,
@@ -4445,6 +4939,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
       bindNotesListEdit(flexibleListMissed);
       bindChecklistLineEdit(flexibleListMissed);
+      bindNotesTableEdit(flexibleListMissed);
+      bindFlexTitleEdit(flexibleListMissed);
     }
     if (!items.length && !missed.length){
       var hasAnyFlexible = state.reminders.some(function(r){ return r.flexible; });
@@ -5412,7 +5908,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     dayPanelList.innerHTML = items.map(function(it){
       var key = it.reminder.id + '|' + it.time;
       var expanded = !!dayPanelExpanded[key];
-      return '<div class="up-item dp-item" data-key="'+escapeHTML(key)+'">' +
+      return '<div class="up-item dp-item" data-key="'+escapeHTML(key)+'" data-checklist-owner="'+it.reminder.id+'" data-date="'+it.date+'">' +
         '<div class="body">' +
           '<div class="title dp-title" role="button" tabindex="0" aria-expanded="'+(expanded?'true':'false')+'">' +
             titleWithLinkHTML(it.reminder.title, it.reminder.link) +
@@ -5441,6 +5937,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
       });
     });
+    bindNotesTableEdit(dayPanelList);
     Array.prototype.forEach.call(dayPanelList.querySelectorAll('.edit-day'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id'), null, btn.getAttribute('data-date'), btn.getAttribute('data-time')); });
     });
