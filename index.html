@@ -23,7 +23,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>EssentiaPath</title>
 <meta name="description" content="Pengingat berulang dengan tampilan kalender: per jam, harian, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan.">
-<meta name="theme-color" content="#FBF7EF">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
@@ -136,12 +136,34 @@
   .hero{
     position:-webkit-sticky; position:sticky; top:0; z-index:15;
     overflow:hidden;
-    background:var(--paper);
+    background:var(--paper-raised);
+    border-bottom:1px solid var(--line);
     color:var(--ink);
-    padding-bottom:0.75rem;
+    padding-bottom:0;
   }
-  .hero-inner{position:relative; z-index:1; padding-top:0.85rem;}
-  .hero-top{display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
+  .hero-inner{position:relative; z-index:1; padding-top:0;}
+  /* Bilah judul di atas: nama tab aktif (sama dengan label di bottom bar) di
+     kiri, deretan tombol pintasan (.header-shortcuts) di pojok kanan. */
+  .hero-top{display:flex; align-items:center; justify-content:space-between; gap:0.75rem; min-height:3.4rem; padding:0.55rem 0;}
+  .page-title{
+    margin:0; font-family:var(--font-body); font-size:1.2rem; font-weight:700; letter-spacing:-0.01em;
+    line-height:1.2; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;
+  }
+  .header-shortcuts{
+    display:flex; align-items:center; justify-content:flex-end; gap:0.45rem; flex:none; max-width:70%;
+    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .header-shortcuts::-webkit-scrollbar{display:none;}
+  /* Gaya tombol pintasan (dipakai nanti saat isinya sudah ditentukan). */
+  .shortcut-btn{
+    width:34px; height:34px; flex:none; border-radius:9px; border:1px solid var(--line);
+    background:var(--paper-raised); color:var(--ink); cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center; transition:background 0.15s ease, border-color 0.15s ease;
+  }
+  .shortcut-btn svg{width:16px; height:16px;}
+  .shortcut-btn:hover{background:var(--line-soft);}
+  .shortcut-btn.active{color:var(--moss-deep); border-color:var(--moss);}
+  .shortcut-btn.logout-shortcut:hover{color:var(--danger); background:var(--danger-bg); border-color:var(--danger-border);}
   .brand{display:flex; align-items:center; gap:0.65rem;}
   .brand-mark{width:34px; height:34px; border-radius:9px; background:var(--amber); display:flex; align-items:center; justify-content:center; flex:none;}
   .brand-mark svg{width:18px; height:18px;}
@@ -167,7 +189,7 @@
 
   .toolbar{
     display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap;
-    margin-top:0.75rem;
+    margin-top:0; padding:0 0 0.6rem;
   }
   .month-nav{display:flex; align-items:center; gap:0.35rem;}
   .month-nav-btn{
@@ -204,7 +226,7 @@
   /* ---------- Layout ---------- */
   .layout{
     display:grid; grid-template-columns:minmax(0,1fr); gap:1.5rem;
-    margin-top:-1rem; position:relative; z-index:2;
+    margin-top:1.25rem; position:relative; z-index:2;
   }
 
   .panel{
@@ -450,6 +472,41 @@
     background:var(--notice-bg,rgba(227,169,124,0.12)); border-color:var(--amber-deep);
     box-shadow:inset 3px 0 0 var(--amber-deep);
   }
+  /* Judul & catatan pada daftar "Mendatang" (Dashboard) bisa diedit langsung
+     di tempat — pola yang sama dengan kartu Fleksibel (bindFlexTitleEdit,
+     bindNotesListEdit, bindChecklistLineEdit, bindNotesTableEdit), ditambah
+     baris catatan teks bebas (bindFreeTextLineEdit). */
+  .up-editable .title .title-text{cursor:text; border-radius:5px; padding:0.05rem 0.25rem; margin:0 -0.25rem; transition:background 0.12s ease;}
+  .up-editable .title .title-text:hover{background:var(--paper-raised);}
+  .up-editable .title .title-link:hover, .up-editable .title .title-link:focus{text-decoration:none;}
+  .up-editable .title .title-link .link-ico{box-sizing:content-box; padding:5px; margin:-5px; cursor:pointer;}
+  .up-editable .title .title-edit-input{
+    display:block; width:calc(100% + 0.25rem); box-sizing:border-box; font:inherit; font-size:inherit; font-weight:inherit;
+    color:var(--ink); margin-left:-0.25rem;
+  }
+  .up-editable .sub-check-label:hover, .up-editable .notes-plain-item:hover,
+  .up-editable .notes-plain-table td.notes-cell:hover{background:var(--paper-raised);}
+  .notes-freetext-line.is-editable{
+    cursor:text; border-radius:5px; padding:0.05rem 0.25rem; margin:0 -0.25rem 0.32rem; transition:background 0.12s ease;
+  }
+  .notes-freetext-line.is-editable:last-child{margin-bottom:0;}
+  .notes-freetext-line.is-editable:hover, .notes-freetext-line.is-editable.editing{background:var(--paper-raised);}
+  .notes-freetext-line.is-editable.editing{cursor:default;}
+  .notes-freetext-line .notes-line-input{display:block; width:100%; box-sizing:border-box; font-size:0.76rem;}
+  /* Tabel di catatan (kartu Fleksibel, "Terlewat", dan "Mendatang") terkunci
+     secara default supaya tidak teredit/terhapus karena tersentuh tidak
+     sengaja. Ikon tabel di deretan tombol aksi kartu (.toggle-table) membuka
+     kuncinya — baru setelah itu sel bisa diketuk dan tombol +/× muncul.
+     Kelasnya dipasang lewat JS (applyTableEditMode). */
+  .toggle-table svg{width:15px; height:15px;}
+  .toggle-table.active{color:var(--moss-deep); background:var(--line-soft);}
+  .flex-item.has-table-btn .title{padding-right:11rem;}
+  .table-locked .notes-col-add, .table-locked .notes-col-del,
+  .table-locked .notes-row-del, .table-locked .notes-row-add{display:none;}
+  .table-locked .notes-plain-table td.notes-cell{cursor:default;}
+  .table-locked .notes-plain-table td.notes-cell:hover{background:transparent;}
+  .table-locked .notes-plain-table tr:first-child td.notes-cell:hover{background:var(--paper-raised);}
+  .table-locked .notes-plain-table tr:first-child td{padding-right:0.4rem;}
   .icon-btn{
     width:24px; height:24px; border-radius:6px; border:none; background:transparent; color:var(--ink-soft);
     cursor:pointer; display:flex; align-items:center; justify-content:center;
@@ -765,6 +822,12 @@
   }
   .nav-btn svg{width:20px; height:20px;}
   .nav-btn.active{color:var(--moss-deep); background:var(--selected-bg);}
+  /* Setelah Kalender pindah ke bilah atas, sisa tombol di bottom bar = Dashboard,
+     Fleksibel, +, Setting. Setting ditaruh di wadah selebar dua kolom dan
+     lebarnya separuh wadah (= satu kolom, sama dengan tombol lain) supaya
+     tombol + tetap persis di tengah. */
+  .nav-half{flex:2; display:flex; justify-content:center; min-width:0;}
+  .nav-half .nav-btn{flex:0 0 50%;}
 
   /* ---------- Settings (Pengaturan) view ---------- */
   .settings-panel{display:none; padding:0.3rem 0.2rem 1rem; background:none; box-shadow:none; border:none;}
@@ -808,13 +871,11 @@
   .upgrade-pagination button:disabled{opacity:0.35; cursor:default;}
   .upgrade-pagination .page-info{font-size:0.76rem; color:var(--ink-soft); font-family:var(--font-mono);}
 
-  .theme-tabs{display:flex; gap:0.4rem; background:var(--surface); padding:4px; border-radius:999px; margin-bottom:0.2rem;}
-  .theme-tab{
-    flex:1; border:none; background:transparent; padding:0.45rem 0.5rem; border-radius:999px; font-size:0.82rem;
-    font-weight:700; color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.35rem;
-  }
-  .theme-tab svg{width:15px; height:15px;}
-  .theme-tab.active{background:var(--paper-raised); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,0.12);}
+  /* Tombol mode terang/gelap di bilah atas: ikon bulan saat terang (ketuk =
+     ke gelap), ikon matahari saat gelap (ketuk = ke terang). */
+  .theme-toggle .theme-ico-sun{display:none;}
+  :root[data-theme="dark"] .theme-toggle .theme-ico-moon{display:none;}
+  :root[data-theme="dark"] .theme-toggle .theme-ico-sun{display:block;}
 
   .font-size-slider-wrap{display:flex; align-items:center; gap:0.6rem; padding:0.2rem 0.1rem 0.1rem;}
   .font-size-slider-icon{color:var(--ink-soft); font-weight:700; flex:none; line-height:1;}
@@ -1228,19 +1289,28 @@
 <header class="hero">
   <div class="shell hero-inner">
     <div class="hero-top">
-      <div class="brand">
-        <div>
-          <!-- Nama aplikasi "EssentiaPath" di header sengaja dihilangkan
-               atas permintaan. Div kosong ini dipertahankan sebagai
-               placeholder supaya .account-chip di sebelah kanan tetap rapi
-               menempel ke tepi kanan (hero-top pakai justify-content:
-               space-between antara dua elemen ini) — bukan malah ikut
-               terdorong ke kiri kalau elemen ini dihapus total. -->
-          <div class="brand-tag sync-indicator" id="syncIndicator" hidden>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3v4h-4M7 21v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span id="syncIndicatorText">Tersinkron</span>
-          </div>
-        </div>
+      <!-- Judul halaman = nama tab yang sedang aktif di bottom bar (diisi lewat
+           setView). Indikator sinkron di bawah ini sengaja tetap ada tapi
+           disembunyikan permanen lewat CSS (markSynced() masih mengisinya). -->
+      <h1 class="page-title" id="pageTitle">Dashboard</h1>
+      <div class="brand-tag sync-indicator" id="syncIndicator" hidden>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3v4h-4M7 21v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="syncIndicatorText">Tersinkron</span>
+      </div>
+      <!-- Pojok kanan: deretan tombol pintasan (shortcut). Baru berisi Keluar, mode terang/gelap, dan Kalender;
+           pintasan lain menyusul. Tombol yang punya data-view otomatis
+           membuka tab itu (lihat setView); tombol baru cukup <button class="shortcut-btn">. -->
+      <div class="header-shortcuts" id="headerShortcuts">
+        <button type="button" class="shortcut-btn logout-shortcut" id="logoutShortcut" aria-label="Keluar" title="Keluar">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="shortcut-btn theme-toggle" id="themeToggle" aria-label="Ganti ke mode gelap" title="Ganti ke mode gelap">
+          <svg class="theme-ico-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="theme-ico-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="shortcut-btn" id="calendarShortcut" data-view="calendar" aria-label="Kalender" title="Kalender">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
       </div>
       <div class="account-chip" id="accountChip" hidden>
         <span class="account-email" id="accountEmail"></span>
@@ -1435,24 +1505,6 @@
       </div>
     </div>
     <div class="settings-block">
-      <h2>Tampilan</h2>
-      <div class="theme-tabs" id="themeTabs">
-        <button type="button" class="theme-tab" data-theme-choice="light">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          Terang
-        </button>
-        <button type="button" class="theme-tab" data-theme-choice="dark">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Gelap
-        </button>
-        <button type="button" class="theme-tab" data-theme-choice="system">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4.5" width="18" height="12" rx="1.8" stroke="currentColor" stroke-width="2"/><path d="M8.5 20h7M12 16.5V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          Sistem
-        </button>
-      </div>
-      <p class="hint">"Sistem" mengikuti pengaturan terang/gelap perangkat Anda secara otomatis.</p>
-    </div>
-    <div class="settings-block">
       <h2>Kategori</h2>
       <p class="hint">Ketuk kategori untuk menampilkan/menyembunyikannya di kalender dan daftar. Gunakan ✎ untuk mengubah, 🗑 untuk menghapus.</p>
       <div class="search-box" id="catSearchBox" style="margin-bottom:0.7rem;">
@@ -1488,7 +1540,7 @@
     <div class="settings-block">
       <h2>Akun</h2>
       <p class="settings-account-email" id="settingsEmail">—</p>
-      <button type="button" class="btn btn-danger" id="logoutBtnSettings">Keluar</button>
+      <p class="settings-status">Untuk keluar dari akun, ketuk ikon keluar di pojok kanan atas.</p>
     </div>
     <div class="settings-block">
       <h2>Notifikasi</h2>
@@ -1522,14 +1574,14 @@
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
     <span class="add-btn-label">Pengingat baru</span>
   </button>
-  <button type="button" class="nav-btn" data-view="calendar">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="14.5" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    <span>Kalender</span>
-  </button>
-  <button type="button" class="nav-btn" data-view="display">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.9 4.9l1.55 1.55M17.55 17.55l1.55 1.55M3 12h2.2M18.8 12H21M4.9 19.1l1.55-1.55M17.55 6.45l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    <span>Setting</span>
-  </button>
+  <!-- Kalender sudah pindah ke pojok kanan atas (tombol pintasan). Tombol
+       Setting dibungkus setengah lebar kanan supaya tombol + tetap di tengah. -->
+  <div class="nav-half">
+    <button type="button" class="nav-btn" data-view="display">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Setting</span>
+    </button>
+  </div>
 </nav>
 
 <footer>Pengingat Anda tersimpan di akun Firebase Anda dan hanya bisa diakses setelah masuk dengan email &amp; kata sandi.</footer>
@@ -3170,27 +3222,32 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // `notes` reminder-nya langsung (berlaku untuk semua kemunculan, sama
   // seperti isi list/teks bebas lain — bukan status per-tanggal seperti
   // checklist).
-  function setNotesLineText(reminderId, lineIdx, newText){
+  function setNotesLineText(reminderId, lineIdx, newText, dateStr){
     newText = (newText || '').trim();
     if (!newText) return;
-    var idx = state.reminders.findIndex(function(x){ return x.id === reminderId; });
-    if (idx === -1) return;
-    var r = state.reminders[idx];
-    var lines = (r.notes || '').split('\n');
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return;
+    // Kalau baris ini ada di kartu bertanggal (daftar "Mendatang" / kartu
+    // "Terlewat"), yang diedit adalah isi Catatan untuk kemunculan tanggal
+    // itu (getNotesForOccurrence/setNotesForOccurrence) — sama seperti yang
+    // sedang ditampilkan. Tanpa tanggal (kartu Fleksibel), yang diedit
+    // adalah `notes` reminder-nya.
+    var baseNotes = dateStr ? getNotesForOccurrence(reminderId, dateStr) : (r.notes || '');
+    var lines = baseNotes.split('\n');
     if (lineIdx < 0 || lineIdx >= lines.length) return;
     var info = lineMarkerInfo(lines[lineIdx]);
     var prefix = lines[lineIdx].slice(0, info.markerLen);
     lines[lineIdx] = prefix + newText;
-    var updated = Object.assign({}, r, { notes: lines.join('\n') });
-    state.reminders = state.reminders.slice();
-    state.reminders[idx] = updated;
+    var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
     renderFlexible();
     renderUpcoming();
     if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
-    saveReminderToCloud(updated).catch(function(err){
-      console.error(err);
-      showToast('Gagal menyimpan perubahan catatan. Coba lagi.');
-    });
+    if (p && typeof p.catch === 'function'){
+      p.catch(function(err){
+        console.error(err);
+        showToast('Gagal menyimpan perubahan catatan. Coba lagi.');
+      });
+    }
   }
   // Klik langsung pada satu baris catatan list (bullet/angka) membuka input
   // kecil di tempat (inline), sudah terisi teks lengkap baris itu — bisa
@@ -3199,7 +3256,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // seluruh isi "Catatan". Menghentikan propagasi supaya tidak ikut memicu
   // body-tap-edit di kartu. Dipakai bersama oleh baris list biasa
   // (bindNotesListEdit) maupun label checklist (bindChecklistLineEdit).
-  function startInlineNotesLineEdit(li, textEl, reminderId, lineIdx){
+  function startInlineNotesLineEdit(li, textEl, reminderId, lineIdx, dateStr){
     if (li.classList.contains('editing')) return;
     li.classList.add('editing');
     var originalText = textEl.textContent;
@@ -3221,7 +3278,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (input.parentNode) input.parentNode.removeChild(input);
       textEl.style.display = originalDisplay;
       li.classList.remove('editing');
-      if (save && val && val !== originalText) setNotesLineText(reminderId, lineIdx, val);
+      if (save && val && val !== originalText) setNotesLineText(reminderId, lineIdx, val, dateStr || null);
     }
     input.addEventListener('keydown', function(ev){
       if (ev.key === 'Enter'){ ev.preventDefault(); finish(true); }
@@ -3238,7 +3295,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         e.stopPropagation();
         var host = li.closest('[data-checklist-owner]');
         if (!host) return;
-        startInlineNotesLineEdit(li, textEl, host.getAttribute('data-checklist-owner'), parseInt(li.getAttribute('data-line'), 10));
+        startInlineNotesLineEdit(li, textEl, host.getAttribute('data-checklist-owner'), parseInt(li.getAttribute('data-line'), 10), host.getAttribute('data-date'));
       });
     });
   }
@@ -3254,7 +3311,25 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         e.stopPropagation();
         var host = li.closest('[data-checklist-owner]');
         if (!host) return;
-        startInlineNotesLineEdit(li, labelEl, host.getAttribute('data-checklist-owner'), parseInt(li.getAttribute('data-line'), 10));
+        startInlineNotesLineEdit(li, labelEl, host.getAttribute('data-checklist-owner'), parseInt(li.getAttribute('data-line'), 10), host.getAttribute('data-date'));
+      });
+    });
+  }
+  // Baris catatan teks bebas (bukan checklist/list/tabel) juga bisa diketuk
+  // untuk diedit di tempat — dipakai di daftar "Mendatang". Pola yang sama
+  // dengan bindNotesListEdit; nomor baris (data-line) dan tanggal kemunculan
+  // (data-date pada kartu) menentukan baris & isi Catatan mana yang diubah.
+  function bindFreeTextLineEdit(container){
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-freetext-line[data-line]'), function(lineEl){
+      var textEl = lineEl.querySelector('.notes-freetext-text');
+      if (!textEl) return;
+      lineEl.classList.add('is-editable');
+      lineEl.setAttribute('title', 'Ketuk untuk mengedit baris ini');
+      lineEl.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = lineEl.closest('[data-checklist-owner]');
+        if (!host) return;
+        startInlineNotesLineEdit(lineEl, textEl, host.getAttribute('data-checklist-owner'), parseInt(lineEl.getAttribute('data-line'), 10), host.getAttribute('data-date'));
       });
     });
   }
@@ -3585,6 +3660,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var tr = td.parentNode;
         var host = td.closest('[data-checklist-owner]');
         if (!host || !tr) return;
+        // Tabel terkunci (lihat applyTableEditMode): ketukan diabaikan,
+        // tidak mengedit sel dan tidak ikut membuka form edit kartu.
+        if (host.classList.contains('table-locked')) return;
         startInlineTableCellEdit(
           td,
           host.getAttribute('data-checklist-owner'),
@@ -3592,6 +3670,62 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           parseInt(tr.getAttribute('data-line'), 10),
           parseInt(td.getAttribute('data-col'), 10)
         );
+      });
+    });
+  }
+  // ---------- Kunci edit tabel di kartu ----------
+  // Kartu yang catatannya berisi tabel (Fleksibel, "Terlewat", "Mendatang")
+  // mendapat tombol ikon tabel di baris tombol aksi, paling kiri (di kiri
+  // ikon arsip). Tabel terkunci dulu; ketuk ikon itu untuk membuka kunci
+  // dan baru bisa mengedit sel / menambah-menghapus baris & kolom, ketuk
+  // lagi untuk mengunci. Status buka-kunci hanya disimpan di memori (per
+  // pengingat + tanggal kartu) supaya tetap terbuka selama kartu digambar
+  // ulang setelah tiap edit, dan otomatis terkunci lagi setelah muat ulang.
+  var tableEditModes = {};
+  var TABLE_TOGGLE_ICON = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M3.5 14.5h17M9.5 5v14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  function tableModeKey(host){
+    return (host.getAttribute('data-checklist-owner') || '') + '|' + (host.getAttribute('data-date') || '');
+  }
+  function syncTableModeUI(host, btn){
+    var on = !!tableEditModes[tableModeKey(host)];
+    host.classList.toggle('table-locked', !on);
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    var label = on ? 'Kunci tabel (selesai mengedit)' : 'Edit tabel';
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+    Array.prototype.forEach.call(host.querySelectorAll('.notes-plain-table td.notes-cell'), function(td){
+      if (on) td.setAttribute('title', 'Ketuk untuk mengedit sel ini');
+      else td.removeAttribute('title');
+    });
+  }
+  function applyTableEditMode(container){
+    Array.prototype.forEach.call(container.querySelectorAll('[data-checklist-owner]'), function(host){
+      if (!host.querySelector('.notes-table-wrap')) return;
+      var acts = host.querySelector('.acts');
+      if (!acts) return; // tanpa tombol aksi tidak ada cara membuka kunci — biarkan seperti semula
+      var btn = acts.querySelector('.toggle-table');
+      if (!btn){
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'icon-btn toggle-table';
+        btn.innerHTML = TABLE_TOGGLE_ICON;
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          var key = tableModeKey(host);
+          if (tableEditModes[key]) delete tableEditModes[key]; else tableEditModes[key] = true;
+          syncTableModeUI(host, btn);
+        });
+        acts.insertBefore(btn, acts.firstChild);
+        host.classList.add('has-table-btn');
+      }
+      syncTableModeUI(host, btn);
+      // Ketukan di area tabel selagi terkunci (mis. di tepi/padding tabel)
+      // juga tidak boleh menembus ke kartu dan membuka form edit.
+      Array.prototype.forEach.call(host.querySelectorAll('.notes-table-wrap'), function(wrap){
+        wrap.addEventListener('click', function(e){
+          if (host.classList.contains('table-locked')) e.stopPropagation();
+        });
       });
     });
   }
@@ -3691,7 +3825,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         pushToBlock('table', { idx: idx, text: line });
       } else {
         var trimmed = line.trim();
-        if (trimmed) pushToBlock('text', { text: trimmed });
+        if (trimmed) pushToBlock('text', { idx: idx, text: trimmed });
       }
     });
     return blocks.map(function(b){
@@ -3741,7 +3875,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           }).join('') +
         '</ul>';
       }
-      return '<div class="notes-freetext">' + b.items.map(function(it){ return '<div class="notes-freetext-line">'+escapeHTML(it.text)+'</div>'; }).join('') + '</div>';
+      return '<div class="notes-freetext">' + b.items.map(function(it){ return '<div class="notes-freetext-line" data-line="'+it.idx+'"><span class="notes-freetext-text">'+escapeHTML(it.text)+'</span></div>'; }).join('') + '</div>';
     }).join('');
   }
 
@@ -4112,12 +4246,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
       : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
     var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
-    return '<li class="up-item'+(isDone?' done':'')+(isOngoing?' ongoing':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+    return '<li class="up-item up-editable'+(isDone?' done':'')+(isOngoing?' ongoing':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
       '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
-      '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge+'</div>' +
+      '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge +
+      renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
+      '</div>' +
       '<div class="acts">' +
         '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
       '</div></li>';
@@ -4142,6 +4278,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         openEditForm(btn.getAttribute('data-id'), null, btn.getAttribute('data-date'), btn.getAttribute('data-time'));
       });
     });
+    // Judul & catatan bisa diedit langsung di kartu (tanpa membuka form):
+    // ketuk judul = ubah judul; ketuk baris catatan (checklist / list /
+    // teks bebas / sel tabel) = ubah baris itu. Catatan yang diedit adalah
+    // isi untuk tanggal kemunculan ini (lihat data-date pada <li>).
+    bindChecklistClicks(listEl, function(host){
+      return { type:'current', date: host.getAttribute('data-date') };
+    });
+    bindNotesListEdit(listEl);
+    bindChecklistLineEdit(listEl);
+    bindFreeTextLineEdit(listEl);
+    bindNotesTableEdit(listEl);
+    bindFlexTitleEdit(listEl);
+    applyTableEditMode(listEl);
   }
   // Bagian "Selesai" di bawah "Mendatang": begitu dicentang, pengingat
   // otomatis hilang dari daftar utama dan pindah ke sini (disembunyikan
@@ -4152,7 +4301,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     upcomingListDone.hidden = true;
     upcomingListDone.innerHTML = '';
   }
+  // Selama kolom isian di daftar "Mendatang" sedang difokus (judul/baris
+  // catatan yang diedit di tempat), jangan gambar ulang daftarnya (refresh
+  // 15 detik / sinkron Firestore) — kalau tidak, teks yang sedang diketik
+  // ikut hilang. Begitu edit selesai (Enter / klik di luar / Escape), render
+  // normal lagi.
+  function upcomingHasActiveEdit(){
+    var ae = document.activeElement;
+    if (!ae || ae.tagName !== 'INPUT') return false;
+    return upcomingList.contains(ae) || !!(upcomingListDone && upcomingListDone.contains(ae));
+  }
   function renderUpcoming(){
+    if (upcomingHasActiveEdit()) return;
     var groups = [];
     var d = parseISODate(upcomingStartDate);
     var dateStr = toISODate(d);
@@ -4724,9 +4884,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     input.addEventListener('click', function(ev){ ev.stopPropagation(); });
   }
   function bindFlexTitleEdit(container){
-    Array.prototype.forEach.call(container.querySelectorAll('.flex-item .body > .title'), function(titleEl){
+    Array.prototype.forEach.call(container.querySelectorAll('.flex-item .body > .title, .up-editable .body > .title'), function(titleEl){
       var textEl = titleEl.querySelector('.title-text');
-      var host = titleEl.closest('.flex-item');
+      var host = titleEl.closest('.flex-item, .up-editable');
       if (!textEl || !host) return;
       textEl.setAttribute('title', 'Ketuk untuk mengedit judul');
       textEl.addEventListener('click', function(e){
@@ -4788,6 +4948,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     bindChecklistLineEdit(listEl);
     bindNotesTableEdit(listEl);
     bindFlexTitleEdit(listEl);
+    applyTableEditMode(listEl);
   }
 
   // Salin seluruh isi field "Catatan (opsional)" apa adanya ke clipboard,
@@ -4941,6 +5102,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       bindChecklistLineEdit(flexibleListMissed);
       bindNotesTableEdit(flexibleListMissed);
       bindFlexTitleEdit(flexibleListMissed);
+      applyTableEditMode(flexibleListMissed);
     }
     if (!items.length && !missed.length){
       var hasAnyFlexible = state.reminders.some(function(r){ return r.flexible; });
@@ -6545,7 +6707,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   document.getElementById('logoutBtn').addEventListener('click', function(){
     signOut(auth);
   });
-  document.getElementById('logoutBtnSettings').addEventListener('click', function(){
+  // Tombol keluar (ikon) di bilah atas. Diberi konfirmasi karena letaknya
+  // di area yang gampang tersentuh — supaya tidak keluar akun tanpa sengaja.
+  document.getElementById('logoutShortcut').addEventListener('click', function(){
+    if (!confirm('Keluar dari akun ini?')) return;
     signOut(auth);
   });
   var settingsEmailEl = document.getElementById('settingsEmail');
@@ -6597,9 +6762,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   });
 
-  // ---------- Theme (Terang / Gelap / Sistem) ----------
+  // ---------- Theme (Terang / Gelap) ----------
+  // Tombol di bilah atas (#themeToggle) membalik terang <-> gelap. Nilai
+  // tersimpan 'light' / 'dark'; kalau belum pernah dipilih (nilai bawaan
+  // 'system'), tampilan mengikuti pengaturan perangkat sampai tombol
+  // ditekan pertama kali.
   var THEME_KEY = 'essentiapath.theme';
   var themeMetaEl = document.querySelector('meta[name="theme-color"]');
+  var themeToggleBtn = document.getElementById('themeToggle');
 
   function getThemePref(){
     try { return localStorage.getItem(THEME_KEY) || 'system'; } catch(e){ return 'system'; }
@@ -6608,26 +6778,28 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (pref === 'dark' || pref === 'light') return pref;
     return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
   }
+  function updateThemeToggle(resolved){
+    if (!themeToggleBtn) return;
+    var label = resolved === 'dark' ? 'Ganti ke mode terang' : 'Ganti ke mode gelap';
+    themeToggleBtn.setAttribute('aria-label', label);
+    themeToggleBtn.setAttribute('title', label);
+  }
   function applyTheme(pref){
     var resolved = resolveTheme(pref);
     document.documentElement.setAttribute('data-theme', resolved);
-    if (themeMetaEl) themeMetaEl.setAttribute('content', resolved === 'dark' ? '#17130F' : '#FBF7EF');
-  }
-  function updateThemeTabs(pref){
-    Array.prototype.forEach.call(document.querySelectorAll('#themeTabs .theme-tab'), function(btn){
-      btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === pref);
-    });
+    if (themeMetaEl) themeMetaEl.setAttribute('content', resolved === 'dark' ? '#231C16' : '#FFFFFF');
+    updateThemeToggle(resolved);
   }
   function setThemePref(pref){
     try { localStorage.setItem(THEME_KEY, pref); } catch(e){}
     applyTheme(pref);
-    updateThemeTabs(pref);
   }
-  Array.prototype.forEach.call(document.querySelectorAll('#themeTabs .theme-tab'), function(btn){
-    btn.addEventListener('click', function(){ setThemePref(btn.getAttribute('data-theme-choice')); });
-  });
+  if (themeToggleBtn){
+    themeToggleBtn.addEventListener('click', function(){
+      setThemePref(resolveTheme(getThemePref()) === 'dark' ? 'light' : 'dark');
+    });
+  }
   applyTheme(getThemePref());
-  updateThemeTabs(getThemePref());
   if (window.matchMedia){
     var darkMql = window.matchMedia('(prefers-color-scheme: dark)');
     var onSystemChange = function(){ if (getThemePref() === 'system') applyTheme('system'); };
@@ -6674,18 +6846,36 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   updateFontSizeUi(getFontSizePref());
 
   // ---------- View navigation (Dashboard / Kalender / Setting) ----------
+  var pageTitleEl = document.getElementById('pageTitle');
+  // Judul bilah atas per tab. Kalender tidak lagi punya tombol di bottom bar
+  // (pindah ke pintasan kanan atas), jadi judulnya tidak bisa diambil dari
+  // label tombol — dipetakan di sini.
+  var VIEW_TITLES = { dashboard:'Dashboard', flexible:'Fleksibel', calendar:'Kalender', display:'Setting' };
   function setView(view){
     document.body.setAttribute('data-view', view);
+    if (pageTitleEl && VIEW_TITLES[view]) pageTitleEl.textContent = VIEW_TITLES[view];
     Array.prototype.forEach.call(document.querySelectorAll('.view-section'), function(el){
       el.classList.toggle('active', el.getAttribute('data-view') === view);
     });
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(btn){
       btn.classList.toggle('active', btn.getAttribute('data-view') === view);
     });
+    Array.prototype.forEach.call(document.querySelectorAll('.shortcut-btn[data-view]'), function(btn){
+      var on = btn.getAttribute('data-view') === view;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
   }
   Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function(btn){
     btn.addEventListener('click', function(){ setView(btn.getAttribute('data-view')); });
   });
+  var headerShortcutsEl = document.getElementById('headerShortcuts');
+  if (headerShortcutsEl){
+    headerShortcutsEl.addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('.shortcut-btn[data-view]') : null;
+      if (btn) setView(btn.getAttribute('data-view'));
+    });
+  }
   setView('dashboard');
 
   // ---------- Init ----------
