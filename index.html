@@ -595,6 +595,11 @@
   .notes-plain-table td{border:1px solid var(--line); padding:0.22rem 0.4rem; word-break:break-word; vertical-align:top;}
   .notes-plain-table tr:first-child td{font-weight:700; color:var(--ink); background:var(--paper-raised);}
   .flex-item .body{flex:1; min-width:0;}
+  /* Ditambah lewat JS (bindFlexItemEvents) untuk kartu di tab Fleksibel
+     (Pin/Prioritas/Standar/Selesai/Diarsipkan) — menandai bahwa area ini
+     bisa langsung disentuh untuk membuka form edit, tanpa perlu ikon pensil. */
+  .body-tap-edit{cursor:pointer;}
+  .body-tap-edit .title-link, .body-tap-edit .sub-check-item{cursor:pointer;}
   /* padding-right di sini HANYA untuk baris judul, supaya judul tidak
      tertutup ikon aksi (arsip/pin/bintang/edit/salin) yang sekarang
      ditumpuk di pojok kanan-atas kartu (lihat .flex-item .acts di bawah)
@@ -3599,6 +3604,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(currentOverdueList.querySelectorAll('.edit-flex'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id'), null, btn.getAttribute('data-date'), btn.getAttribute('data-time')); });
     });
+    Array.prototype.forEach.call(currentOverdueList.querySelectorAll('.flex-item .body'), function(bodyEl){
+      bodyEl.classList.add('body-tap-edit');
+      bodyEl.addEventListener('click', function(){
+        var host = bodyEl.closest('.flex-item');
+        if (!host) return;
+        openEditForm(host.getAttribute('data-id'), null, host.getAttribute('data-date'), host.querySelector('.flex-check').getAttribute('data-time'));
+      });
+    });
     bindChecklistClicks(currentOverdueList, function(host){
       return { type:'current', date: host.getAttribute('data-date'), time: host.querySelector('.flex-check').getAttribute('data-time') };
     });
@@ -4260,6 +4273,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(listEl.querySelectorAll('.edit-flex'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
     });
+    // Sentuh/klik langsung di area judul & catatan kartu untuk langsung
+    // masuk ke form edit — supaya tidak wajib menyentuh ikon pensil dulu.
+    // Klik pada elemen yang memang punya aksi sendiri (centang checklist,
+    // tautan judul) sudah menghentikan propagasi lewat stopPropagation di
+    // handler masing-masing (lihat bindChecklistClicks & titleWithLinkHTML),
+    // jadi tidak akan ikut membuka form edit.
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-item .body'), function(bodyEl){
+      bodyEl.classList.add('body-tap-edit');
+      bodyEl.addEventListener('click', function(){
+        var host = bodyEl.closest('.flex-item');
+        if (!host) return;
+        var id = host.getAttribute('data-id');
+        if (id) openEditForm(id);
+      });
+    });
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-copy'), function(btn){
       btn.addEventListener('click', function(){
         var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
@@ -4397,6 +4425,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.edit-flex'), function(btn){
         btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+      });
+      // Sama seperti kartu Pin/Prioritas/Standar: sentuh langsung judul/catatan
+      // di kartu "Terlewat" juga membuka form edit, tidak wajib lewat ikon pensil.
+      Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-item .body'), function(bodyEl){
+        bodyEl.classList.add('body-tap-edit');
+        bodyEl.addEventListener('click', function(){
+          var host = bodyEl.closest('.flex-item');
+          if (!host) return;
+          var id = host.getAttribute('data-id');
+          if (id) openEditForm(id);
+        });
       });
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-copy'), function(btn){
         btn.addEventListener('click', function(){
