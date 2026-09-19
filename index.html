@@ -163,7 +163,6 @@
   .shortcut-btn svg{width:16px; height:16px;}
   .shortcut-btn:hover{background:var(--line-soft);}
   .shortcut-btn.active{color:var(--moss-deep); border-color:var(--moss);}
-  .shortcut-btn.logout-shortcut:hover{color:var(--danger); background:var(--danger-bg); border-color:var(--danger-border);}
   .brand{display:flex; align-items:center; gap:0.65rem;}
   .brand-mark{width:34px; height:34px; border-radius:9px; background:var(--amber); display:flex; align-items:center; justify-content:center; flex:none;}
   .brand-mark svg{width:18px; height:18px;}
@@ -822,12 +821,11 @@
   }
   .nav-btn svg{width:20px; height:20px;}
   .nav-btn.active{color:var(--moss-deep); background:var(--selected-bg);}
-  /* Setelah Kalender pindah ke bilah atas, sisa tombol di bottom bar = Dashboard,
-     Fleksibel, +, Setting. Setting ditaruh di wadah selebar dua kolom dan
-     lebarnya separuh wadah (= satu kolom, sama dengan tombol lain) supaya
-     tombol + tetap persis di tengah. */
-  .nav-half{flex:2; display:flex; justify-content:center; min-width:0;}
-  .nav-half .nav-btn{flex:0 0 50%;}
+  /* Bottom bar = Dashboard, Terlewat | + | Pin, Fleksibel. Dua tombol di
+     tiap sisi, masing-masing dibungkus .nav-group selebar sama, supaya
+     tombol + tetap persis di tengah. (Setting dan Kalender ada di bilah
+     atas.) */
+  .nav-group{flex:1; display:flex; gap:0.25rem; min-width:0;}
 
   /* ---------- Settings (Pengaturan) view ---------- */
   .settings-panel{display:none; padding:0.3rem 0.2rem 1rem; background:none; box-shadow:none; border:none;}
@@ -907,7 +905,13 @@
   body[data-view="display"] .layout{display:none;}
   body[data-view="flexible"] .toolbar{display:none;}
   body[data-view="flexible"] .layout{display:none;}
-  .flexible-panel{padding:0.3rem 0.2rem 1rem; margin-top:1.25rem; position:relative; z-index:2;}
+  body[data-view="missed"] .toolbar{display:none;}
+  body[data-view="missed"] .layout{display:none;}
+  body[data-view="pinned"] .toolbar{display:none;}
+  body[data-view="pinned"] .layout{display:none;}
+  .flexible-panel,
+  .missed-panel,
+  .pinned-panel{padding:0.3rem 0.2rem 1rem; margin-top:1.25rem; position:relative; z-index:2;}
   .settings-panel{margin-top:1.25rem; position:relative; z-index:2;}
   .account-chip{display:none !important;}
 
@@ -1148,6 +1152,7 @@
   .btn-primary:hover{background:var(--moss-deep);}
   .btn-ghost{background:transparent; color:var(--ink-soft);}
   .btn-danger{background:transparent; color:var(--danger);}
+  .btn-logout{background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-border);}
   .modal-actions .btn.icon-only{padding:0.55rem 0.75rem; font-size:1.05rem; line-height:1; display:inline-flex; align-items:center; justify-content:center;}
   .hint{font-size:0.72rem; color:var(--ink-soft); margin-top:0.3rem;}
 
@@ -1297,12 +1302,12 @@
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3v4h-4M7 21v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span id="syncIndicatorText">Tersinkron</span>
       </div>
-      <!-- Pojok kanan: deretan tombol pintasan (shortcut). Baru berisi Keluar, mode terang/gelap, dan Kalender;
+      <!-- Pojok kanan: deretan tombol pintasan (shortcut). Baru berisi Setting, mode terang/gelap, dan Kalender;
            pintasan lain menyusul. Tombol yang punya data-view otomatis
            membuka tab itu (lihat setView); tombol baru cukup <button class="shortcut-btn">. -->
       <div class="header-shortcuts" id="headerShortcuts">
-        <button type="button" class="shortcut-btn logout-shortcut" id="logoutShortcut" aria-label="Keluar" title="Keluar">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <button type="button" class="shortcut-btn" id="settingsShortcut" data-view="display" aria-label="Setting" title="Setting">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <button type="button" class="shortcut-btn theme-toggle" id="themeToggle" aria-label="Ganti ke mode gelap" title="Ganti ke mode gelap">
           <svg class="theme-ico-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1416,6 +1421,38 @@
     </aside>
   </div>
 
+  <section class="panel view-section missed-panel" data-view="missed" aria-label="Terlewat">
+    <div class="sidebar-head">
+      <h2>Terlewat</h2>
+    </div>
+    <div class="search-box" id="missedSearchBox" style="margin:0 0.6rem 0.6rem;">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="text" id="missedSearchInput" placeholder="" autocomplete="off">
+      <button type="button" class="search-clear" id="missedSearchClear" aria-label="Hapus pencarian">✕</button>
+    </div>
+    <div class="flex-columns">
+      <div class="flex-column" id="flexMissedBlock">
+        <ul class="flex-list flex-list-missed" id="flexibleListMissed"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel view-section pinned-panel" data-view="pinned" aria-label="Prioritas Pin">
+    <div class="sidebar-head">
+      <h2>Prioritas Pin</h2>
+    </div>
+    <div class="search-box" id="pinSearchBox" style="margin:0 0.6rem 0.6rem;">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="text" id="pinSearchInput" placeholder="" autocomplete="off">
+      <button type="button" class="search-clear" id="pinSearchClear" aria-label="Hapus pencarian">✕</button>
+    </div>
+    <div class="flex-columns">
+      <div class="flex-column" id="flexPinnedBlock">
+        <ul class="flex-list" id="flexibleListPinned"></ul>
+      </div>
+    </div>
+  </section>
+
   <section class="panel view-section flexible-panel" data-view="flexible" aria-label="Fleksibel">
     <div class="sidebar-head">
       <h2>Fleksibel</h2>
@@ -1445,14 +1482,6 @@
       <button type="button" class="search-clear" id="flexSearchClear" aria-label="Hapus pencarian">✕</button>
     </div>
     <div class="flex-columns">
-      <div class="flex-column" id="flexMissedBlock" hidden>
-        <div class="flex-column-head missed"><span class="dot"></span>Terlewat</div>
-        <ul class="flex-list flex-list-missed" id="flexibleListMissed"></ul>
-      </div>
-      <div class="flex-column" id="flexPinnedBlock" hidden>
-        <div class="flex-column-head pinned"><span class="dot"></span>Prioritas Pin</div>
-        <ul class="flex-list" id="flexibleListPinned"></ul>
-      </div>
       <div class="flex-column">
         <div class="flex-column-head priority"><span class="dot"></span>Prioritas</div>
         <ul class="flex-list" id="flexibleListPriority"></ul>
@@ -1540,7 +1569,7 @@
     <div class="settings-block">
       <h2>Akun</h2>
       <p class="settings-account-email" id="settingsEmail">—</p>
-      <p class="settings-status">Untuk keluar dari akun, ketuk ikon keluar di pojok kanan atas.</p>
+      <button type="button" class="btn btn-logout" id="logoutSettingsBtn">Keluar dari akun</button>
     </div>
     <div class="settings-block">
       <h2>Notifikasi</h2>
@@ -1562,24 +1591,31 @@
 </main>
 
 <nav class="bottom-nav" id="bottomNav" aria-label="Navigasi utama">
-  <button type="button" class="nav-btn active" data-view="dashboard">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>Dashboard</span>
-  </button>
-  <button type="button" class="nav-btn" data-view="flexible">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>Fleksibel</span>
-  </button>
+  <!-- Kalender dan Setting ada di pojok kanan atas (tombol pintasan). Sisa
+       empat tombol dibagi dua kiri + dua kanan dari tombol +, supaya + tetap
+       persis di tengah. -->
+  <div class="nav-group">
+    <button type="button" class="nav-btn active" data-view="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button type="button" class="nav-btn" data-view="missed">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Terlewat</span>
+    </button>
+  </div>
   <button type="button" class="add-btn" id="openAdd" aria-label="Pengingat baru">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
     <span class="add-btn-label">Pengingat baru</span>
   </button>
-  <!-- Kalender sudah pindah ke pojok kanan atas (tombol pintasan). Tombol
-       Setting dibungkus setengah lebar kanan supaya tombol + tetap di tengah. -->
-  <div class="nav-half">
-    <button type="button" class="nav-btn" data-view="display">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Setting</span>
+  <div class="nav-group">
+    <button type="button" class="nav-btn" data-view="pinned">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 10c0 6.5-9 12-9 12s-9-5.5-9-12a9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="2"/></svg>
+      <span>Pin</span>
+    </button>
+    <button type="button" class="nav-btn" data-view="flexible">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Fleksibel</span>
     </button>
   </div>
 </nav>
@@ -4508,11 +4544,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
 
-  // ---------- Missed (overdue, not-daily) occurrences → surfaced in Fleksibel ----------
+  // ---------- Missed (overdue, not-daily) occurrences → tab "Terlewat" ----------
   // Kalau sampai hari itu berakhir sebuah kemunculan belum ditandai selesai,
   // dan jenis pengulangannya BUKAN harian (harian pasti muncul lagi besok,
-  // jadi tidak perlu ditumpuk di Fleksibel), kemunculan itu ikut tampil di
-  // daftar Fleksibel sampai ditandai selesai dari sana. Jendela pencarian
+  // jadi tidak perlu ditumpuk), kemunculan itu tampil di tab "Terlewat"
+  // (berdiri sendiri, di sebelah kiri Fleksibel) sampai ditandai selesai. Jendela pencarian
   // dibatasi selaras dengan masa penyimpanan status selesai (3 hari).
   var MISSED_LOOKBACK_DAYS = 3;
   function getMissedItems(){
@@ -4523,7 +4559,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var dateStr = toISODate(dt);
       state.reminders.forEach(function(r){
         if (r.flexible || r.repeat === 'daily') return;
-        if (state.flexFilters.indexOf(r.category) === -1) return;
         var times = occurrencesOnDate(r, dateStr);
         times.forEach(function(t){
           if (isOccurrenceDone({ reminder:r, date:dateStr, time:t })) return;
@@ -5018,31 +5053,79 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return false;
   }
 
-  function renderFlexible(){
-    renderFlexFilterUI();
-    renderFlexSortUI();
-    var items = state.reminders.filter(function(r){
-      if (!r.flexible) return false;
-      if (state.flexFilters.indexOf(r.category) === -1) return false;
-      if (flexSearchQuery && !reminderMatchesQuery(r, flexSearchQuery)) return false;
-      if (r.archived) return false; // diarsipkan -> otomatis disembunyikan dari kolom utama
-      if (flexItemIsDone(r)) return false; // sudah dicentang selesai -> otomatis disembunyikan
-      return true;
+  // ---------- Tab "Prioritas Pin" (berdiri sendiri) ----------
+  // Isinya item Fleksibel yang Prioritas + di-pin (belum selesai, tidak
+  // diarsipkan). Tidak mengikuti filter kategori/pencarian Fleksibel; punya
+  // pencarian sendiri. Urutan sesama pin mengikuti pengaturan urut Fleksibel
+  // (flexSortOrder).
+  var pinSearchQuery = '';
+  var pinSearchInput = document.getElementById('pinSearchInput');
+  var pinSearchBox = document.getElementById('pinSearchBox');
+  var pinSearchClear = document.getElementById('pinSearchClear');
+  pinSearchInput.addEventListener('input', function(){
+    pinSearchQuery = pinSearchInput.value.trim().toLowerCase();
+    pinSearchBox.classList.toggle('has-value', pinSearchQuery.length > 0);
+    renderPinned();
+  });
+  pinSearchClear.addEventListener('click', function(){
+    pinSearchInput.value = '';
+    pinSearchQuery = '';
+    pinSearchBox.classList.remove('has-value');
+    renderPinned();
+    pinSearchInput.focus();
+  });
+  function renderPinned(){
+    var allPinned = state.reminders.filter(function(r){
+      return r.flexible && r.priority && r.pinned && !r.archived && !flexItemIsDone(r);
     });
-    var missed = getMissedItems().filter(function(it){
-      return !flexSearchQuery || reminderMatchesQuery(it.reminder, flexSearchQuery);
+    var pinned = allPinned.filter(function(r){
+      return !pinSearchQuery || reminderMatchesQuery(r, pinSearchQuery);
     });
-    // Urutkan berdasarkan waktu dibuat (dari id) sesuai flexSortOrder:
-    // 'desc' = terbaru→terlama, 'asc' = terlama→terbaru.
-    items.sort(function(a,b){
+    pinned.sort(function(a,b){
       return flexSortOrder === 'asc' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id);
     });
-    // Yang terlewat (butuh perhatian) ditampilkan lebih dulu, di atas kedua kolom.
+    if (!pinned.length){
+      flexibleListPinned.innerHTML = '<div class="empty-state">' +
+        (allPinned.length
+          ? 'Tidak ada yang cocok dengan "'+escapeHTML(pinSearchInput.value.trim())+'".'
+          : 'Belum ada pengingat yang di-pin.') +
+        '</div>';
+      return;
+    }
+    flexibleListPinned.innerHTML = pinned.map(flexItemHtml).join('');
+    bindFlexItemEvents(flexibleListPinned);
+  }
+
+  // ---------- Tab "Terlewat" (berdiri sendiri) ----------
+  // Pencarian punya state sendiri (tidak berbagi dengan pencarian Fleksibel).
+  var missedSearchQuery = '';
+  var missedSearchInput = document.getElementById('missedSearchInput');
+  var missedSearchBox = document.getElementById('missedSearchBox');
+  var missedSearchClear = document.getElementById('missedSearchClear');
+  missedSearchInput.addEventListener('input', function(){
+    missedSearchQuery = missedSearchInput.value.trim().toLowerCase();
+    missedSearchBox.classList.toggle('has-value', missedSearchQuery.length > 0);
+    renderMissed();
+  });
+  missedSearchClear.addEventListener('click', function(){
+    missedSearchInput.value = '';
+    missedSearchQuery = '';
+    missedSearchBox.classList.remove('has-value');
+    renderMissed();
+    missedSearchInput.focus();
+  });
+  function renderMissed(){
+    var missed = getMissedItems().filter(function(it){
+      return !missedSearchQuery || reminderMatchesQuery(it.reminder, missedSearchQuery);
+    });
     if (!missed.length){
-      flexibleListMissed.innerHTML = '';
-      if (flexMissedBlock) flexMissedBlock.hidden = true;
+      var hasAnyMissedCandidate = !missedSearchQuery ? false : getMissedItems().length > 0;
+      flexibleListMissed.innerHTML = '<div class="empty-state">' +
+        (hasAnyMissedCandidate
+          ? 'Tidak ada yang cocok dengan "'+escapeHTML(missedSearchInput.value.trim())+'".'
+          : 'Tidak ada pengingat yang terlewat. 🎉') +
+        '</div>';
     } else {
-      if (flexMissedBlock) flexMissedBlock.hidden = false;
       flexibleListMissed.innerHTML = missed.map(function(it){
         var c = catInfo(it.reminder.category);
         var dtLabel = dayLabel(parseISODate(it.date));
@@ -5104,7 +5187,27 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       bindFlexTitleEdit(flexibleListMissed);
       applyTableEditMode(flexibleListMissed);
     }
-    if (!items.length && !missed.length){
+  }
+
+  function renderFlexible(){
+    renderPinned();
+    renderMissed();
+    renderFlexFilterUI();
+    renderFlexSortUI();
+    var items = state.reminders.filter(function(r){
+      if (!r.flexible) return false;
+      if (state.flexFilters.indexOf(r.category) === -1) return false;
+      if (flexSearchQuery && !reminderMatchesQuery(r, flexSearchQuery)) return false;
+      if (r.archived) return false; // diarsipkan -> otomatis disembunyikan dari kolom utama
+      if (flexItemIsDone(r)) return false; // sudah dicentang selesai -> otomatis disembunyikan
+      return true;
+    });
+    // Urutkan berdasarkan waktu dibuat (dari id) sesuai flexSortOrder:
+    // 'desc' = terbaru→terlama, 'asc' = terlama→terbaru.
+    items.sort(function(a,b){
+      return flexSortOrder === 'asc' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id);
+    });
+    if (!items.length){
       var hasAnyFlexible = state.reminders.some(function(r){ return r.flexible; });
       var hasAnyUndone = state.reminders.some(function(r){ return r.flexible && !flexItemIsDone(r); });
       var msg = flexSearchQuery
@@ -5120,27 +5223,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       flexCols.priority.pagination.hidden = true;
       flexCols.standard.list.innerHTML = '';
       flexCols.standard.pagination.hidden = true;
-      flexibleListPinned.innerHTML = '';
-      if (flexPinnedBlock) flexPinnedBlock.hidden = true;
       renderFlexDoneSection();
       renderFlexArchiveSection();
       return;
     }
     var priorityItemsRaw = items.filter(function(r){ return !!r.priority; });
-    // Item yang di-pin sekarang tampil di blok "Prioritas Pin" tersendiri
-    // (di atas kolom Prioritas), bukan lagi disisipkan di baris teratas
-    // kolom Prioritas. Urutan relatif sesama pin mengikuti flexSortOrder
-    // yang sudah diterapkan di atas (Array.sort stabil di JS modern).
-    var pinnedItemsRaw = priorityItemsRaw.filter(function(r){ return !!r.pinned; });
+    // Item yang di-pin tampil di tab "Prioritas Pin" tersendiri (lihat
+    // renderPinned), jadi di sini dikeluarkan dari kolom Prioritas.
     var priorityRestRaw = priorityItemsRaw.filter(function(r){ return !r.pinned; });
-    if (!pinnedItemsRaw.length){
-      flexibleListPinned.innerHTML = '';
-      if (flexPinnedBlock) flexPinnedBlock.hidden = true;
-    } else {
-      if (flexPinnedBlock) flexPinnedBlock.hidden = false;
-      flexibleListPinned.innerHTML = pinnedItemsRaw.map(flexItemHtml).join('');
-      bindFlexItemEvents(flexibleListPinned);
-    }
     var priorityItemsHtml = priorityRestRaw.map(flexItemHtml);
     var standardItemsHtml = items.filter(function(r){ return !r.priority; }).map(flexItemHtml);
     renderFlexColumn(flexCols.priority, priorityItemsHtml);
@@ -6707,9 +6797,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   document.getElementById('logoutBtn').addEventListener('click', function(){
     signOut(auth);
   });
-  // Tombol keluar (ikon) di bilah atas. Diberi konfirmasi karena letaknya
-  // di area yang gampang tersentuh — supaya tidak keluar akun tanpa sengaja.
-  document.getElementById('logoutShortcut').addEventListener('click', function(){
+  // Tombol "Keluar dari akun" di tab Setting (blok Akun). Tetap diberi
+  // konfirmasi supaya tidak keluar akun tanpa sengaja.
+  document.getElementById('logoutSettingsBtn').addEventListener('click', function(){
     if (!confirm('Keluar dari akun ini?')) return;
     signOut(auth);
   });
@@ -6850,7 +6940,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // Judul bilah atas per tab. Kalender tidak lagi punya tombol di bottom bar
   // (pindah ke pintasan kanan atas), jadi judulnya tidak bisa diambil dari
   // label tombol — dipetakan di sini.
-  var VIEW_TITLES = { dashboard:'Dashboard', flexible:'Fleksibel', calendar:'Kalender', display:'Setting' };
+  var VIEW_TITLES = { dashboard:'Dashboard', missed:'Terlewat', pinned:'Prioritas Pin', flexible:'Fleksibel', calendar:'Kalender', display:'Setting' };
   function setView(view){
     document.body.setAttribute('data-view', view);
     if (pageTitleEl && VIEW_TITLES[view]) pageTitleEl.textContent = VIEW_TITLES[view];
