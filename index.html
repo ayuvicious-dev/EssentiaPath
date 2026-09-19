@@ -1281,6 +1281,13 @@
           </div>
         </div>
         <ul class="upcoming-list" id="upcomingList"></ul>
+        <div class="flex-done-toggle-wrap" id="upcomingDoneToggleWrap" hidden>
+          <button type="button" class="flex-done-toggle" id="upcomingDoneToggle" aria-expanded="false">
+            <span id="upcomingDoneToggleLabel">Tampilkan yang selesai</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <ul class="upcoming-list" id="upcomingListDone" hidden></ul>
+        </div>
       </section>
 
     </aside>
@@ -3677,6 +3684,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   // ---------- Upcoming list ----------
   var upcomingList = document.getElementById('upcomingList');
+  var upcomingShowDone = false;
+  var upcomingDoneToggleWrap = document.getElementById('upcomingDoneToggleWrap');
+  var upcomingDoneToggleBtn = document.getElementById('upcomingDoneToggle');
+  var upcomingDoneToggleLabel = document.getElementById('upcomingDoneToggleLabel');
+  var upcomingListDone = document.getElementById('upcomingListDone');
+  if (upcomingDoneToggleBtn){
+    upcomingDoneToggleBtn.addEventListener('click', function(){
+      upcomingShowDone = !upcomingShowDone;
+      renderUpcoming();
+    });
+  }
   var upcomingStartInput = document.getElementById('upcomingStartInput');
   var upcomingDateDisplay = document.getElementById('upcomingDateDisplay');
   var upcomingResetBtn = document.getElementById('upcomingResetToday');
@@ -3726,62 +3744,25 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (t >= '15:00' && t <= '17:59') return 'Sore hari';
     return 'Malam hari'; // 18:00–23:59
   }
-  function renderUpcoming(){
-    var groups = [];
-    var d = parseISODate(upcomingStartDate);
-    var dateStr = toISODate(d);
-    var items = itemsForDate(dateStr);
-    if (items.length) groups.push({ date:dateStr, dt:d, items:items });
-    if (state.reminders.length === 0){
-      upcomingList.innerHTML = '<div class="empty-state">' +
-        '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#547E6C" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/><circle cx="17" cy="5" r="2.5" fill="#E3A97C"/></svg>' +
-        '<div>Belum ada pengingat. Mulai jalur Anda dengan menambah yang pertama.</div></div>';
-      return;
-    }
-    if (groups.length === 0){
-      upcomingList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini untuk kategori yang dipilih.</div>';
-      return;
-    }
-    // Item "saat ini" (kalau ada) dipakai untuk menandai satu kemunculan hari
-    // ini sebagai "Berlangsung" — sama seperti yang ditampilkan di panel
-    // "Saat Ini" di atas, supaya keduanya selalu sinkron.
-    var cur = getCurrentOccurrence();
-    var html = '';
-    groups.forEach(function(g){
-      var label = dayLabel(g.dt);
-      html += '<div class="up-group-label">'+label+'</div>';
-      var byPeriod = {};
-      g.items.forEach(function(it){
-        var p = timeOfDayLabel(it.time);
-        if (!byPeriod[p]) byPeriod[p] = [];
-        byPeriod[p].push(it);
-      });
-      TIME_PERIOD_ORDER.forEach(function(period){
-        var list = byPeriod[period];
-        if (!list || !list.length) return;
-        html += '<div class="up-subgroup-label">'+period+'</div>';
-        list.forEach(function(it){
-          var c = catInfo(it.reminder.category);
-          var isDone = isOccurrenceDone(it);
-          var isOngoing = !isDone && cur.current && cur.current.reminder.id===it.reminder.id &&
-            cur.current.date===it.date && cur.current.time===it.time;
-          var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
-            : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
-          var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
-          html += '<li class="up-item'+(isDone?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
-            '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
-              '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-            '</button>' +
-            '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
-            '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge+'</div>' +
-            '<div class="acts">' +
-              '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
-            '</div></li>';
-        });
-      });
-    });
-    upcomingList.innerHTML = html;
-    Array.prototype.forEach.call(upcomingList.querySelectorAll('.up-check'), function(btn){
+  function upcomingItemHtml(it, cur){
+    var isDone = isOccurrenceDone(it);
+    var isOngoing = !isDone && cur.current && cur.current.reminder.id===it.reminder.id &&
+      cur.current.date===it.date && cur.current.time===it.time;
+    var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
+      : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
+    var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
+    return '<li class="up-item'+(isDone?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'">' +
+      '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
+        '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '</button>' +
+      '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+      '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge+'</div>' +
+      '<div class="acts">' +
+        '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
+      '</div></li>';
+  }
+  function bindUpcomingItemEvents(listEl){
+    Array.prototype.forEach.call(listEl.querySelectorAll('.up-check'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
         var id = btn.getAttribute('data-id');
@@ -3794,12 +3775,87 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         }
       });
     });
-    Array.prototype.forEach.call(upcomingList.querySelectorAll('.edit-up'), function(btn){
+    Array.prototype.forEach.call(listEl.querySelectorAll('.edit-up'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
         openEditForm(btn.getAttribute('data-id'), null, btn.getAttribute('data-date'), btn.getAttribute('data-time'));
       });
     });
+  }
+  // Bagian "Selesai" di bawah "Mendatang": begitu dicentang, pengingat
+  // otomatis hilang dari daftar utama dan pindah ke sini (disembunyikan
+  // secara default, sama seperti pola "Selesai"/"Diarsipkan" di Fleksibel).
+  function hideUpcomingDoneSection(){
+    upcomingDoneToggleWrap.hidden = true;
+    upcomingShowDone = false;
+    upcomingListDone.hidden = true;
+    upcomingListDone.innerHTML = '';
+  }
+  function renderUpcoming(){
+    var groups = [];
+    var d = parseISODate(upcomingStartDate);
+    var dateStr = toISODate(d);
+    var items = itemsForDate(dateStr);
+    if (items.length) groups.push({ date:dateStr, dt:d, items:items });
+    if (state.reminders.length === 0){
+      upcomingList.innerHTML = '<div class="empty-state">' +
+        '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 18c3-6 6-2 8-6s2-6 5-7" stroke="#547E6C" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3.2"/><circle cx="17" cy="5" r="2.5" fill="#E3A97C"/></svg>' +
+        '<div>Belum ada pengingat. Mulai jalur Anda dengan menambah yang pertama.</div></div>';
+      hideUpcomingDoneSection();
+      return;
+    }
+    if (groups.length === 0){
+      upcomingList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini untuk kategori yang dipilih.</div>';
+      hideUpcomingDoneSection();
+      return;
+    }
+    // Item "saat ini" (kalau ada) dipakai untuk menandai satu kemunculan hari
+    // ini sebagai "Berlangsung" — sama seperti yang ditampilkan di panel
+    // "Saat Ini" di atas, supaya keduanya selalu sinkron.
+    var cur = getCurrentOccurrence();
+    var html = '';
+    var doneItems = [];
+    groups.forEach(function(g){
+      var label = dayLabel(g.dt);
+      var byPeriod = {};
+      g.items.forEach(function(it){
+        // Yang sudah tercentang/selesai TIDAK ditampilkan di daftar utama —
+        // dikumpulkan dulu, nanti dirender di bagian "Selesai" yang bisa
+        // dibuka/tutup di bawah "Mendatang".
+        if (isOccurrenceDone(it)){ doneItems.push(it); return; }
+        var p = timeOfDayLabel(it.time);
+        if (!byPeriod[p]) byPeriod[p] = [];
+        byPeriod[p].push(it);
+      });
+      var hasAnyNotDone = TIME_PERIOD_ORDER.some(function(period){ return byPeriod[period] && byPeriod[period].length; });
+      if (!hasAnyNotDone) return;
+      html += '<div class="up-group-label">'+label+'</div>';
+      TIME_PERIOD_ORDER.forEach(function(period){
+        var list = byPeriod[period];
+        if (!list || !list.length) return;
+        html += '<div class="up-subgroup-label">'+period+'</div>';
+        list.forEach(function(it){ html += upcomingItemHtml(it, cur); });
+      });
+    });
+    upcomingList.innerHTML = html || '<div class="empty-state">Semua pengingat pada tanggal ini sudah selesai. 🎉</div>';
+    bindUpcomingItemEvents(upcomingList);
+    if (!doneItems.length){
+      hideUpcomingDoneSection();
+      return;
+    }
+    doneItems.sort(function(a,b){ return a.time.localeCompare(b.time); });
+    upcomingDoneToggleWrap.hidden = false;
+    upcomingDoneToggleBtn.setAttribute('aria-expanded', upcomingShowDone ? 'true' : 'false');
+    upcomingDoneToggleLabel.textContent = upcomingShowDone
+      ? 'Sembunyikan yang selesai'
+      : 'Tampilkan yang selesai (' + doneItems.length + ')';
+    upcomingListDone.hidden = !upcomingShowDone;
+    if (upcomingShowDone){
+      upcomingListDone.innerHTML = doneItems.map(function(it){ return upcomingItemHtml(it, cur); }).join('');
+      bindUpcomingItemEvents(upcomingListDone);
+    } else {
+      upcomingListDone.innerHTML = '';
+    }
   }
 
   // ---------- Recently added (dashboard, below "Mendatang") ----------
