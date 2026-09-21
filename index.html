@@ -20,7 +20,7 @@
 })();
 </script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>EssentiaPath</title>
 <meta name="description" content="Pengingat berulang dengan tampilan kalender: per jam, harian, hari kerja, akhir pekan, dua mingguan, bulanan, triwulanan, tahunan.">
 <meta name="theme-color" content="#FFFFFF">
@@ -429,6 +429,24 @@
     font-size:0.72rem; font-family:inherit; color:var(--ink); pointer-events:none; white-space:nowrap;
   }
   .up-date-today-btn svg{width:14px; height:14px;}
+  /* Chip persentase ketercapaian to-do pada tanggal yang sedang ditampilkan di
+     daftar "Mendatang" (default hari ini). Letaknya di kiri input tanggal. */
+  .up-progress{
+    display:inline-flex; align-items:center; gap:0.28rem; padding:0.26rem 0.5rem;
+    border:1px solid var(--line); border-radius:999px; background:var(--surface);
+    font-size:0.72rem; font-weight:700; line-height:1; color:var(--moss-deep);
+    font-variant-numeric:tabular-nums; white-space:nowrap;
+  }
+  .up-progress[hidden]{display:none;}
+  .up-progress svg{width:16px; height:16px; flex:none;}
+  .up-progress .up-progress-track{fill:none; stroke:var(--line); stroke-width:3;}
+  .up-progress .up-progress-bar{
+    fill:none; stroke:var(--moss); stroke-width:3; stroke-linecap:round;
+    stroke-dasharray:43.98; stroke-dashoffset:43.98; transition:stroke-dashoffset 0.3s ease;
+  }
+  .up-progress.is-complete{background:rgba(63,102,89,0.15); border-color:transparent;}
+  @media (prefers-reduced-motion:reduce){ .up-progress .up-progress-bar{transition:none;} }
+  @media (max-width:359px){ .up-progress svg{display:none;} }
   .upcoming-list{list-style:none; margin:0; padding:0 0.6rem 0.9rem; display:flex; flex-direction:column; gap:0.35rem;}
   .up-group-label{
     font-size:0.68rem; text-transform:none; color:var(--ink-soft); font-weight:700; padding:0.5rem 0.5rem 0.15rem;
@@ -1399,6 +1417,10 @@
         <div class="sidebar-head">
           <h2>Mendatang</h2>
           <div class="up-date-control">
+            <div class="up-progress" id="upcomingProgress" role="img" aria-label="" title="" hidden>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><circle class="up-progress-track" cx="10" cy="10" r="7"/><circle class="up-progress-bar" id="upcomingProgressBar" cx="10" cy="10" r="7" transform="rotate(-90 10 10)"/></svg>
+              <span id="upcomingProgressText">0%</span>
+            </div>
             <div class="up-date-wrap">
               <input type="date" id="upcomingStartInput" aria-label="Mulai daftar dari tanggal">
               <span class="up-date-display" id="upcomingDateDisplay" aria-hidden="true"></span>
@@ -4264,6 +4286,35 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       renderUpcoming();
     });
   }
+  // Persentase ketercapaian to-do untuk tanggal yang sedang ditampilkan di
+  // "Mendatang" (default hari ini). Dihitung dari kemunculan pengingat pada
+  // tanggal itu — sama dengan isi daftar (ikut filter kategori aktif): yang
+  // sudah tercentang / checklist-nya lengkap dihitung selesai. Chip
+  // disembunyikan kalau tidak ada to-do pada tanggal tersebut.
+  var upcomingProgressEl = document.getElementById('upcomingProgress');
+  var upcomingProgressBar = document.getElementById('upcomingProgressBar');
+  var upcomingProgressText = document.getElementById('upcomingProgressText');
+  var UP_PROGRESS_CIRC = 2 * Math.PI * 7;
+  function updateUpcomingProgress(){
+    if (!upcomingProgressEl) return;
+    var items = itemsForDate(upcomingStartDate);
+    var total = items.length;
+    if (!total){ upcomingProgressEl.hidden = true; return; }
+    var done = 0;
+    items.forEach(function(it){ if (isOccurrenceDone(it)) done++; });
+    var pct = Math.round(done / total * 100);
+    upcomingProgressEl.hidden = false;
+    upcomingProgressEl.classList.toggle('is-complete', done === total);
+    upcomingProgressText.textContent = pct + '%';
+    if (upcomingProgressBar){
+      upcomingProgressBar.style.strokeDasharray = UP_PROGRESS_CIRC;
+      upcomingProgressBar.style.strokeDashoffset = UP_PROGRESS_CIRC * (1 - done / total);
+    }
+    var when = isUpcomingStartToday() ? 'hari ini' : 'tanggal ' + formatDMY(upcomingStartDate);
+    var label = 'Ketercapaian ' + when + ': ' + done + ' dari ' + total + ' selesai (' + pct + '%)';
+    upcomingProgressEl.setAttribute('aria-label', label);
+    upcomingProgressEl.title = label;
+  }
   var TIME_PERIOD_ORDER = ['Dini hari','Pagi hari','Siang hari','Sore hari','Malam hari'];
   function timeOfDayLabel(t){
     // t is "HH:MM"; 00:00 counts as end of "Malam hari" (18.00–00.00), while
@@ -4348,6 +4399,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return upcomingList.contains(ae) || !!(upcomingListDone && upcomingListDone.contains(ae));
   }
   function renderUpcoming(){
+    updateUpcomingProgress();
     if (upcomingHasActiveEdit()) return;
     var groups = [];
     var d = parseISODate(upcomingStartDate);
