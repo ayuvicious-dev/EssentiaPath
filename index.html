@@ -1166,8 +1166,18 @@
   /* Baris Tanggal mulai / Waktu / Berakhir pada: selalu 3 kolom sejajar
      dalam satu baris, termasuk di layar sempit (HP) — ukuran font, padding,
      dan ikon dikecilkan supaya tetap muat, dengan gap yang cukup supaya
-     ketiga kolom tidak bersinggungan langsung. */
-  #dateTimeUntilRow.row-3{align-items:start; grid-template-columns:1fr 1fr 1fr; gap:0.85rem; row-gap:0.85rem; margin-bottom:0.85rem;}
+     ketiga kolom tidak bersinggungan langsung.
+     Lebar kolom SENGAJA tidak dibagi rata 1/3-1/3-1/3: kolom "Tanggal
+     mulai" isinya paling padat (teks tanggal + ikon kalender + tombol
+     "pakai tanggal hari ini"), sedangkan "Waktu" isinya paling ringkas
+     (cuma jam + ikon jam bawaan browser, tanpa tombol tambahan). Jatah
+     lebar "Waktu" dikurangi & dialihkan ke "Tanggal mulai" (grid-template-
+     columns 1.15fr/0.85fr/1fr, bukan 1fr/1fr/1fr) supaya "Tanggal mulai"
+     tidak lagi terasa sempit/berdempetan padahal isinya paling banyak,
+     sementara "Waktu" tetap cukup lega untuk jam + AM/PM. Kolom "Berakhir
+     pada" dibiarkan seperti semula (1fr) karena isinya sama seperti
+     "Tanggal mulai" tapi tanpa tombol tambahan, jadi memang tidak sesak. */
+  #dateTimeUntilRow.row-3{align-items:start; grid-template-columns:1.15fr 0.85fr 1fr; gap:0.85rem; row-gap:0.85rem; margin-bottom:0.85rem;}
   #dateTimeUntilRow.row-3 .field{margin-bottom:0; min-width:0;}
   #dateTimeUntilRow.row-3 .field label{font-size:0.78rem; margin-bottom:0.25rem; min-height:2.1em; display:flex; align-items:flex-end; justify-content:center; text-align:center; white-space:normal; line-height:1.15;}
   #dateTimeUntilRow.row-3 .field input,
@@ -1210,6 +1220,36 @@
     #dateTimeUntilRow.row-3 .field input,
     #dateTimeUntilRow.row-3 .field select{padding:0.45rem 0.5rem; font-size:0.8rem;}
     #dateTimeUntilRow.row-3 .date-field-display{font-size:0.8rem; left:0.5rem;}
+    /* Kolom "Tanggal mulai" (date-field-row) punya penumpang ekstra yang
+       tidak dimiliki kolom "Berakhir": tombol "pakai tanggal hari ini" di
+       sisi kanannya, yang ikut memakan jatah lebar kolom yang sama-sama
+       1/3 lebar baris. Di lebar layar >=480px (di layar <480px ikon
+       kalendernya memang sudah disembunyikan lewat aturan di atas, jadi
+       tidak kena masalah ini), sisa ruang untuk ikon kalender + teks
+       "DD/MM/YYYY" jadi tidak cukup dan keduanya bertabrakan.
+       Bukan menyembunyikan ikonnya (user tetap ingin ikonnya kelihatan
+       seperti semula) — di sini ikon kalender & tombol "hari ini"
+       dikecilkan sedikit (bukan dihilangkan) supaya ruang yang terbebas
+       cukup untuk menampung teks tanggal penuh tanpa tertindih. Hanya
+       berlaku untuk kolom "Tanggal mulai" (.date-field-row) — kolom
+       "Berakhir" yang tidak punya tombol tambahan dibiarkan seperti
+       semula karena memang tidak sesak. */
+    #dateTimeUntilRow.row-3 .date-field-row .date-field-wrap .date-field-icon{ width:1.3rem; }
+    #dateTimeUntilRow.row-3 .date-field-row .date-field-wrap .date-field-icon .field-icon{ width:12px; height:12px; }
+    #dateTimeUntilRow.row-3 .date-field-row .date-field-wrap input[type="date"]{ padding-right:1.3rem; }
+    #dateTimeUntilRow.row-3 .date-field-row .date-field-display{ right:1.3rem; left:0.3rem; }
+    #dateTimeUntilRow.row-3 .date-field-row .today-check{ width:1.5rem; }
+    /* Ikon kalender (kotak kiri) dan ikon kalender-centang "hari ini"
+       (kotak kanan) sekarang sama-sama dikecilkan jadi 12px di kotak yang
+       lebih sempit — tapi ikon "hari ini" masih memakai koreksi posisi
+       translateY(-2px) yang dulu di-tuning untuk ukuran ikon 16px di
+       kotak yang lebih besar. Di ukuran baru yang lebih kecil, koreksi
+       2px itu jadi kebesaran & justru membuat ikon "hari ini" naik
+       terlalu tinggi dibanding ikon kalender di sebelahnya (terlihat
+       melenceng/tidak sejajar). Koreksinya dinetralkan di sini supaya
+       keduanya benar-benar center sejajar lurus mengikuti flex
+       align-items:center pada kotaknya masing-masing. */
+    #dateTimeUntilRow.row-3 .date-field-row .today-check .field-icon{ width:12px; height:12px; transform:none; }
   }
   @media (min-width:640px){
     #dateTimeUntilRow.row-3 .field input,
