@@ -811,6 +811,66 @@
      sebaris. */
   .checkbox-field[hidden]{display:none;}
 
+  /* Versi ikon-saja (tanpa tulisan) untuk Fleksibel/Prioritas/Travel/Pin di
+     form pengingat — supaya baris ini ringkas. Label jadi cuma bungkus
+     ikon (nama tetap ada lewat title/aria-label untuk aksesibilitas &
+     tooltip saat hover), dan warna ikon berubah begitu dicentang supaya
+     tetap kelihatan mana yang aktif tanpa perlu teks. */
+  .checkbox-field.icon-check label{
+    display:flex; align-items:center; justify-content:center; width:1.6rem; height:1.6rem;
+  }
+  .checkbox-field.icon-check .field-icon{width:19px; height:19px; color:var(--ink-soft); flex:none;}
+  .checkbox-field.icon-check .icon-star{width:20px; height:20px;}
+  #fFlexible:checked + label .field-icon{color:var(--moss-deep);}
+  #fPriority:checked + label .icon-star{color:var(--amber-deep);}
+  #fPriority:checked + label .icon-star path{fill:var(--amber-deep);}
+  #fTravel:checked + label .field-icon{color:var(--today-num);}
+  #fPin:checked + label .field-icon{color:var(--amber-deep);}
+  #fPin:checked + label .field-icon path,
+  #fPin:checked + label .field-icon circle{fill:var(--amber-deep); fill-opacity:0.2;}
+
+  /* Centang "pakai tanggal hari ini" di sebelah kanan input Tanggal mulai —
+     checkbox aslinya disembunyikan (visually-hidden), ikon kalender-centang
+     di sebelah kanan yang jadi tombolnya, berubah warna begitu dicentang. */
+  /* Centang "pakai tanggal hari ini" / "pakai Tidak berulang" digabung jadi
+     SATU kotak dengan input/select-nya (bukan dua kotak terpisah) — border &
+     background dipindah ke pembungkus baris ini, input/select & tombol
+     centang di dalamnya jadi transparan tanpa border sendiri, cuma
+     dipisahkan garis tipis di tengah supaya tetap kelihatan sebagai dua
+     kontrol yang bisa ditekan terpisah. */
+  .date-field-row, .select-field-row{
+    display:flex; align-items:stretch; border:1px solid var(--line); border-radius:9px;
+    background:var(--surface); overflow:hidden;
+  }
+  .date-field-row .date-field-wrap{flex:1; min-width:0;}
+  .date-field-row .date-field-wrap input[type="date"]{
+    border:none; border-radius:0; background:transparent;
+  }
+  .select-field-row select{
+    flex:1; min-width:0;
+  }
+  .field .select-field-row select{
+    border:none; border-radius:0; background-color:transparent;
+  }
+  .today-check-input{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  .today-check{
+    display:flex; align-items:center; justify-content:center; flex:none;
+    width:2.3rem; border-left:1px solid var(--line); border-radius:0;
+    background:transparent; cursor:pointer;
+  }
+  .today-check .field-icon{width:16px; height:16px; color:var(--ink-soft);}
+  .today-check-input:checked + .today-check{background:var(--selected-bg);}
+  .today-check-input:checked + .today-check .field-icon{color:var(--moss-deep);}
+  .today-check-input:checked + .today-check .field-icon path:last-child{stroke:var(--moss-deep);}
+  .today-check-input:focus-visible + .today-check{outline:2.5px solid var(--amber); outline-offset:-2px;}
+  @media (max-width:479px){
+    .today-check{width:2rem;}
+    .today-check .field-icon{width:14px; height:14px;}
+  }
+
   /* ---------- Tab navigation (Dashboard / Kalender / Pengaturan) ---------- */
   /* Same tabbed navigation on every screen size — laptop/desktop no longer
      shows the calendar and sidebar stacked side by side; it switches views
@@ -1043,6 +1103,13 @@
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;}
   .row-3 .checkbox-field.compact{padding:0.5rem 0.5rem;}
+  /* flexPriorityRow (Fleksibel/Prioritas/Travel/Pin): jumlah kotak yang
+     tampil berubah-ubah (2 saat belum Fleksibel, 3 saat Fleksibel
+     dicentang), jadi dipakai flex alih-alih grid 3-kolom tetap — supaya
+     kotak yang masih terlihat ikut melebar mengisi baris tanpa
+     menyisakan kolom kosong. */
+  #flexPriorityRow.row-3{display:flex; flex-wrap:wrap;}
+  #flexPriorityRow.row-3 > .checkbox-field{flex:1 1 0; min-width:0;}
   /* Baris Tanggal mulai / Waktu / Berakhir pada: selalu 3 kolom sejajar
      dalam satu baris, termasuk di layar sempit (HP) — ukuran font, padding,
      dan ikon dikecilkan supaya tetap muat, dengan gap yang cukup supaya
@@ -1679,28 +1746,52 @@
         </div>
       </div>
       <div class="row-3" id="flexPriorityRow">
-        <div class="checkbox-field compact" id="fPriorityField">
-          <input type="checkbox" id="fPriority">
-          <label for="fPriority">Prioritas</label>
-        </div>
-        <div class="checkbox-field compact" id="fFlexibleField">
+        <div class="checkbox-field compact icon-check" id="fFlexibleField">
           <input type="checkbox" id="fFlexible">
-          <label for="fFlexible">Fleksibel</label>
+          <label for="fFlexible" title="Fleksibel" aria-label="Fleksibel">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
         </div>
-        <div class="checkbox-field compact" id="fTravelField" style="position:relative;">
+        <div class="checkbox-field compact icon-check" id="fPriorityField" hidden>
+          <input type="checkbox" id="fPriority">
+          <label for="fPriority" title="Prioritas" aria-label="Prioritas">
+            <svg class="field-icon icon-star" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5l2.6 5.4 5.9.7-4.3 4.1 1.1 5.9L12 16.9l-5.3 2.7 1.1-5.9-4.3-4.1 5.9-.7L12 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg>
+          </label>
+        </div>
+        <div class="checkbox-field compact icon-check" id="fTravelField" style="position:relative;">
           <input type="checkbox" id="fTravel">
-          <label for="fTravel">Travel</label>
+          <label for="fTravel" title="Travel" aria-label="Travel">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
           <button type="button" class="info-tip-btn" id="travelInfoBtn" aria-label="Info Travel" aria-expanded="false">i</button>
           <div class="info-tip-popover" id="travelInfoPopover" hidden>Kalau "Travel" dicentang, kotak tanggalnya di kalender akan berwarna biru pastel.</div>
+        </div>
+        <!-- Pin menempati slot yang sama dengan Travel: Travel cuma berlaku
+             untuk pengingat terjadwal, Pin cuma berlaku untuk pengingat
+             Fleksibel, jadi keduanya saling menggantikan (lihat
+             toggleFlexibleUI) supaya baris ini tetap 3 kolom. -->
+        <div class="checkbox-field compact icon-check" id="fPinField" style="position:relative;" hidden>
+          <input type="checkbox" id="fPin">
+          <label for="fPin" title="Pin" aria-label="Pin">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 10c0 6.5-9 12-9 12s-9-5.5-9-12a9 9 0 0118 0z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="1.8"/></svg>
+          </label>
+          <button type="button" class="info-tip-btn" id="pinInfoBtn" aria-label="Info Pin" aria-expanded="false">i</button>
+          <div class="info-tip-popover" id="pinInfoPopover" hidden>Kalau "Pin" dicentang, pengingat Prioritas ini otomatis tersemat di atas daftar Fleksibel dan muncul di tab Prioritas Pin.</div>
         </div>
       </div>
       <div id="scheduledFields">
         <div class="row-3" id="dateTimeUntilRow">
           <div class="field">
             <label for="fDate">Tanggal mulai</label>
-            <div class="date-field-wrap">
-              <input type="date" id="fDate">
-              <span class="date-field-display" id="fDateDisplay" aria-hidden="true"></span>
+            <div class="date-field-row">
+              <div class="date-field-wrap">
+                <input type="date" id="fDate">
+                <span class="date-field-display" id="fDateDisplay" aria-hidden="true"></span>
+              </div>
+              <input type="checkbox" id="fDateToday" class="today-check-input">
+              <label class="today-check" for="fDateToday" title="Pakai tanggal hari ini" aria-label="Pakai tanggal hari ini">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 5.5A1.5 1.5 0 015.5 4h13A1.5 1.5 0 0120 5.5v13a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 18.5v-13z" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v3M16 3v3M4 9h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 13.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </label>
             </div>
           </div>
           <div class="field">
@@ -1718,23 +1809,29 @@
         <div class="row-2" id="repeatUntilRow">
           <div class="field">
             <label for="fRepeat">Ulangi</label>
-            <select id="fRepeat" required>
-              <option value="" disabled selected hidden></option>
-              <option value="none" style="text-align:center;">Tidak berulang</option>
-              <option value="hourly" style="text-align:center;">Tiap beberapa jam</option>
-              <option value="daily" style="text-align:center;">Harian</option>
-              <option value="everyNDays" style="text-align:center;">Setiap X hari sekali</option>
-              <option value="everyNWeeks" style="text-align:center;">Setiap X minggu sekali</option>
-              <option value="weekday" style="text-align:center;">Hari kerja (Sen–Jum)</option>
-              <option value="workdaySat" style="text-align:center;">Hari Kerja (Sen–Sab)</option>
-              <option value="weekend" style="text-align:center;">Akhir pekan (Sab–Min)</option>
-              <option value="weekly" style="text-align:center;">Mingguan</option>
-              <option value="biweekly" style="text-align:center;">Dua mingguan</option>
-              <option value="monthly" style="text-align:center;">Bulanan</option>
-              <option value="endOfMonth" style="text-align:center;">Akhir bulan</option>
-              <option value="quarterly" style="text-align:center;">Triwulanan (tiap 3 bulan)</option>
-              <option value="annually" style="text-align:center;">Tahunan</option>
-            </select>
+            <div class="select-field-row">
+              <select id="fRepeat" required>
+                <option value="" disabled selected hidden></option>
+                <option value="none" style="text-align:center;">Tidak berulang</option>
+                <option value="hourly" style="text-align:center;">Tiap beberapa jam</option>
+                <option value="daily" style="text-align:center;">Harian</option>
+                <option value="everyNDays" style="text-align:center;">Setiap X hari sekali</option>
+                <option value="everyNWeeks" style="text-align:center;">Setiap X minggu sekali</option>
+                <option value="weekday" style="text-align:center;">Hari kerja (Sen–Jum)</option>
+                <option value="workdaySat" style="text-align:center;">Hari Kerja (Sen–Sab)</option>
+                <option value="weekend" style="text-align:center;">Akhir pekan (Sab–Min)</option>
+                <option value="weekly" style="text-align:center;">Mingguan</option>
+                <option value="biweekly" style="text-align:center;">Dua mingguan</option>
+                <option value="monthly" style="text-align:center;">Bulanan</option>
+                <option value="endOfMonth" style="text-align:center;">Akhir bulan</option>
+                <option value="quarterly" style="text-align:center;">Triwulanan (tiap 3 bulan)</option>
+                <option value="annually" style="text-align:center;">Tahunan</option>
+              </select>
+              <input type="checkbox" id="fRepeatNone" class="today-check-input">
+              <label class="today-check" for="fRepeatNone" title="Pakai Tidak berulang" aria-label="Pakai Tidak berulang">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 6.5l11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </label>
+            </div>
           </div>
           <div class="checkbox-field compact" id="dayTypeToggleRow" style="position:relative;">
             <input type="checkbox" id="fByDayType">
@@ -5481,6 +5578,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       }
     });
   }
+  var pinInfoBtn = document.getElementById('pinInfoBtn');
+  var pinInfoPopover = document.getElementById('pinInfoPopover');
+  if (pinInfoBtn && pinInfoPopover){
+    pinInfoBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      var open = pinInfoPopover.hidden;
+      pinInfoPopover.hidden = !open;
+      pinInfoBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e){
+      if (!pinInfoPopover.hidden && !pinInfoPopover.contains(e.target) && e.target !== pinInfoBtn){
+        pinInfoPopover.hidden = true;
+        pinInfoBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
   var workdaySatToggleRow = document.getElementById('workdaySatToggleRow');
   var workdaySatTimeRow = document.getElementById('workdaySatTimeRow');
   var fWorkdaySatSpecial = document.getElementById('fWorkdaySatSpecial');
@@ -5495,12 +5609,28 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var fUntilDisplay = document.getElementById('fUntilDisplay');
   var fUntilEl = document.getElementById('fUntil');
   var fTravel = document.getElementById('fTravel');
+  var fPin = document.getElementById('fPin');
+  var fPinField = document.getElementById('fPinField');
+  var fDateToday = document.getElementById('fDateToday');
   function updateDateDisplay(inputEl, displayEl){
     if (!displayEl) return;
     displayEl.textContent = inputEl.value ? formatDMY(inputEl.value) : '';
   }
   fDateEl.addEventListener('change', function(){ updateDateDisplay(fDateEl, fDateDisplay); });
   fUntilEl.addEventListener('change', function(){ updateDateDisplay(fUntilEl, fUntilDisplay); });
+  // Centang "pakai tanggal hari ini": begitu dicentang, langsung isi
+  // Tanggal mulai dengan tanggal hari ini dan kunci input-nya (biar tidak
+  // tertukar isi manual selagi tercentang) — lepas centang untuk kembali
+  // bisa mengisi tanggal manual seperti biasa.
+  fDateToday.addEventListener('change', function(){
+    if (fDateToday.checked){
+      fDateEl.value = toISODate(new Date());
+      updateDateDisplay(fDateEl, fDateDisplay);
+      fDateEl.disabled = true;
+    } else {
+      fDateEl.disabled = false;
+    }
+  });
   var selectedCat = '';
   function openCatDropdown(){
     catDropdownList.hidden = false;
@@ -5606,8 +5736,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // disimpan (lihat data.travel di listener 'submit' di bawah).
     fTravelField.hidden = isFlexible;
     if (isFlexible) fTravel.checked = false;
-    // Prioritas & Fleksibel sekarang selalu tampil sebaris berdampingan,
-    // tidak lagi disembunyikan/menunggu Fleksibel dicentang.
+    // Pin kebalikan dari Travel: cuma berlaku untuk pengingat Fleksibel
+    // (dipakai untuk menyematkan item Prioritas di atas daftar Fleksibel /
+    // tab Prioritas Pin — lihat data.pinned di listener 'submit' di bawah),
+    // jadi baru ditampilkan begitu Fleksibel dicentang, dan lepas
+    // centangnya begitu Fleksibel dilepas supaya tidak ada centang yang
+    // kelihatan aktif tapi diabaikan saat disimpan.
+    fPinField.hidden = !isFlexible;
+    if (!isFlexible) fPin.checked = false;
+    // Prioritas cuma dipakai/disimpan untuk pengingat Fleksibel (lihat
+    // "priority: false" yang dipaksakan di listener 'submit' untuk
+    // pengingat terjadwal) — jadi baru ditampilkan begitu Fleksibel
+    // dicentang, sama seperti Pin, dan lepas centangnya begitu Fleksibel
+    // dilepas.
+    fPriorityField.hidden = !isFlexible;
+    if (!isFlexible) fPriority.checked = false;
   }
   fFlexible.addEventListener('change', function(){ toggleFlexibleUI(fFlexible.checked); });
 
@@ -5642,6 +5785,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (hideDayType){
       fByDayType.checked = false;
       dayTypeTimesRow.style.display = 'none';
+    }
+  });
+  var fRepeatNone = document.getElementById('fRepeatNone');
+  // Centang "pakai Tidak berulang": begitu dicentang, langsung pilih opsi
+  // "none" di dropdown Ulangi (lalu picu 'change' supaya baris-baris
+  // terkait — jam khusus, tiap X hari/minggu, dst — ikut disembunyikan
+  // seperti saat dipilih manual) dan kunci dropdownnya. Lepas centang
+  // untuk kembali bisa memilih jenis pengulangan manual.
+  fRepeatNone.addEventListener('change', function(){
+    if (fRepeatNone.checked){
+      fRepeat.value = 'none';
+      fRepeat.dispatchEvent(new Event('change'));
+      fRepeat.disabled = true;
+    } else {
+      fRepeat.disabled = false;
     }
   });
   fByDayType.addEventListener('change', function(){
@@ -5884,10 +6042,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderCatOptions();
     document.getElementById('fDate').value = prefillDate || '';
     document.getElementById('fTime').value = '';
+    fDateEl.disabled = false;
+    fDateToday.checked = false;
     updateDateDisplay(fDateEl, fDateDisplay);
     fUntilEl.value = '';
     updateDateDisplay(fUntilEl, fUntilDisplay);
     fRepeat.value = '';
+    fRepeat.disabled = false;
+    fRepeatNone.checked = false;
     hourlyRow.style.display = 'none';
     everyNDaysRow.style.display = 'none';
     everyNWeeksRow.style.display = 'none';
@@ -5907,6 +6069,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fFlexible.checked = false;
     fPriority.checked = false;
     fTravel.checked = false;
+    fPin.checked = false;
     toggleFlexibleUI(false);
     resetNotesToolbar();
     formOverlay.hidden = false;
@@ -5959,8 +6122,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderCatOptions();
     document.getElementById('fDate').value = r.date || toISODate(new Date());
     document.getElementById('fTime').value = r.time || '09:00';
+    fDateEl.disabled = false;
+    fDateToday.checked = false;
     updateDateDisplay(fDateEl, fDateDisplay);
     fRepeat.value = r.repeat && r.repeat!=='none' ? r.repeat : 'none';
+    fRepeat.disabled = false;
+    fRepeatNone.checked = false;
     hourlyRow.style.display = r.repeat==='hourly' ? 'grid' : 'none';
     everyNDaysRow.style.display = r.repeat==='everyNDays' ? 'grid' : 'none';
     everyNWeeksRow.style.display = r.repeat==='everyNWeeks' ? 'grid' : 'none';
@@ -5993,6 +6160,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fFlexible.checked = !!r.flexible;
     fPriority.checked = !!r.priority;
     fTravel.checked = !!r.travel;
+    fPin.checked = !!r.pinned;
     toggleFlexibleUI(!!r.flexible);
     formOverlay.hidden = false;
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
@@ -6032,11 +6200,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         category: selectedCat,
         flexible: true,
         priority: fPriority.checked,
-        // setDoc() di saveReminderToCloud menimpa seluruh dokumen, jadi
-        // field yang tidak dibawa di sini akan hilang saat disimpan ulang
-        // lewat form edit — pinned perlu dipertahankan dari data lama
-        // supaya status "disematkan" tidak ikut hilang tiap kali diedit.
-        pinned: existing ? !!existing.pinned : false,
+        // Pin sekarang bisa langsung dicentang/dilepas dari form (checkbox
+        // fPin, menggantikan slot Travel selagi Fleksibel dicentang) —
+        // jadi status "disematkan" ikut tersimpan dari centang itu, tidak
+        // lagi cuma bisa diubah lewat tombol pin di daftar Fleksibel.
+        pinned: fPin.checked,
         // sama seperti pinned di atas — archived juga harus dipertahankan
         // dari data lama supaya item yang sudah diarsipkan tidak tiba-tiba
         // muncul lagi di kolom utama hanya karena diedit.
