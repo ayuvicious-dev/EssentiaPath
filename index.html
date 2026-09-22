@@ -893,7 +893,8 @@
      kalender di sebelahnya, tapi sejak garis pembatas antar-ikon
      dihilangkan, koreksi manual ini justru membuat kedua ikon terlihat
      tidak sejajar. Cukup dibiarkan center murni lewat flex. */
-  .date-field-row .today-check .field-icon{ transform:none; } /* posisi asli diatur lewat JS panel geser + default, lihat initIconAdjustPanel */
+  .date-field-row .today-check .field-icon{ transform:none; } /* posisi default; ikon "Hari ini" di field Tanggal mulai (#fDateTodayIcon) punya posisi tetap sendiri, lihat aturan di bawah */
+  #fDateTodayIcon{ transform:translate(-9px, -4px) scale(1.4); } /* posisi & ukuran final ikon "Hari ini" — sudah disesuaikan permanen, panel geser sudah dihapus */
   .select-field-row .today-check .field-icon{ transform:translate(0px, 9px); }
   .today-check-input:checked + .today-check{background:var(--selected-bg);}
   .today-check-input:checked + .today-check .field-icon{color:var(--moss-deep);}
@@ -903,41 +904,6 @@
     .today-check{width:2rem;}
     .today-check .field-icon{width:14px; height:14px;}
   }
-
-  /* ---------- Panel "sesuaikan posisi & ukuran ikon" (reusable) ---------- */
-  /* Tombol kecil di samping kanan label untuk membuka panel geser posisi
-     & ubah ukuran ikon secara manual (dipakai user sendiri buat
-     fine-tuning per field, bukan otomatis). */
-  .field-label-row{ display:flex; align-items:center; justify-content:center; gap:0.35rem; position:relative; }
-  .field-label-row label{ margin-bottom:0; }
-  .icon-adjust-toggle{
-    flex:none; width:1.4rem; height:1.4rem; border-radius:50%; border:1px solid var(--line);
-    background:var(--surface); color:var(--ink-soft); display:flex; align-items:center; justify-content:center;
-    cursor:pointer; padding:0;
-  }
-  .icon-adjust-toggle:hover{ border-color:var(--moss); color:var(--moss-deep); }
-  .icon-adjust-toggle .field-icon{ width:13px; height:13px; }
-  .icon-adjust-toggle[aria-expanded="true"]{ background:var(--selected-bg); border-color:var(--moss); color:var(--moss-deep); }
-  .icon-adjust-panel{
-    position:relative; margin-top:0.4rem; padding:0.55rem 0.6rem; border:1px dashed var(--line);
-    border-radius:8px; background:var(--paper-raised); display:flex; flex-direction:column; gap:0.4rem;
-    z-index:5;
-  }
-  .icon-adjust-row{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; }
-  .icon-adjust-label{ font-size:0.7rem; font-weight:700; color:var(--ink-soft); flex:none; }
-  .icon-adjust-controls{ display:flex; align-items:center; gap:0.25rem; flex-wrap:wrap; }
-  .icon-adjust-controls button{
-    width:1.5rem; height:1.5rem; border-radius:6px; border:1px solid var(--line); background:var(--surface);
-    color:var(--ink-soft); font-size:0.7rem; line-height:1; cursor:pointer; padding:0;
-  }
-  .icon-adjust-controls button:hover{ border-color:var(--moss); color:var(--moss-deep); }
-  .icon-adjust-value{ font-family:'IBM Plex Mono', monospace; font-size:0.66rem; color:var(--ink-soft); min-width:5.2em; text-align:right; }
-  .icon-adjust-reset{
-    align-self:flex-end; border:none; background:transparent; color:var(--amber-deep); font-size:0.68rem;
-    font-weight:700; cursor:pointer; padding:0.2rem 0.3rem;
-  }
-  .icon-adjust-reset:hover{ text-decoration:underline; }
-
 
   /* ---------- Tab navigation (Dashboard / Kalender / Pengaturan) ---------- */
   /* Same tabbed navigation on every screen size — laptop/desktop no longer
@@ -1120,12 +1086,16 @@
      CSS eksternal pada <option>) supaya semua baris ikut rata tengah. */
   .field select option{ text-align:center; }
   /* Opsi terpanjang ("Triwulanan (tiap 3 bulan)", "Setiap X minggu
-     sekali", dst) kepotong di kotak select "Ulangi" yang cuma separuh
-     lebar baris (berbagi kolom dengan "Berakhir"). Font dikecilkan &
-     padding kiri dirapatkan khusus untuk select ini supaya teks penuh
-     lebih muat; text-overflow:ellipsis ditambahkan sebagai jaga-jaga
-     kalau di layar sangat sempit masih kurang lebar, supaya kepotongnya
-     rapi ("...") bukan terpotong mendadak seperti sebelumnya. */
+     sekali", dst) bisa kepotong di kotak select "Ulangi" yang cuma
+     separuh lebar baris (berbagi kolom dengan "Jam Khusus"). Ukuran
+     font di sini cuma FALLBACK statis (dipakai kalau JS gagal jalan);
+     ukuran sebenarnya diatur otomatis lewat JS (lihat initRepeatFontFit
+     di dekat deklarasi var fRepeat) yang mengukur lebar teks opsi
+     terpanjang dan mengejar sedekat mungkin ke ukuran label "Ulangi"
+     (0.78rem) tanpa pernah kepotong. padding kiri dirapatkan supaya
+     teks penuh lebih muat; text-overflow:ellipsis tetap dipertahankan
+     sebagai jaga-jaga terakhir kalau JS gagal & fallback statis ini
+     masih kurang lebar juga. */
   #fRepeat{
     font-size:0.68rem; padding-left:0.4rem;
     text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
@@ -1219,7 +1189,8 @@
      (lewat panel geser yang sudah dihapus) ke offset ini — dipertahankan
      di sini secara permanen. Khusus "Tanggal mulai" (.date-field-row),
      tidak memengaruhi ikon kalender di field "Berakhir". */
-  .date-field-row .date-field-wrap .date-field-icon .field-icon{ transform:none; } /* posisi asli diatur lewat JS panel geser + default, lihat initIconAdjustPanel */
+  .date-field-row .date-field-wrap .date-field-icon .field-icon{ transform:none; } /* posisi default; ikon kalender di field Tanggal mulai (#fDateCalIcon) punya posisi tetap sendiri, lihat aturan di bawah */
+  #fDateCalIcon{ transform:translate(-11px, 1px) scale(1.4); } /* posisi & ukuran final ikon kalender — sudah disesuaikan permanen, panel geser sudah dihapus */
   .notes-toolbar{display:flex; justify-content:center; gap:0.35rem; margin-bottom:0.4rem; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
   .notes-toolbar::-webkit-scrollbar{display:none;}
   .notes-fmt-btn{
@@ -1958,12 +1929,7 @@
       <div id="scheduledFields">
         <div class="row-3" id="dateTimeUntilRow">
           <div class="field">
-            <div class="field-label-row">
-              <label for="fDate">Tanggal mulai</label>
-              <button type="button" class="icon-adjust-toggle" id="dateIconAdjustToggle" aria-expanded="false" aria-controls="dateIconAdjustPanel" title="Sesuaikan posisi & ukuran ikon" aria-label="Sesuaikan posisi & ukuran ikon">
-                <svg class="field-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v2.5M12 18.5V21M4.2 4.2l1.8 1.8M18 18l1.8 1.8M3 12h2.5M18.5 12H21M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
-              </button>
-            </div>
+            <label for="fDate">Tanggal mulai</label>
             <div class="date-field-row">
               <div class="date-field-wrap">
                 <input type="date" id="fDate">
@@ -1976,33 +1942,6 @@
               <label class="today-check" for="fDateToday" title="Pakai tanggal hari ini" aria-label="Pakai tanggal hari ini">
                 <svg class="field-icon" id="fDateTodayIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 5.5A1.5 1.5 0 015.5 4h13A1.5 1.5 0 0120 5.5v13a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 18.5v-13z" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v3M16 3v3M4 9h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 13.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </label>
-            </div>
-            <div class="icon-adjust-panel" id="dateIconAdjustPanel" hidden>
-              <div class="icon-adjust-row">
-                <span class="icon-adjust-label">Kalender</span>
-                <div class="icon-adjust-controls">
-                  <button type="button" data-icon="cal" data-axis="x" data-dir="-1" aria-label="Geser kiri">◀</button>
-                  <button type="button" data-icon="cal" data-axis="x" data-dir="1" aria-label="Geser kanan">▶</button>
-                  <button type="button" data-icon="cal" data-axis="y" data-dir="-1" aria-label="Geser atas">▲</button>
-                  <button type="button" data-icon="cal" data-axis="y" data-dir="1" aria-label="Geser bawah">▼</button>
-                  <button type="button" data-icon="cal" data-axis="s" data-dir="-1" aria-label="Perkecil">－</button>
-                  <button type="button" data-icon="cal" data-axis="s" data-dir="1" aria-label="Perbesar">＋</button>
-                  <span class="icon-adjust-value" data-readout="cal">0, 0 · 100%</span>
-                </div>
-              </div>
-              <div class="icon-adjust-row">
-                <span class="icon-adjust-label">Hari ini</span>
-                <div class="icon-adjust-controls">
-                  <button type="button" data-icon="today" data-axis="x" data-dir="-1" aria-label="Geser kiri">◀</button>
-                  <button type="button" data-icon="today" data-axis="x" data-dir="1" aria-label="Geser kanan">▶</button>
-                  <button type="button" data-icon="today" data-axis="y" data-dir="-1" aria-label="Geser atas">▲</button>
-                  <button type="button" data-icon="today" data-axis="y" data-dir="1" aria-label="Geser bawah">▼</button>
-                  <button type="button" data-icon="today" data-axis="s" data-dir="-1" aria-label="Perkecil">－</button>
-                  <button type="button" data-icon="today" data-axis="s" data-dir="1" aria-label="Perbesar">＋</button>
-                  <span class="icon-adjust-value" data-readout="today">0, 0 · 100%</span>
-                </div>
-              </div>
-              <button type="button" class="icon-adjust-reset" id="dateIconAdjustReset">Reset posisi & ukuran</button>
             </div>
           </div>
           <div class="field">
@@ -5758,6 +5697,58 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var catInput = document.getElementById('catInput');
   var catDropdownList = document.getElementById('catDropdownList');
   var fRepeat = document.getElementById('fRepeat');
+  // Ukuran font teks select "Ulangi" (#fRepeat) diusahakan sama besar
+  // dengan label "Ulangi" di atasnya (0.78rem), tapi kotaknya sempit
+  // (berbagi baris dengan "Jam Khusus") sehingga opsi terpanjang
+  // ("Triwulanan (tiap 3 bulan)", "Setiap X minggu sekali", dst) bisa
+  // kepotong kalau dipaksa 0.78rem terus. Daripada patok satu ukuran
+  // tetap yang harus dikecilkan manual tiap kali ada opsi baru/teks
+  // berubah, ukuran font diukur & disesuaikan otomatis di sini lewat
+  // <canvas> (ukur lebar teks opsi terpanjang pada font asli elemen) —
+  // dicoba mulai dari 0.78rem, turun bertahap sampai muat sungguhan,
+  // jadi selalu sebesar mungkin (idealnya persis sama dengan label)
+  // tanpa pernah terpotong. CSS #fRepeat font-size tetap jadi fallback
+  // aman kalau JS/canvas gagal.
+  (function initRepeatFontFit(){
+    if (!fRepeat) return;
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext && canvas.getContext('2d');
+    if (!ctx) return;
+    var MAX_REM = 0.78;   // target: sama seperti label "Ulangi"
+    var MIN_REM = 0.56;   // batas bawah supaya teks tetap terbaca
+    var STEP_REM = 0.02;
+    function longestOptionText(){
+      var longest = '';
+      for (var i = 0; i < fRepeat.options.length; i++){
+        var opt = fRepeat.options[i];
+        if (opt.value && opt.text.length > longest.length) longest = opt.text;
+      }
+      return longest;
+    }
+    function fitRepeatFont(){
+      var text = longestOptionText();
+      if (!text || fRepeat.offsetParent === null) return; // sembunyi (mis. mode Fleksibel) — ukur nanti saat terlihat lagi
+      var cs = getComputedStyle(fRepeat);
+      var rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      var availableWidth = fRepeat.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
+      if (!(availableWidth > 0)) return;
+      var size = MAX_REM;
+      while (size > MIN_REM){
+        ctx.font = cs.fontWeight + ' ' + (size * rootPx) + 'px ' + cs.fontFamily;
+        if (ctx.measureText(text).width <= availableWidth) break;
+        size = Math.round((size - STEP_REM) * 100) / 100;
+      }
+      fRepeat.style.fontSize = Math.max(size, MIN_REM) + 'rem';
+    }
+    fitRepeatFont();
+    window.addEventListener('resize', fitRepeatFont);
+    if ('ResizeObserver' in window) new ResizeObserver(fitRepeatFont).observe(fRepeat);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitRepeatFont);
+    // Field select ini sempat disembunyikan/ditampilkan lagi (mis. saat
+    // toggle Fleksibel) — ukur ulang begitu terlihat kembali, sekalian
+    // dipakai kalau baris "Ulangi" pindah lebar akibat perubahan lain.
+    window.__fitRepeatFont = fitRepeatFont;
+  })();
   var hourlyRow = document.getElementById('hourlyRow');
   var everyNDaysRow = document.getElementById('everyNDaysRow');
   var everyNWeeksRow = document.getElementById('everyNWeeksRow');
@@ -5851,75 +5842,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       fDateEl.disabled = false;
     }
   });
-  // ---------- Panel "sesuaikan posisi & ukuran ikon" (reusable) ----------
-  // Fungsi umum: dipakai untuk field mana pun yang punya tombol toggle +
-  // panel geser/perbesar ikon. Posisi & ukuran disimpan per-field di
-  // localStorage (key beda per field) supaya tidak saling menimpa.
-  function initIconAdjustPanel(opts){
-    var toggleBtn = document.getElementById(opts.toggleId);
-    var panel = document.getElementById(opts.panelId);
-    if (!toggleBtn || !panel) return;
-    var icons = {};
-    Object.keys(opts.icons).forEach(function(key){
-      icons[key] = document.getElementById(opts.icons[key]);
-    });
-    var offsets = {};
-    Object.keys(icons).forEach(function(key){
-      var base = (opts.defaults && opts.defaults[key]) || {};
-      offsets[key] = { x: base.x || 0, y: base.y || 0, s: base.s || 1 };
-    });
-    try {
-      var saved = JSON.parse(localStorage.getItem(opts.storageKey) || 'null');
-      if (saved){ Object.keys(offsets).forEach(function(key){ if (saved[key]) offsets[key] = saved[key]; }); }
-    } catch(e){}
-    function applyOffset(key){
-      var el = icons[key];
-      if (!el) return;
-      var o = offsets[key];
-      el.style.transform = 'translate(' + o.x + 'px, ' + o.y + 'px) scale(' + o.s + ')';
-      var readout = panel.querySelector('[data-readout="' + key + '"]');
-      if (readout) readout.textContent = o.x + ', ' + o.y + ' · ' + Math.round(o.s * 100) + '%';
-    }
-    Object.keys(icons).forEach(applyOffset);
-    toggleBtn.addEventListener('click', function(){
-      var open = panel.hidden;
-      panel.hidden = !open;
-      toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-    panel.querySelectorAll('.icon-adjust-controls button').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var key = btn.getAttribute('data-icon');
-        var axis = btn.getAttribute('data-axis');
-        var dir = parseInt(btn.getAttribute('data-dir'), 10);
-        if (axis === 's'){
-          offsets[key].s = Math.max(0.3, Math.min(2.5, Math.round((offsets[key].s + dir * 0.05) * 100) / 100));
-        } else {
-          offsets[key][axis] += dir;
-        }
-        applyOffset(key);
-        try { localStorage.setItem(opts.storageKey, JSON.stringify(offsets)); } catch(e){}
-      });
-    });
-    var resetBtn = opts.resetId ? document.getElementById(opts.resetId) : null;
-    if (resetBtn){
-      resetBtn.addEventListener('click', function(){
-        Object.keys(offsets).forEach(function(key){
-          var base = (opts.defaults && opts.defaults[key]) || {};
-          offsets[key] = { x: base.x || 0, y: base.y || 0, s: base.s || 1 };
-        });
-        Object.keys(icons).forEach(applyOffset);
-        try { localStorage.removeItem(opts.storageKey); } catch(e){}
-      });
-    }
-  }
-  initIconAdjustPanel({
-    toggleId: 'dateIconAdjustToggle',
-    panelId: 'dateIconAdjustPanel',
-    resetId: 'dateIconAdjustReset',
-    storageKey: 'essentiapath_dateIconAdjust2',
-    icons: { cal: 'fDateCalIcon', today: 'fDateTodayIcon' },
-    defaults: { cal: {x:-9, y:1, s:1}, today: {x:-9, y:-4, s:1} }
-  });
+  // Posisi & ukuran ikon kalender (#fDateCalIcon) dan ikon "Hari ini"
+  // (#fDateTodayIcon) di field Tanggal mulai sudah final dan diatur lewat
+  // CSS (lihat #fDateCalIcon / #fDateTodayIcon) — panel geser & perbesar
+  // manual yang dulu ada di sini sudah dihapus.
   var selectedCat = '';
   function openCatDropdown(){
     catDropdownList.hidden = false;
@@ -6040,6 +5966,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // dilepas.
     fPriorityField.hidden = !isFlexible;
     if (!isFlexible) fPriority.checked = false;
+    // Baris "Ulangi" cuma terlihat saat tidak Fleksibel — ukur ulang
+    // ukuran fontnya (lihat initRepeatFontFit) setiap kali baris ini
+    // tampil kembali, karena tadinya tersembunyi (lebar 0) dan tidak
+    // bisa diukur.
+    if (!isFlexible && window.__fitRepeatFont) setTimeout(window.__fitRepeatFont, 0);
   }
   fFlexible.addEventListener('change', function(){ toggleFlexibleUI(fFlexible.checked); });
 
@@ -6363,6 +6294,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     toggleFlexibleUI(false);
     resetNotesToolbar();
     formOverlay.hidden = false;
+    if (window.__fitRepeatFont) setTimeout(window.__fitRepeatFont, 0);
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
   }
 
@@ -6453,6 +6385,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fPin.checked = !!r.pinned;
     toggleFlexibleUI(!!r.flexible);
     formOverlay.hidden = false;
+    if (window.__fitRepeatFont) setTimeout(window.__fitRepeatFont, 0);
     setTimeout(function(){ document.getElementById('fTitle').focus(); }, 30);
   }
 
