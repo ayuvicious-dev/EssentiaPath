@@ -1241,15 +1241,10 @@
   #dateTimeUntilRow.row-3 input[type="time"]{padding-right:1.6rem;}
   #dateTimeUntilRow.row-3 .date-field-display{font-size:0.72rem; left:0.35rem; right:2.3rem;}
   #dateTimeUntilRow.row-3 .hint{font-size:0.62rem; margin-top:0.3rem; line-height:1.25;}
-  /* ---------- Tombol & panel "atur posisi ikon" ----------
-     Ada DUA tombol terpisah dengan panel & penyimpanan sendiri-sendiri:
-     .pos-adjust-btn-desktop (cuma tampil >=640px, mengatur posisi khusus
-     desktop) dan .pos-adjust-btn-mobile (cuma tampil <640px, mengatur
-     posisi khusus HP). Keduanya pakai display:none sebagai basis lalu
-     dimunculkan lewat @media masing-masing yang saling berkebalikan —
-     jadi di lebar layar mana pun cuma SATU tombol yang benar-benar ada
-     di layar (bukan cuma disembunyikan visual), dan pengaturan salah
-     satu tidak pernah bocor ke tampilan yang lain. */
+  /* ---------- Tombol & panel "atur posisi ikon" (khusus HP) ----------
+     Posisi ikon di tampilan desktop sudah tetap (lihat DESKTOP_ICON_POS di
+     JS) dan tidak punya tombol/panel lagi. Tombol .pos-adjust-btn-mobile
+     ini cuma tampil <640px, untuk atur posisi ikon khusus tampilan HP. */
   #dateStartField{ position:relative; }
   .field-label-row{ display:flex; align-items:center; justify-content:center; gap:0.3rem; }
   .pos-adjust-btn{
@@ -1259,9 +1254,6 @@
   }
   .pos-adjust-btn svg{ width:13px; height:13px; }
   .pos-adjust-btn:hover, .pos-adjust-btn[aria-expanded="true"]{ border-color:var(--moss); color:var(--moss-deep); }
-  @media (min-width:640px){
-    .pos-adjust-btn-desktop{ display:inline-flex; }
-  }
   @media (max-width:639px){
     .pos-adjust-btn-mobile{ display:inline-flex; width:17px; height:17px; }
     .pos-adjust-btn-mobile svg{ width:11px; height:11px; }
@@ -2003,9 +1995,6 @@
           <div class="field" id="dateStartField">
             <div class="field-label-row">
               <label for="fDate">Tanggal mulai</label>
-              <button type="button" class="pos-adjust-btn pos-adjust-btn-desktop" id="dateIconPosBtnDesktop" title="Atur posisi ikon (khusus tampilan desktop)" aria-label="Atur posisi ikon (khusus tampilan desktop)" aria-expanded="false">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
-              </button>
               <button type="button" class="pos-adjust-btn pos-adjust-btn-mobile" id="dateIconPosBtnMobile" title="Atur posisi ikon (khusus tampilan HP)" aria-label="Atur posisi ikon (khusus tampilan HP)" aria-expanded="false">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
               </button>
@@ -2022,34 +2011,6 @@
               <label class="today-check" for="fDateToday" title="Pakai tanggal hari ini" aria-label="Pakai tanggal hari ini">
                 <svg class="field-icon" id="fDateTodayIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 5.5A1.5 1.5 0 015.5 4h13A1.5 1.5 0 0120 5.5v13a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 18.5v-13z" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v3M16 3v3M4 9h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 13.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </label>
-            </div>
-            <div class="pos-adjust-panel" id="dateIconPosPanelDesktop" hidden>
-              <h4>Atur posisi ikon (khusus desktop)</h4>
-              <div class="pos-adjust-row">
-                <label for="posCalX">Kalender X</label>
-                <input type="range" id="posCalX" min="-20" max="20" step="1" value="0">
-                <span id="posCalXVal">0</span>
-              </div>
-              <div class="pos-adjust-row">
-                <label for="posCalY">Kalender Y</label>
-                <input type="range" id="posCalY" min="-20" max="20" step="1" value="0">
-                <span id="posCalYVal">0</span>
-              </div>
-              <div class="pos-adjust-row">
-                <label for="posTodayX">Hari ini X</label>
-                <input type="range" id="posTodayX" min="-20" max="20" step="1" value="0">
-                <span id="posTodayXVal">0</span>
-              </div>
-              <div class="pos-adjust-row">
-                <label for="posTodayY">Hari ini Y</label>
-                <input type="range" id="posTodayY" min="-20" max="20" step="1" value="0">
-                <span id="posTodayYVal">0</span>
-              </div>
-              <p class="pos-adjust-hint">Cuma berlaku di tampilan desktop — tidak memengaruhi tampilan HP.</p>
-              <div class="pos-adjust-actions">
-                <button type="button" id="posAdjustReset">Reset</button>
-                <button type="button" id="posAdjustClose">Tutup</button>
-              </div>
             </div>
             <div class="pos-adjust-panel" id="dateIconPosPanelMobile" hidden>
               <h4>Atur posisi ikon (khusus HP)</h4>
@@ -5994,19 +5955,22 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       fDateEl.disabled = false;
     }
   });
-  // ---------- Atur posisi ikon Tanggal mulai (desktop & HP, terpisah) ----------
-  // Ada dua tombol kecil di sebelah label "Tanggal mulai": satu cuma
-  // tampil di lebar layar desktop (.pos-adjust-btn-desktop, >=640px),
-  // satu lagi cuma tampil di lebar layar HP (.pos-adjust-btn-mobile,
-  // <640px — lihat CSS). Masing-masing punya panel geser, localStorage
-  // key, dan fungsi apply sendiri-sendiri (dibuat lewat createIconPosAdjust
-  // di bawah supaya kodenya tidak diduplikasi), sehingga pengaturan posisi
-  // di satu sisi TIDAK PERNAH memengaruhi sisi yang lain.
-  // Penting: applyPos() masing-masing HANYA menyentuh transform ikon kalau
-  // breakpoint-nya sendiri yang sedang aktif; kalau tidak, dibiarkan sama
-  // sekali tidak disentuh (bukan direset ke ''), supaya saat resize kedua
-  // fungsi dipanggil berurutan tanpa saling menimpa nilai yang baru saja
-  // diterapkan oleh yang lain (lihat listener resize gabungan di bawah).
+  // ---------- Posisi ikon Tanggal mulai — desktop (tetap) & HP (bisa diatur) ----------
+  // Di tampilan desktop (>=640px) posisi ikon "Kalender" & "Hari ini" sudah
+  // ditetapkan (DESKTOP_ICON_POS di bawah) dan tidak ada tombol/panel untuk
+  // mengubahnya lagi. Di tampilan HP (<640px) fitur atur-posisi lewat
+  // slider (.pos-adjust-btn-mobile) masih ada seperti sebelumnya, dengan
+  // localStorage-nya sendiri — TIDAK memengaruhi posisi desktop yang tetap.
+  var DESKTOP_ICON_POS = { calX: -12, calY: 0, todayX: -9, todayY: -5 };
+  function applyDesktopIconPos(){
+    if (window.innerWidth < 640) return; // biarkan skrip mobile yang menentukan
+    var calIcon = document.getElementById('fDateCalIcon');
+    var todayIcon = document.getElementById('fDateTodayIcon');
+    if (!calIcon || !todayIcon) return;
+    calIcon.style.transform = 'translate(' + DESKTOP_ICON_POS.calX + 'px, ' + DESKTOP_ICON_POS.calY + 'px)';
+    todayIcon.style.transform = 'translate(' + DESKTOP_ICON_POS.todayX + 'px, ' + DESKTOP_ICON_POS.todayY + 'px)';
+  }
+  applyDesktopIconPos();
   function createIconPosAdjust(opts){
     var btn = document.getElementById(opts.btnId);
     var panel = document.getElementById(opts.panelId);
@@ -6100,14 +6064,6 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       applyPos: function(){ applyPos(current); }
     };
   }
-  var posAdjustDesktop = createIconPosAdjust({
-    posKey: 'essentiapath_dateIconPos_desktop_v1',
-    matchesBreakpoint: function(){ return window.innerWidth >= 640; },
-    btnId: 'dateIconPosBtnDesktop', panelId: 'dateIconPosPanelDesktop',
-    sliderIds: {calX:'posCalX', calY:'posCalY', todayX:'posTodayX', todayY:'posTodayY'},
-    valIds: {calX:'posCalXVal', calY:'posCalYVal', todayX:'posTodayXVal', todayY:'posTodayYVal'},
-    resetBtnId: 'posAdjustReset', closeBtnId: 'posAdjustClose'
-  });
   var posAdjustMobile = createIconPosAdjust({
     posKey: 'essentiapath_dateIconPos_mobile_v1',
     matchesBreakpoint: function(){ return window.innerWidth < 640; },
@@ -6117,18 +6073,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     resetBtnId: 'posAdjustResetMobile', closeBtnId: 'posAdjustCloseMobile'
   });
   window.addEventListener('resize', function(){
-    // Urutan panggil di sini tidak masalah — masing-masing applyPos cuma
-    // aktif menulis transform kalau breakpoint-nya sendiri yang cocok,
-    // jadi tidak ada yang saling menimpa nilai yang benar untuk lebar
-    // layar saat ini.
-    [posAdjustDesktop, posAdjustMobile].forEach(function(inst){
-      if (!inst) return;
-      inst.applyPos();
-      if (!inst.matchesBreakpoint() && !inst.panel.hidden){
-        inst.panel.hidden = true;
-        inst.btn.setAttribute('aria-expanded', 'false');
+    // applyDesktopIconPos() cuma menulis transform kalau lebar layar
+    // sekarang desktop; posAdjustMobile.applyPos() cuma menulis kalau
+    // lebar layar sekarang HP — jadi urutan panggil di sini tidak masalah,
+    // tidak ada yang saling menimpa nilai yang benar untuk lebar saat ini.
+    applyDesktopIconPos();
+    if (posAdjustMobile){
+      posAdjustMobile.applyPos();
+      if (!posAdjustMobile.matchesBreakpoint() && !posAdjustMobile.panel.hidden){
+        posAdjustMobile.panel.hidden = true;
+        posAdjustMobile.btn.setAttribute('aria-expanded', 'false');
       }
-    });
+    }
   });
   var selectedCat = '';
   function openCatDropdown(){
