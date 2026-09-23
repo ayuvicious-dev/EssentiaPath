@@ -410,6 +410,9 @@
   .sidebar{display:flex; flex-direction:column; gap:1rem; margin-top:1rem;}
   .sidebar-head{padding:1rem 1.1rem 0.4rem; display:flex; align-items:center; justify-content:space-between;}
   .sidebar-head h2{font-family:var(--font-display); font-size:1.05rem; margin:0; font-weight:600;}
+  .up-title-nav{display:flex; align-items:center; gap:0.15rem; min-width:0;}
+  .up-title-nav h2{white-space:nowrap;}
+  .up-title-nav-btn{flex:none;}
   .up-date-control{display:flex; align-items:center; gap:0.3rem;}
   .up-date-wrap{position:relative; display:inline-flex; align-items:center;}
   .up-date-control input[type="date"]{
@@ -1662,7 +1665,15 @@
     <aside class="sidebar view-section" data-view="dashboard" aria-label="Dashboard">
       <section class="panel" aria-label="Pengingat mendatang" style="flex:1;">
         <div class="sidebar-head">
-          <h2 id="upcomingSectionTitle">Hari Ini</h2>
+          <div class="up-title-nav">
+            <button type="button" class="icon-btn up-title-nav-btn" id="upcomingPrevDay" aria-label="Hari sebelumnya" title="Hari sebelumnya">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <h2 id="upcomingSectionTitle">Hari Ini</h2>
+            <button type="button" class="icon-btn up-title-nav-btn" id="upcomingNextDay" aria-label="Hari berikutnya" title="Hari berikutnya">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
           <div class="up-date-control">
             <div class="up-progress" id="upcomingProgress" role="img" aria-label="" title="" hidden>
               <svg viewBox="0 0 20 20" aria-hidden="true"><circle class="up-progress-track" cx="10" cy="10" r="7"/><circle class="up-progress-bar" id="upcomingProgressBar" cx="10" cy="10" r="7" transform="rotate(-90 10 10)"/></svg>
@@ -4627,6 +4638,26 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       updateUpcomingResetVisibility();
       renderUpcoming();
     });
+  }
+  // Tombol "<" / ">" di sekeliling judul ("Hari Ini" dst.) — geser tanggal
+  // yang sedang dilihat mundur/maju satu hari, tanpa perlu buka input tanggal.
+  function shiftUpcomingStartDate(deltaDays){
+    var d = parseISODate(upcomingStartDate);
+    d.setDate(d.getDate() + deltaDays);
+    upcomingStartDate = toISODate(d);
+    if (upcomingStartInput) upcomingStartInput.value = upcomingStartDate;
+    updateUpcomingDateDisplay();
+    updateUpcomingSectionTitle();
+    updateUpcomingResetVisibility();
+    renderUpcoming();
+  }
+  var upcomingPrevDayBtn = document.getElementById('upcomingPrevDay');
+  var upcomingNextDayBtn = document.getElementById('upcomingNextDay');
+  if (upcomingPrevDayBtn){
+    upcomingPrevDayBtn.addEventListener('click', function(){ shiftUpcomingStartDate(-1); });
+  }
+  if (upcomingNextDayBtn){
+    upcomingNextDayBtn.addEventListener('click', function(){ shiftUpcomingStartDate(1); });
   }
   // Persentase ketercapaian to-do untuk tanggal yang sedang ditampilkan di
   // "Mendatang" (default hari ini). Dihitung dari kemunculan pengingat pada
