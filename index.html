@@ -899,8 +899,8 @@
      kalender di sebelahnya, tapi sejak garis pembatas antar-ikon
      dihilangkan, koreksi manual ini justru membuat kedua ikon terlihat
      tidak sejajar. Cukup dibiarkan center murni lewat flex. */
-  .date-field-row .today-check .field-icon{ transform:none; } /* posisi default; ikon "Hari ini" di field Tanggal mulai (#fDateTodayIcon) punya posisi tetap sendiri, lihat aturan di bawah */
-  #fDateTodayIcon{ transform:translate(-9px, -4px) scale(1.4); } /* posisi & ukuran final ikon "Hari ini" — sudah disesuaikan permanen, panel geser sudah dihapus */
+  .date-field-row .today-check .field-icon{ transform:none; }
+  #fDateTodayIcon{ transform:none; } /* tidak lagi diperbesar sendiri (dulu scale 1.4) — ukurannya sekarang mengikuti ukuran ikon lain di form ini supaya seragam */
   .select-field-row .today-check .field-icon{ transform:translate(0px, 9px); }
   .today-check-input:checked + .today-check{background:var(--selected-bg);}
   .today-check-input:checked + .today-check .field-icon{color:var(--moss-deep);}
@@ -909,6 +909,7 @@
   @media (max-width:479px){
     .today-check{width:2rem;}
     .today-check .field-icon{width:14px; height:14px;}
+    .select-field-row .select-field-wrap .select-field-icon .field-icon{width:14px; height:14px;}
   }
 
   /* ---------- Tab navigation (Dashboard / Kalender / Pengaturan) ---------- */
@@ -1103,11 +1104,11 @@
      sebagai jaga-jaga terakhir kalau JS gagal & fallback statis ini
      masih kurang lebar juga. */
   #fRepeat{
-    font-size:0.68rem; padding-left:0.4rem;
+    font-size:0.78rem; padding-left:0.4rem;
     text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
   }
   @media (max-width:479px){
-    #fRepeat{ font-size:0.6rem; padding-left:0.3rem; }
+    #fRepeat{ padding-left:0.3rem; }
   }
 
   /* Teks jam di "Jam hari Sabtu" & "Jam hari libur" disamakan ukuran &
@@ -1195,8 +1196,8 @@
      (lewat panel geser yang sudah dihapus) ke offset ini — dipertahankan
      di sini secara permanen. Khusus "Tanggal mulai" (.date-field-row),
      tidak memengaruhi ikon kalender di field "Berakhir". */
-  .date-field-row .date-field-wrap .date-field-icon .field-icon{ transform:none; } /* posisi default; ikon kalender di field Tanggal mulai (#fDateCalIcon) punya posisi tetap sendiri, lihat aturan di bawah */
-  #fDateCalIcon{ transform:translate(-11px, 1px) scale(1.4); } /* posisi & ukuran final ikon kalender — sudah disesuaikan permanen, panel geser sudah dihapus */
+  .date-field-row .date-field-wrap .date-field-icon .field-icon{ transform:none; }
+  #fDateCalIcon{ transform:none; } /* tidak lagi diperbesar sendiri (dulu scale 1.4) — ukurannya sekarang mengikuti ukuran ikon lain di form ini supaya seragam */
   .notes-toolbar{display:flex; justify-content:center; gap:0.35rem; margin-bottom:0.4rem; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
   .notes-toolbar::-webkit-scrollbar{display:none;}
   .notes-fmt-btn{
@@ -1264,9 +1265,19 @@
     }
     #dateTimeUntilRow.row-3 .field input{ height:2.15rem; box-sizing:border-box; }
     #dateTimeUntilRow.row-3 input[type="time"]{ padding-right:0.35rem; }
-    #dateTimeUntilRow.row-3 .date-field-display{ right:0.35rem; }
-    #dateTimeUntilRow.row-3 .date-field-wrap input[type="date"]{ padding-right:0.35rem; }
-    #dateTimeUntilRow.row-3 .date-field-wrap .date-field-icon{ display:none; }
+    /* Ikon kalender (pilih tanggal manual) & ikon "hari ini" TETAP terlihat
+       di HP (sebelumnya disembunyikan lewat display:none, sehingga di
+       kotak "Tanggal mulai" cuma tombol "hari ini" yang kelihatan, dan
+       kotak "Berakhir" jadi kosong tanpa ikon sama sekali). Ukurannya
+       disamakan (14px) dengan ikon panah & "Tidak berulang" di baris
+       "Ulangi" persis di bawahnya supaya semua ikon di form ini seragam,
+       dan ruang teks tanggal dikurangi secukupnya supaya tetap muat. */
+    #dateTimeUntilRow.row-3 .date-field-display{ right:1.3rem; font-size:0.66rem; }
+    #dateTimeUntilRow.row-3 .date-field-wrap input[type="date"]{ padding-right:1.3rem; }
+    #dateTimeUntilRow.row-3 .date-field-wrap .date-field-icon{ width:1.3rem; }
+    #dateTimeUntilRow.row-3 .date-field-wrap .date-field-icon .field-icon{ width:14px; height:14px; }
+    #dateTimeUntilRow.row-3 .date-field-row .today-check{ width:1.7rem; }
+    #dateTimeUntilRow.row-3 .date-field-row .today-check .field-icon{ width:14px; height:14px; }
   }
   @media (min-width:480px){
     #dateTimeUntilRow.row-3{gap:1rem;}
@@ -5737,7 +5748,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var ctx = canvas.getContext && canvas.getContext('2d');
     if (!ctx) return;
     var MAX_REM = 0.78;   // target: sama seperti label "Ulangi"
-    var MIN_REM = 0.56;   // batas bawah supaya teks tetap terbaca
+    var MIN_REM = 0.78;   // dikunci sama dengan MAX_REM — font select "Ulangi" tidak lagi diizinkan mengecil di bawah ukuran label; opsi yang kepanjangan cukup dipotong lewat ellipsis (lihat text-overflow di CSS #fRepeat)
     var STEP_REM = 0.02;
     function longestOptionText(){
       var longest = '';
