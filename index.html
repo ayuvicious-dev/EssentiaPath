@@ -1241,42 +1241,11 @@
   #dateTimeUntilRow.row-3 input[type="time"]{padding-right:1.6rem;}
   #dateTimeUntilRow.row-3 .date-field-display{font-size:0.72rem; left:0.35rem; right:2.3rem;}
   #dateTimeUntilRow.row-3 .hint{font-size:0.62rem; margin-top:0.3rem; line-height:1.25;}
-  /* ---------- Tombol & panel "atur posisi ikon" (khusus HP) ----------
-     Posisi ikon di tampilan desktop sudah tetap (lihat DESKTOP_ICON_POS di
-     JS) dan tidak punya tombol/panel lagi. Tombol .pos-adjust-btn-mobile
-     ini cuma tampil <640px, untuk atur posisi ikon khusus tampilan HP. */
+  /* Fitur "atur posisi ikon" (tombol + panel geser) sudah dihapus dari
+     desktop maupun HP — posisi ikon sekarang tetap di kedua tampilan,
+     lihat DESKTOP_ICON_POS & MOBILE_ICON_POS di JS. */
   #dateStartField{ position:relative; }
   .field-label-row{ display:flex; align-items:center; justify-content:center; gap:0.3rem; }
-  .pos-adjust-btn{
-    display:none; width:20px; height:20px; border-radius:50%; border:1px solid var(--line);
-    background:var(--paper-raised); color:var(--ink-soft); cursor:pointer; padding:0; flex:none;
-    align-items:center; justify-content:center;
-  }
-  .pos-adjust-btn svg{ width:13px; height:13px; }
-  .pos-adjust-btn:hover, .pos-adjust-btn[aria-expanded="true"]{ border-color:var(--moss); color:var(--moss-deep); }
-  @media (max-width:639px){
-    .pos-adjust-btn-mobile{ display:inline-flex; width:17px; height:17px; }
-    .pos-adjust-btn-mobile svg{ width:11px; height:11px; }
-  }
-  .pos-adjust-panel{
-    position:absolute; z-index:30; top:100%; left:50%; transform:translateX(-50%); margin-top:0.4rem;
-    width:220px; max-width:80vw; background:var(--paper-raised); border:1px solid var(--line);
-    border-radius:10px; padding:0.7rem 0.8rem; box-shadow:0 10px 24px -12px rgba(0,0,0,0.3);
-    text-align:left;
-  }
-  .pos-adjust-panel[hidden]{ display:none; }
-  .pos-adjust-panel h4{ margin:0 0 0.5rem; font-size:0.74rem; color:var(--ink-soft); font-weight:700; }
-  .pos-adjust-row{ display:flex; align-items:center; gap:0.4rem; margin-bottom:0.4rem; }
-  .pos-adjust-row label{ flex:none; width:62px; font-size:0.64rem; font-weight:700; color:var(--ink-soft); margin:0; text-align:left; }
-  .pos-adjust-row input[type="range"]{ flex:1; width:auto; padding:0; }
-  .pos-adjust-row span{ flex:none; width:24px; text-align:right; font-size:0.62rem; color:var(--ink-soft); }
-  .pos-adjust-hint{ margin:0.2rem 0 0.5rem; font-size:0.6rem; color:var(--ink-soft); line-height:1.3; }
-  .pos-adjust-actions{ display:flex; justify-content:flex-end; gap:0.4rem; }
-  .pos-adjust-actions button{
-    font-size:0.64rem; font-weight:700; padding:0.25rem 0.55rem; border-radius:6px;
-    border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); cursor:pointer;
-  }
-  .pos-adjust-actions button:hover{ border-color:var(--moss); color:var(--moss-deep); }
   /* Di bawah 480px, ruang yang disisakan untuk ikon kalender/jam bawaan
      browser (padding-right 1.6rem di atas) ternyata membuat total lebar
      3 kolom melebihi lebar layar HP, sehingga kolom "Berakhir pada" jadi
@@ -1995,9 +1964,6 @@
           <div class="field" id="dateStartField">
             <div class="field-label-row">
               <label for="fDate">Tanggal mulai</label>
-              <button type="button" class="pos-adjust-btn pos-adjust-btn-mobile" id="dateIconPosBtnMobile" title="Atur posisi ikon (khusus tampilan HP)" aria-label="Atur posisi ikon (khusus tampilan HP)" aria-expanded="false">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
-              </button>
             </div>
             <div class="date-field-row">
               <div class="date-field-wrap">
@@ -2011,34 +1977,6 @@
               <label class="today-check" for="fDateToday" title="Pakai tanggal hari ini" aria-label="Pakai tanggal hari ini">
                 <svg class="field-icon" id="fDateTodayIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 5.5A1.5 1.5 0 015.5 4h13A1.5 1.5 0 0120 5.5v13a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 18.5v-13z" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v3M16 3v3M4 9h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 13.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </label>
-            </div>
-            <div class="pos-adjust-panel" id="dateIconPosPanelMobile" hidden>
-              <h4>Atur posisi ikon (khusus HP)</h4>
-              <div class="pos-adjust-row">
-                <label for="posCalXM">Kalender X</label>
-                <input type="range" id="posCalXM" min="-20" max="20" step="1" value="0">
-                <span id="posCalXMVal">0</span>
-              </div>
-              <div class="pos-adjust-row">
-                <label for="posCalYM">Kalender Y</label>
-                <input type="range" id="posCalYM" min="-20" max="20" step="1" value="0">
-                <span id="posCalYMVal">0</span>
-              </div>
-              <div class="pos-adjust-row">
-                <label for="posTodayXM">Hari ini X</label>
-                <input type="range" id="posTodayXM" min="-20" max="20" step="1" value="0">
-                <span id="posTodayXMVal">0</span>
-              </div>
-              <div class="pos-adjust-row">
-                <label for="posTodayYM">Hari ini Y</label>
-                <input type="range" id="posTodayYM" min="-20" max="20" step="1" value="0">
-                <span id="posTodayYMVal">0</span>
-              </div>
-              <p class="pos-adjust-hint">Cuma berlaku di tampilan HP — tidak memengaruhi tampilan desktop.</p>
-              <div class="pos-adjust-actions">
-                <button type="button" id="posAdjustResetMobile">Reset</button>
-                <button type="button" id="posAdjustCloseMobile">Tutup</button>
-              </div>
             </div>
           </div>
           <div class="field">
@@ -5955,12 +5893,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       fDateEl.disabled = false;
     }
   });
-  // ---------- Posisi ikon Tanggal mulai — desktop (tetap) & HP (bisa diatur) ----------
-  // Di tampilan desktop (>=640px) posisi ikon "Kalender" & "Hari ini" sudah
-  // ditetapkan (DESKTOP_ICON_POS di bawah) dan tidak ada tombol/panel untuk
-  // mengubahnya lagi. Di tampilan HP (<640px) fitur atur-posisi lewat
-  // slider (.pos-adjust-btn-mobile) masih ada seperti sebelumnya, dengan
-  // localStorage-nya sendiri — TIDAK memengaruhi posisi desktop yang tetap.
+  // ---------- Posisi ikon Tanggal mulai — tetap di desktop & HP ----------
+  // Posisi ikon "Kalender" & "Hari ini" sekarang sama-sama tetap: di
+  // tampilan desktop (>=640px) pakai DESKTOP_ICON_POS, di tampilan HP
+  // (<640px) pakai MOBILE_ICON_POS. Tidak ada lagi tombol/panel geser
+  // (atau localStorage) di kedua sisi — masing-masing fungsi apply cuma
+  // menulis transform kalau breakpoint-nya sendiri yang aktif.
   var DESKTOP_ICON_POS = { calX: -12, calY: 0, todayX: -9, todayY: -5 };
   function applyDesktopIconPos(){
     if (window.innerWidth < 640) return; // biarkan skrip mobile yang menentukan
@@ -5971,120 +5909,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     todayIcon.style.transform = 'translate(' + DESKTOP_ICON_POS.todayX + 'px, ' + DESKTOP_ICON_POS.todayY + 'px)';
   }
   applyDesktopIconPos();
-  function createIconPosAdjust(opts){
-    var btn = document.getElementById(opts.btnId);
-    var panel = document.getElementById(opts.panelId);
+  var MOBILE_ICON_POS = { calX: 7, calY: 1, todayX: 1, todayY: -6 };
+  function applyMobileIconPos(){
+    if (window.innerWidth >= 640) return; // biarkan skrip desktop yang menentukan
     var calIcon = document.getElementById('fDateCalIcon');
     var todayIcon = document.getElementById('fDateTodayIcon');
-    if (!btn || !panel || !calIcon || !todayIcon) return null;
-    var sliders = {
-      calX: document.getElementById(opts.sliderIds.calX),
-      calY: document.getElementById(opts.sliderIds.calY),
-      todayX: document.getElementById(opts.sliderIds.todayX),
-      todayY: document.getElementById(opts.sliderIds.todayY)
-    };
-    var vals = {
-      calX: document.getElementById(opts.valIds.calX),
-      calY: document.getElementById(opts.valIds.calY),
-      todayX: document.getElementById(opts.valIds.todayX),
-      todayY: document.getElementById(opts.valIds.todayY)
-    };
-    function loadPos(){
-      try {
-        var raw = localStorage.getItem(opts.posKey);
-        if (!raw) return {calX:0,calY:0,todayX:0,todayY:0};
-        var p = JSON.parse(raw);
-        return {
-          calX: Number(p.calX)||0, calY: Number(p.calY)||0,
-          todayX: Number(p.todayX)||0, todayY: Number(p.todayY)||0
-        };
-      } catch(e){ return {calX:0,calY:0,todayX:0,todayY:0}; }
-    }
-    function savePos(p){
-      try { localStorage.setItem(opts.posKey, JSON.stringify(p)); } catch(e){}
-    }
-    function applyPos(p){
-      if (!opts.matchesBreakpoint()) return; // biarkan skrip pasangannya yang menentukan
-      calIcon.style.transform = 'translate(' + p.calX + 'px, ' + p.calY + 'px)';
-      todayIcon.style.transform = 'translate(' + p.todayX + 'px, ' + p.todayY + 'px)';
-    }
-    function syncSliders(p){
-      sliders.calX.value = p.calX; vals.calX.textContent = p.calX;
-      sliders.calY.value = p.calY; vals.calY.textContent = p.calY;
-      sliders.todayX.value = p.todayX; vals.todayX.textContent = p.todayX;
-      sliders.todayY.value = p.todayY; vals.todayY.textContent = p.todayY;
-    }
-    var current = loadPos();
-    syncSliders(current);
-    applyPos(current);
-    function onSliderInput(){
-      current = {
-        calX: Number(sliders.calX.value), calY: Number(sliders.calY.value),
-        todayX: Number(sliders.todayX.value), todayY: Number(sliders.todayY.value)
-      };
-      vals.calX.textContent = current.calX;
-      vals.calY.textContent = current.calY;
-      vals.todayX.textContent = current.todayX;
-      vals.todayY.textContent = current.todayY;
-      applyPos(current);
-      savePos(current);
-    }
-    sliders.calX.addEventListener('input', onSliderInput);
-    sliders.calY.addEventListener('input', onSliderInput);
-    sliders.todayX.addEventListener('input', onSliderInput);
-    sliders.todayY.addEventListener('input', onSliderInput);
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      var open = panel.hidden;
-      panel.hidden = !open;
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-    var closeBtn = document.getElementById(opts.closeBtnId);
-    var resetBtn = document.getElementById(opts.resetBtnId);
-    if (closeBtn) closeBtn.addEventListener('click', function(){
-      panel.hidden = true;
-      btn.setAttribute('aria-expanded', 'false');
-    });
-    if (resetBtn) resetBtn.addEventListener('click', function(){
-      current = {calX:0,calY:0,todayX:0,todayY:0};
-      syncSliders(current);
-      applyPos(current);
-      savePos(current);
-    });
-    document.addEventListener('click', function(e){
-      if (!panel.hidden && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)){
-        panel.hidden = true;
-        btn.setAttribute('aria-expanded', 'false');
-      }
-    });
-    return {
-      btn: btn, panel: panel,
-      matchesBreakpoint: opts.matchesBreakpoint,
-      applyPos: function(){ applyPos(current); }
-    };
+    if (!calIcon || !todayIcon) return;
+    calIcon.style.transform = 'translate(' + MOBILE_ICON_POS.calX + 'px, ' + MOBILE_ICON_POS.calY + 'px)';
+    todayIcon.style.transform = 'translate(' + MOBILE_ICON_POS.todayX + 'px, ' + MOBILE_ICON_POS.todayY + 'px)';
   }
-  var posAdjustMobile = createIconPosAdjust({
-    posKey: 'essentiapath_dateIconPos_mobile_v1',
-    matchesBreakpoint: function(){ return window.innerWidth < 640; },
-    btnId: 'dateIconPosBtnMobile', panelId: 'dateIconPosPanelMobile',
-    sliderIds: {calX:'posCalXM', calY:'posCalYM', todayX:'posTodayXM', todayY:'posTodayYM'},
-    valIds: {calX:'posCalXMVal', calY:'posCalYMVal', todayX:'posTodayXMVal', todayY:'posTodayYMVal'},
-    resetBtnId: 'posAdjustResetMobile', closeBtnId: 'posAdjustCloseMobile'
-  });
+  applyMobileIconPos();
   window.addEventListener('resize', function(){
-    // applyDesktopIconPos() cuma menulis transform kalau lebar layar
-    // sekarang desktop; posAdjustMobile.applyPos() cuma menulis kalau
-    // lebar layar sekarang HP — jadi urutan panggil di sini tidak masalah,
-    // tidak ada yang saling menimpa nilai yang benar untuk lebar saat ini.
+    // Masing-masing fungsi cuma menulis transform kalau lebar layar
+    // sekarang cocok dengan breakpoint-nya sendiri, jadi urutan panggil
+    // di sini tidak masalah — tidak ada yang saling menimpa nilai yang
+    // benar untuk lebar layar saat ini.
     applyDesktopIconPos();
-    if (posAdjustMobile){
-      posAdjustMobile.applyPos();
-      if (!posAdjustMobile.matchesBreakpoint() && !posAdjustMobile.panel.hidden){
-        posAdjustMobile.panel.hidden = true;
-        posAdjustMobile.btn.setAttribute('aria-expanded', 'false');
-      }
-    }
+    applyMobileIconPos();
   });
   var selectedCat = '';
   function openCatDropdown(){
