@@ -4593,9 +4593,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   // Persentase ketercapaian to-do untuk tanggal yang sedang ditampilkan di
   // "Mendatang" (default hari ini). Dihitung dari kemunculan pengingat pada
-  // tanggal itu — sama dengan isi daftar (ikut filter kategori aktif): yang
-  // sudah tercentang / checklist-nya lengkap dihitung selesai. Chip
-  // disembunyikan kalau tidak ada to-do pada tanggal tersebut.
+  // tanggal itu — sama dengan isi daftar (ikut filter kategori aktif).
+  // PENTING: dihitung per CENTANG, bukan per kemunculan — kalau sebuah
+  // kemunculan punya sub-checklist ("anak centang"), tiap baris checklist-nya
+  // ikut dihitung satu-satu (total & yang sudah tercentang), bukan cuma
+  // dihitung 1 kemunculan "selesai/belum" saja. Kemunculan tanpa checklist
+  // tetap dihitung 1 centang seperti biasa (tercentang / belum). Ini supaya
+  // persentase mencerminkan proporsi centang yang benar-benar sudah selesai,
+  // bukan cuma proporsi kemunculan yang checklist-nya 100% lengkap. Chip
+  // disembunyikan kalau tidak ada to-do (dan tidak ada centang sama sekali)
+  // pada tanggal tersebut.
   var upcomingProgressEl = document.getElementById('upcomingProgress');
   var upcomingProgressBar = document.getElementById('upcomingProgressBar');
   var upcomingProgressText = document.getElementById('upcomingProgressText');
@@ -4603,10 +4610,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function updateUpcomingProgress(){
     if (!upcomingProgressEl) return;
     var items = itemsForDate(upcomingStartDate);
-    var total = items.length;
+    var total = 0, done = 0;
+    items.forEach(function(it){
+      var checklist = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
+      if (checklist.length){
+        total += checklist.length;
+        checklist.forEach(function(ci){ if (ci.checked) done++; });
+      } else {
+        total += 1;
+        if (isOccurrenceDone(it)) done++;
+      }
+    });
     if (!total){ upcomingProgressEl.hidden = true; return; }
-    var done = 0;
-    items.forEach(function(it){ if (isOccurrenceDone(it)) done++; });
     var pct = Math.round(done / total * 100);
     upcomingProgressEl.hidden = false;
     upcomingProgressEl.classList.toggle('is-complete', done === total);
@@ -4616,7 +4631,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       upcomingProgressBar.style.strokeDashoffset = UP_PROGRESS_CIRC * (1 - done / total);
     }
     var when = isUpcomingStartToday() ? 'hari ini' : 'tanggal ' + formatDMY(upcomingStartDate);
-    var label = 'Ketercapaian ' + when + ': ' + done + ' dari ' + total + ' selesai (' + pct + '%)';
+    var label = 'Ketercapaian ' + when + ': ' + done + ' dari ' + total + ' centang selesai (' + pct + '%)';
     upcomingProgressEl.setAttribute('aria-label', label);
     upcomingProgressEl.title = label;
   }
