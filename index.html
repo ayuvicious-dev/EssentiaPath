@@ -649,6 +649,12 @@
   .notes-plain-item.editing{background:var(--surface); cursor:default;}
   .notes-plain-marker{flex:none; color:var(--moss-deep); font-variant-numeric:tabular-nums;}
   .notes-plain-text{word-break:break-word; flex:1 1 auto; min-width:0;}
+  /* Baris "judul" (❖) dipakai sebagai heading kecil di dalam Catatan — teks
+     ditebalkan, ukurannya dibesarkan di atas ukuran normal baris catatan
+     lain, dan warnanya dipertegas supaya menonjol dari baris bullet/teks
+     biasa di sekitarnya. */
+  .notes-plain-item.is-judul .notes-plain-text{font-weight:700; font-size:1.15em; color:var(--ink);}
+  .notes-plain-item.is-judul .notes-plain-marker{color:var(--amber); font-size:1.15em;}
   .notes-line-add-btn{
     flex:none; width:15px; height:15px; border-radius:50%; border:1px solid var(--line);
     background:var(--paper-raised); color:var(--ink-soft); font-size:0.62rem; line-height:1; padding:0;
@@ -1198,7 +1204,7 @@
     background:var(--paper-raised); color:var(--ink-soft); font-size:0.74rem; font-weight:700;
     padding:0.3rem 0.6rem; cursor:pointer; line-height:1; flex:none; white-space:nowrap;
   }
-  .notes-fmt-btn svg{width:13px; height:13px; flex:none;}
+  .notes-fmt-btn svg{width:15px; height:15px; flex:none;}
   .notes-fmt-btn:hover{border-color:var(--moss);}
   .notes-fmt-btn.active{border-color:var(--moss); background:var(--selected-bg); color:var(--moss-deep);}
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
@@ -2059,10 +2065,20 @@
             <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="17" height="17" rx="4" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <button type="button" class="notes-fmt-btn" data-fmt="number" aria-label="List angka" title="List angka">
-            <svg viewBox="0 0 24 24" fill="none"><text x="1.5" y="8" font-size="7.5" font-weight="700" fill="currentColor" font-family="inherit">1</text><text x="1.5" y="14.5" font-size="7.5" font-weight="700" fill="currentColor" font-family="inherit">2</text><text x="1.5" y="21" font-size="7.5" font-weight="700" fill="currentColor" font-family="inherit">3</text><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 24 24" fill="none"><text x="12" y="17.5" font-size="15" font-weight="800" fill="currentColor" font-family="inherit" text-anchor="middle">1.</text></svg>
           </button>
           <button type="button" class="notes-fmt-btn" data-fmt="bullet" aria-label="List bullet" title="List bullet">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="4.5" cy="6" r="1.7" fill="currentColor"/><circle cx="4.5" cy="12" r="1.7" fill="currentColor"/><circle cx="4.5" cy="18" r="1.7" fill="currentColor"/><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5.5" fill="currentColor"/></svg>
+          </button>
+          <button type="button" class="notes-fmt-btn" data-fmt="judul" aria-label="List judul" title="List judul">
+            <svg viewBox="0 0 24 24" fill="none">
+              <g fill="currentColor">
+                <rect x="9" y="4" width="6" height="6" transform="rotate(45 12 7)"/>
+                <rect x="14" y="9" width="6" height="6" transform="rotate(45 17 12)"/>
+                <rect x="9" y="14" width="6" height="6" transform="rotate(45 12 17)"/>
+                <rect x="4" y="9" width="6" height="6" transform="rotate(45 7 12)"/>
+              </g>
+            </svg>
           </button>
           <button type="button" class="notes-fmt-btn" data-fmt="table" aria-label="Tabel" title="Tabel">
             <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M3 16h18M9.5 4v16" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -4062,6 +4078,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var info = lineMarkerInfo(line);
       if (info.type === 'bullet'){
         out.push({ type:'bullet', text: line.slice(info.markerLen) });
+      } else if (info.type === 'judul'){
+        out.push({ type:'judul', text: line.slice(info.markerLen) });
       } else if (info.type === 'number'){
         out.push({ type:'number', text: line.slice(info.markerLen), num: info.num });
       }
@@ -4073,8 +4091,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!items.length) return '';
     return '<ul class="notes-plain-list">' +
       items.map(function(it){
-        var marker = it.type === 'number' ? (it.num + '.') : '\u2022';
-        return '<li class="notes-plain-item">' +
+        var marker = it.type === 'number' ? (it.num + '.') : (it.type === 'judul' ? '\u2756' : '\u2022');
+        return '<li class="notes-plain-item'+(it.type==='judul'?' is-judul':'')+'">' +
           '<span class="notes-plain-marker">'+escapeHTML(marker)+'</span>' +
           '<span class="notes-plain-text">'+escapeHTML(it.text)+'</span>' +
         '</li>';
@@ -4133,6 +4151,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var info = lineMarkerInfo(line);
       if (info.type === 'bullet'){
         pushToBlock('list', { idx: idx, type:'bullet', text: line.slice(info.markerLen) });
+      } else if (info.type === 'judul'){
+        pushToBlock('list', { idx: idx, type:'judul', text: line.slice(info.markerLen) });
       } else if (info.type === 'number'){
         pushToBlock('list', { idx: idx, type:'number', text: line.slice(info.markerLen), num: info.num });
       } else if (info.type === 'table'){
@@ -4180,8 +4200,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (b.type === 'list'){
         return '<ul class="notes-plain-list">' +
           b.items.map(function(it){
-            var marker = it.type === 'number' ? (it.num + '.') : '\u2022';
-            return '<li class="notes-plain-item" data-line="'+it.idx+'" title="Ketuk untuk mengedit baris ini">' +
+            var marker = it.type === 'number' ? (it.num + '.') : (it.type === 'judul' ? '\u2756' : '\u2022');
+            return '<li class="notes-plain-item'+(it.type==='judul'?' is-judul':'')+'" data-line="'+it.idx+'" title="Ketuk untuk mengedit baris ini">' +
               '<span class="notes-plain-marker">'+escapeHTML(marker)+'</span>' +
               '<span class="notes-plain-text">'+escapeHTML(it.text)+'</span>' +
               '<button type="button" class="notes-line-add-btn" tabindex="-1" aria-hidden="true">✎</button>' +
@@ -4605,14 +4625,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(listEl.querySelectorAll('.up-check'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
-        var id = btn.getAttribute('data-id');
-        var date = btn.getAttribute('data-date');
-        var time = btn.getAttribute('data-time');
-        if (btn.getAttribute('data-has-checklist') === '1'){
-          onChecklistToggleAll(id, { type:'current', date: date, time: time });
-        } else {
-          toggleCompletion(id, date, time);
-        }
+        guardedToggle(btn, function(){
+          var id = btn.getAttribute('data-id');
+          var date = btn.getAttribute('data-date');
+          var time = btn.getAttribute('data-time');
+          if (btn.getAttribute('data-has-checklist') === '1'){
+            onChecklistToggleAll(id, { type:'current', date: date, time: time });
+          } else {
+            toggleCompletion(id, date, time);
+          }
+        });
       });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.edit-up'), function(btn){
@@ -6034,7 +6056,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var fNotesEl = document.getElementById('fNotes');
   var notesToolbar = document.getElementById('notesToolbar');
   var notesFmtBtns = notesToolbar ? Array.prototype.slice.call(notesToolbar.querySelectorAll('.notes-fmt-btn')) : [];
-  var NOTES_MARK = { check:CHECK_UNCHECKED, bullet:'\u2022 ' };
+  var NOTES_MARK = { check:CHECK_UNCHECKED, bullet:'\u2022 ', judul:'\u2756 ' };
   var notesFmtMode = 'none';
 
   function setNotesFmtMode(mode){
@@ -6060,12 +6082,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (line.indexOf(CHECK_UNCHECKED) === 0) return { type:'check', markerLen: CHECK_UNCHECKED.length };
     if (line.indexOf(CHECK_CHECKED) === 0) return { type:'check', markerLen: CHECK_CHECKED.length };
     if (line.indexOf(NOTES_MARK.bullet) === 0) return { type:'bullet', markerLen: NOTES_MARK.bullet.length };
+    if (line.indexOf(NOTES_MARK.judul) === 0) return { type:'judul', markerLen: NOTES_MARK.judul.length };
     if (isTableRow(line)) return { type:'table', markerLen: 0 };
     return { type:'none', markerLen: 0 };
   }
   function markerFor(type, num){
     if (type==='check') return NOTES_MARK.check;
     if (type==='bullet') return NOTES_MARK.bullet;
+    if (type==='judul') return NOTES_MARK.judul;
     if (type==='number') return num + '. ';
     return '';
   }
