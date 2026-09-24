@@ -413,6 +413,13 @@
   .up-title-nav{display:flex; align-items:center; gap:0.15rem; min-width:0;}
   .up-title-nav h2{white-space:nowrap;}
   .up-title-nav-btn{flex:none;}
+  /* Perbaikan: SVG panah "Hari sebelumnya/berikutnya" tidak punya width/height
+     eksplisit, jadi mengikuti ukuran default browser (300x150) yang jauh lebih
+     besar dari tombol 24x24-nya — akibatnya sebagian besar area SVG jatuh di
+     luar tombol dan (di HP) terpotong oleh overflow-x:hidden pada <html>,
+     sehingga panahnya jadi tidak kelihatan sama sekali walau tombolnya (area
+     klik yang kebesaran itu) masih bisa dipencet dan tetap memindah periode. */
+  .up-title-nav-btn svg{width:16px; height:16px;}
   .up-date-control{display:flex; align-items:center; gap:0.3rem;}
   .up-date-wrap{position:relative; display:inline-flex; align-items:center;}
   .up-date-control input[type="date"]{
@@ -622,8 +629,10 @@
   /* Tombol salin catatan di baris ikon aksi (bintang prioritas + pensil
      ubah), sengaja diletakkan di situ (bukan dekat tombol centang) supaya
      tidak rawan tersentuh tidak sengaja saat menandai selesai. */
-  .flex-copy svg{width:13px; height:13px;}
-  .flex-copy.copied{color:var(--moss-deep);}
+  .flex-copy svg, .up-copy svg{width:13px; height:13px;}
+  .flex-copy.copied, .up-copy.copied{color:var(--moss-deep);}
+  .recurring-history-item{cursor:pointer;}
+  .recurring-history-item:hover, .recurring-history-item:active{background:var(--line-soft);}
   /* Tombol centang di daftar "Mendatang" dibuat lebih kecil daripada di
      "Fleksibel" — area sentuh tetap diperlebar lewat ::before supaya masih
      mudah disentuh di HP. */
@@ -1814,8 +1823,24 @@
       </div>
     </div>
     <div class="settings-block">
+      <h2>Riwayat Berulang</h2>
+      <p class="hint">Rekap semua pengingat berulang. Ketuk salah satu untuk melihat rincian &amp; catatannya.</p>
+      <div class="search-box" id="recurringHistorySearchBox" style="margin-bottom:0.7rem;">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="text" id="recurringHistorySearchInput" placeholder="" autocomplete="off">
+        <button type="button" class="search-clear" id="recurringHistorySearchClear" aria-label="Hapus pencarian">✕</button>
+      </div>
+      <ul class="upcoming-list recurring-history-list" id="recurringHistoryList"></ul>
+      <div class="upgrade-pagination" id="recurringHistoryPagination" hidden>
+        <button type="button" id="recurringHistoryPrev">‹ Sebelumnya</button>
+        <span class="page-info" id="recurringHistoryPageInfo"></span>
+        <button type="button" id="recurringHistoryNext">Setelahnya ›</button>
+      </div>
+    </div>
+    <div class="settings-block">
       <h2>Kategori</h2>
       <p class="hint">Ketuk kategori untuk menampilkan/menyembunyikannya di kalender dan daftar. Gunakan ✎ untuk mengubah, 🗑 untuk menghapus.</p>
+
       <div class="search-box" id="catSearchBox" style="margin-bottom:0.7rem;">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <input type="text" id="catSearchInput" placeholder="Cari kategori…" autocomplete="off">
@@ -2155,6 +2180,24 @@
         <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Recurring history detail: rincian pengingat berulang + catatannya -->
+<div class="overlay day-panel" id="recurringDetailOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="recurringDetailTitle">
+    <div class="modal-head">
+      <h2 id="recurringDetailTitle">Pengingat</h2>
+      <button type="button" class="modal-close" id="recurringDetailClose" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="hint" id="recurringDetailMeta" style="margin:-0.3rem 0 0.7rem;"></p>
+    <div class="day-panel-list" id="recurringDetailBody"></div>
+    <div class="modal-actions">
+      <div style="flex:1;"></div>
+      <button type="button" class="btn btn-ghost" id="closeRecurringDetail">Tutup</button>
+    </div>
   </div>
 </div>
 
@@ -4734,6 +4777,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '</div>' +
       '<div class="acts">' +
         '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
+        '<button type="button" class="icon-btn up-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '</button>' +
       '</div></li>';
   }
   function bindUpcomingItemEvents(listEl){
@@ -4756,6 +4802,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       btn.addEventListener('click', function(e){
         e.stopPropagation();
         openEditForm(btn.getAttribute('data-id'), null, btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+      });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.up-copy'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
+        if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
       });
     });
     // Judul & catatan bisa diedit langsung di kartu (tanpa membuka form):
@@ -4988,6 +5041,129 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var totalPages = Math.max(1, Math.ceil(filteredCount / RECENT_ADDED_PAGE_SIZE));
       if (recentAddedPage < totalPages - 1){ recentAddedPage++; renderRecentAdded(); }
     });
+  }
+
+  // ---------- Riwayat Berulang (Pengaturan, di bawah "Riwayat") ----------
+  // Rekap semua pengingat berulang (repeat !== 'none'), bisa dicari lewat
+  // judul. Ketuk salah satu baris untuk membuka pop up rincian (kategori +
+  // jadwal pengulangan + isi catatan lengkap) — read-only, bukan form edit,
+  // supaya cepat dipakai sekadar untuk mengecek riwayat/rincian transaksi
+  // berulang tanpa risiko tidak sengaja mengubah datanya.
+  var recurringHistoryList = document.getElementById('recurringHistoryList');
+  var recurringHistoryPaginationEl = document.getElementById('recurringHistoryPagination');
+  var recurringHistoryPageInfoEl = document.getElementById('recurringHistoryPageInfo');
+  var recurringHistoryPrevBtn = document.getElementById('recurringHistoryPrev');
+  var recurringHistoryNextBtn = document.getElementById('recurringHistoryNext');
+  var recurringHistoryPage = 0;
+  var RECURRING_HISTORY_PAGE_SIZE = 5;
+  var recurringHistorySearchQuery = '';
+  var recurringHistorySearchInput = document.getElementById('recurringHistorySearchInput');
+  var recurringHistorySearchBox = document.getElementById('recurringHistorySearchBox');
+  var recurringHistorySearchClear = document.getElementById('recurringHistorySearchClear');
+  if (recurringHistorySearchInput){
+    recurringHistorySearchInput.addEventListener('input', function(){
+      recurringHistorySearchQuery = recurringHistorySearchInput.value.trim().toLowerCase();
+      recurringHistorySearchBox.classList.toggle('has-value', recurringHistorySearchQuery.length > 0);
+      recurringHistoryPage = 0;
+      renderRecurringHistory();
+    });
+  }
+  if (recurringHistorySearchClear){
+    recurringHistorySearchClear.addEventListener('click', function(){
+      recurringHistorySearchInput.value = '';
+      recurringHistorySearchQuery = '';
+      recurringHistorySearchBox.classList.remove('has-value');
+      recurringHistoryPage = 0;
+      renderRecurringHistory();
+      recurringHistorySearchInput.focus();
+    });
+  }
+  function getRecurringReminders(){
+    return state.reminders.filter(function(r){ return r.repeat && r.repeat !== 'none'; });
+  }
+  function recurringHistoryFilteredList(){
+    var list = getRecurringReminders().slice().sort(function(a, b){
+      return (a.title || '').toLowerCase().localeCompare((b.title || '').toLowerCase());
+    });
+    if (recurringHistorySearchQuery){
+      list = list.filter(function(r){ return (r.title || '').toLowerCase().indexOf(recurringHistorySearchQuery) !== -1; });
+    }
+    return list;
+  }
+  function renderRecurringHistory(){
+    if (!recurringHistoryList) return;
+    var filtered = recurringHistoryFilteredList();
+    var total = filtered.length;
+    if (total === 0){
+      recurringHistoryList.innerHTML = recurringHistorySearchQuery
+        ? '<div class="empty-state">Tidak ada pengingat berulang yang cocok dengan "' + escapeHTML(recurringHistorySearchInput.value.trim()) + '".</div>'
+        : '<div class="empty-state">Belum ada pengingat berulang.</div>';
+      recurringHistoryPaginationEl.hidden = true;
+      return;
+    }
+    var totalPages = Math.max(1, Math.ceil(total / RECURRING_HISTORY_PAGE_SIZE));
+    if (recurringHistoryPage >= totalPages) recurringHistoryPage = totalPages - 1;
+    if (recurringHistoryPage < 0) recurringHistoryPage = 0;
+    var start = recurringHistoryPage * RECURRING_HISTORY_PAGE_SIZE;
+    var pageItems = filtered.slice(start, start + RECURRING_HISTORY_PAGE_SIZE);
+
+    recurringHistoryList.innerHTML = pageItems.map(function(r){
+      var c = catInfo(r.category);
+      var meta = c.label + ' · ' + repeatLabel(r);
+      return '<li class="up-item recurring-history-item" data-id="' + r.id + '">' +
+        '<div class="body"><div class="title">' + titleWithLinkHTML(r.title, r.link) + '</div>' +
+        '<div class="meta">' + meta + '</div></div>' +
+      '</li>';
+    }).join('');
+
+    recurringHistoryPaginationEl.hidden = total <= RECURRING_HISTORY_PAGE_SIZE;
+    recurringHistoryPageInfoEl.textContent = 'Halaman ' + (recurringHistoryPage + 1) + ' dari ' + totalPages;
+    recurringHistoryPrevBtn.disabled = recurringHistoryPage <= 0;
+    recurringHistoryNextBtn.disabled = recurringHistoryPage >= totalPages - 1;
+
+    Array.prototype.forEach.call(recurringHistoryList.querySelectorAll('.recurring-history-item'), function(li){
+      li.addEventListener('click', function(){
+        openRecurringDetail(li.getAttribute('data-id'));
+      });
+    });
+  }
+  if (recurringHistoryPrevBtn){
+    recurringHistoryPrevBtn.addEventListener('click', function(){
+      if (recurringHistoryPage > 0){ recurringHistoryPage--; renderRecurringHistory(); }
+    });
+  }
+  if (recurringHistoryNextBtn){
+    recurringHistoryNextBtn.addEventListener('click', function(){
+      var filteredCount = recurringHistoryFilteredList().length;
+      var totalPages = Math.max(1, Math.ceil(filteredCount / RECURRING_HISTORY_PAGE_SIZE));
+      if (recurringHistoryPage < totalPages - 1){ recurringHistoryPage++; renderRecurringHistory(); }
+    });
+  }
+
+  // Pop up rincian: judul, kategori, jadwal pengulangan, dan seluruh isi
+  // catatan (checklist/list/tabel/teks bebas) apa adanya — ditampilkan
+  // read-only (tidak dipasangi bindChecklistClicks/bindNotesListEdit dkk.)
+  // supaya cuma untuk dilihat/dicek, bukan diedit dari sini.
+  var recurringDetailOverlay = document.getElementById('recurringDetailOverlay');
+  var recurringDetailBody = document.getElementById('recurringDetailBody');
+  function openRecurringDetail(id){
+    var r = state.reminders.find(function(x){ return x.id === id; });
+    if (!r || !recurringDetailOverlay) return;
+    document.getElementById('recurringDetailTitle').textContent = r.title || '(Tanpa judul)';
+    var c = catInfo(r.category);
+    var jadwal = r.flexible ? 'Fleksibel' : ((r.time || '--:--') + ' · ' + repeatLabel(r));
+    document.getElementById('recurringDetailMeta').textContent = c.label + ' · ' + jadwal;
+    var notesHTML = renderNotesOrderedHTML(r.notes);
+    recurringDetailBody.innerHTML = notesHTML && notesHTML.trim()
+      ? notesHTML
+      : '<div class="empty-state">Belum ada catatan.</div>';
+    recurringDetailOverlay.hidden = false;
+  }
+  function closeRecurringDetail(){ recurringDetailOverlay.hidden = true; }
+  if (recurringDetailOverlay){
+    document.getElementById('recurringDetailClose').addEventListener('click', closeRecurringDetail);
+    document.getElementById('closeRecurringDetail').addEventListener('click', closeRecurringDetail);
+    recurringDetailOverlay.addEventListener('click', function(e){ if (e.target===recurringDetailOverlay) closeRecurringDetail(); });
   }
 
   // ---------- Missed (overdue) occurrences → tab "Terlewat" ----------
@@ -7611,6 +7787,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderCategorySettings();
     renderUpcoming();
     renderRecentAdded();
+    renderRecurringHistory();
     renderFlexible();
   }
   renderAll();
