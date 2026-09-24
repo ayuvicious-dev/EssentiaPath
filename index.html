@@ -480,6 +480,9 @@
   .up-item .acts{display:flex; gap:0.3rem; flex:none;}
   .up-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
   .up-item.done .flex-check svg{opacity:1;}
+  /* Induk (judul) sudah dicentang, tapi belum semua anak centang -> belum "selesai". */
+  .up-item.parent-checked .flex-check{background:var(--moss); border-color:var(--moss);}
+  .up-item.parent-checked .flex-check svg{opacity:1;}
   .recent-added-list{max-height:none; overflow:visible;}
   .recent-added-list .up-item .meta{font-style:normal;}
   #recentAddedPagination{margin:0 0.6rem 0.9rem;}
@@ -626,6 +629,8 @@
   .flex-check svg{width:15px; height:15px; opacity:0; transition:opacity 0.1s ease;}
   .flex-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
   .flex-item.done .flex-check svg{opacity:1;}
+  .flex-item.parent-checked .flex-check{background:var(--moss); border-color:var(--moss);}
+  .flex-item.parent-checked .flex-check svg{opacity:1;}
   /* Tombol salin catatan di baris ikon aksi (bintang prioritas + pensil
      ubah), sengaja diletakkan di situ (bukan dekat tombol centang) supaya
      tidak rawan tersentuh tidak sengaja saat menandai selesai. */
@@ -3503,15 +3508,46 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
   // Status "selesai" satu kemunculan (reminder + tanggal + jam): kalau
-  // pengingatnya punya sub-checklist, selesai berarti semua item checklist
-  // tercentang UNTUK TANGGAL kemunculan itu; kalau tidak, pakai status
-  // centang per-kemunculan biasa. Dipakai bersama oleh panel "Saat Ini",
-  // "Lewat", dan "Mendatang" supaya ketiganya selalu sinkron.
+  // pengingatnya punya sub-checklist, selesai berarti SEMUA item checklist
+  // (anak) tercentang UNTUK TANGGAL kemunculan itu DAN centang judul
+  // (induk) juga sudah dicentang; kalau tidak punya sub-checklist, pakai
+  // status centang per-kemunculan biasa. Dipakai bersama oleh panel
+  // "Saat Ini", "Lewat", dan "Mendatang" supaya ketiganya selalu sinkron.
+  //
+  // Centang induk disimpan di state.completions (sama seperti pengingat
+  // biasa) dan berdiri sendiri: mencentang semua anak TIDAK otomatis
+  // mencentang induk, begitu pula sebaliknya.
+  //
+  // Kemunculan bertanggal SEBELUM PARENT_CHECK_START tetap memakai aturan
+  // lama (cukup semua anak tercentang) supaya kemunculan kemarin yang
+  // sudah selesai tidak mendadak muncul lagi di "Terlewat".
+  var PARENT_CHECK_START = '2026-09-24';
+  function parentCheckRequired(dateStr){ return !!dateStr && dateStr >= PARENT_CHECK_START; }
+  function occurrenceParentChecked(reminderId, dateStr, time){
+    return !!state.completions[completionKey(reminderId, dateStr, time)];
+  }
   function isOccurrenceDone(it){
     var items = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
-    if (items.length) return checklistAllChecked(items);
+    if (items.length){
+      if (!checklistAllChecked(items)) return false;
+      if (!parentCheckRequired(it.date)) return true;
+      return occurrenceParentChecked(it.reminder.id, it.date, it.time);
+    }
     var key = completionKey(it.reminder.id, it.date, it.time);
     return !!state.completions[key];
+  }
+  // Induk sudah dicentang tapi anak belum lengkap (untuk tampilan kotak
+  // centang judul saja; belum dianggap selesai).
+  function occurrenceParentTicked(it, hasChecklist){
+    return hasChecklist && parentCheckRequired(it.date) && occurrenceParentChecked(it.reminder.id, it.date, it.time);
+  }
+  // Klik kotak centang judul pada kemunculan bertanggal.
+  function onOccurrenceParentClick(id, date, time, hasChecklist, type){
+    if (hasChecklist && !parentCheckRequired(date)){
+      onChecklistToggleAll(id, { type:type, date:date, time:time }); // data lama: perilaku lama
+    } else {
+      toggleCompletion(id, date, time); // hanya induk; anak tidak ikut berubah
+    }
   }
   // Dipakai HANYA untuk item Fleksibel (tidak berulang per-tanggal): status
   // centangnya masih ditulis langsung ke dalam `notes`, sama seperti
@@ -3560,9 +3596,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var idx = state.reminders.findIndex(function(x){ return x.id===reminderId; });
     if (idx === -1) return;
     var r = state.reminders[idx];
-    var allChecked = checklistAllChecked(checklistLines(updatedNotes));
     var updated = Object.assign({}, r, { notes: updatedNotes });
-    if (ctx.type === 'flex') updated.done = allChecked;
+    // Status selesai Fleksibel (r.done, centang judul) berdiri sendiri; tidak
+    // lagi otomatis ikut berubah ketika semua anak dicentang.
     // PENTING: perbarui state.reminders di sini juga (bukan cuma kirim ke
     // cloud), supaya render berikutnya langsung memakai notes yang sudah
     // dicentang — bukan salinan lama yang masih menunggu Firestore
@@ -4730,6 +4766,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (checklist.length){
         total += checklist.length;
         checklist.forEach(function(ci){ if (ci.checked) done++; });
+        if (parentCheckRequired(it.date)){
+          total += 1; // centang judul (induk) ikut dihitung
+          if (occurrenceParentChecked(it.reminder.id, it.date, it.time)) done++;
+        }
       } else {
         total += 1;
         if (isOccurrenceDone(it)) done++;
@@ -4767,7 +4807,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
       : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
     var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
-    return '<li class="up-item up-editable'+(isDone?' done':'')+(isOngoing?' ongoing':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
+    return '<li class="up-item up-editable'+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
       '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
@@ -4790,11 +4830,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           var id = btn.getAttribute('data-id');
           var date = btn.getAttribute('data-date');
           var time = btn.getAttribute('data-time');
-          if (btn.getAttribute('data-has-checklist') === '1'){
-            onChecklistToggleAll(id, { type:'current', date: date, time: time });
-          } else {
-            toggleCompletion(id, date, time);
-          }
+          onOccurrenceParentClick(id, date, time, btn.getAttribute('data-has-checklist') === '1', 'current');
         });
       });
     });
@@ -5443,7 +5479,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function flexItemIsDone(r){
     var checklistItemsR = checklistLines(r.notes);
     var hasChecklistR = checklistItemsR.length > 0;
-    return hasChecklistR ? checklistAllChecked(checklistItemsR) : !!r.done;
+    // Dengan sub-checklist: selesai = semua anak tercentang DAN judul (r.done) tercentang.
+    return hasChecklistR ? (checklistAllChecked(checklistItemsR) && !!r.done) : !!r.done;
   }
 
   function flexItemHtml(r){
@@ -5458,7 +5495,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // Baris meta sekarang cukup nama kategori saja; isi catatan penuh
     // (checklist / list / teks bebas) hanya muncul sekali, dari
     // renderNotesOrderedHTML di bawah.
-    return '<li class="flex-item'+(doneR?' done':'')+(r.priority?' priority-item':'')+(r.priority && r.pinned?' pinned-item':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
+    return '<li class="flex-item'+(doneR?' done':'')+(!doneR && hasChecklistR && r.done?' parent-checked':'')+(r.priority?' priority-item':'')+(r.priority && r.pinned?' pinned-item':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
       '<button type="button" class="flex-check" data-id="'+r.id+'" data-has-checklist="'+(hasChecklistR?'1':'0')+'" aria-label="Tandai selesai">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
@@ -5558,11 +5595,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-check'), function(btn){
       btn.addEventListener('click', function(){
         guardedToggle(btn, function(){
-          if (btn.getAttribute('data-has-checklist') === '1'){
-            onChecklistToggleAll(btn.getAttribute('data-id'), { type:'flex' });
-          } else {
-            toggleFlexDone(btn.getAttribute('data-id'));
-          }
+          toggleFlexDone(btn.getAttribute('data-id'));
         });
       });
     });
@@ -5754,8 +5787,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var dtLabel = dayLabel(parseISODate(it.date));
         var checklistItemsM = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
         var hasChecklistM = checklistItemsM.length > 0;
-        var doneM = hasChecklistM && checklistAllChecked(checklistItemsM);
-        return '<li class="flex-item missed-item'+(doneM?' done':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
+        var doneM = isOccurrenceDone(it);
+        var parentM = !doneM && occurrenceParentTicked(it, hasChecklistM);
+        return '<li class="flex-item missed-item'+(doneM?' done':'')+(parentM?' parent-checked':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
           '<button type="button" class="flex-check missed-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistM?'1':'0')+'" aria-label="Tandai selesai">' +
             '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</button>' +
@@ -5773,11 +5807,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.missed-check'), function(btn){
         btn.addEventListener('click', function(){
           guardedToggle(btn, function(){
-            if (btn.getAttribute('data-has-checklist') === '1'){
-              onChecklistToggleAll(btn.getAttribute('data-id'), { type:'missed', date: btn.getAttribute('data-date'), time: btn.getAttribute('data-time') });
-            } else {
-              toggleCompletion(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
-            }
+            onOccurrenceParentClick(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'), btn.getAttribute('data-has-checklist') === '1', 'missed');
           });
         });
       });
@@ -6917,9 +6947,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!r) return;
     closeForm();
     var items = checklistItemsForDate(r.notes, r.id, occ.date);
-    if (items.length){
+    if (items.length && !parentCheckRequired(occ.date)){
       setAllChecklistProgress(r.id, occ.date, items.map(function(it){ return it.idx; }), false);
     } else {
+      // Batalkan centang judul saja (progres anak dipertahankan).
       setCompletion(r.id, occ.date, occ.time, false);
     }
     showToast('Dikembalikan ke "Saat Ini"');
@@ -6952,7 +6983,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var expanded = !!dayPanelExpanded[key];
       var isDone = isOccurrenceDone(it);
       var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
-      return '<div class="up-item dp-item'+(isDone?' done':'')+'" data-key="'+escapeHTML(key)+'" data-checklist-owner="'+it.reminder.id+'" data-date="'+it.date+'">' +
+      return '<div class="up-item dp-item'+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+'" data-key="'+escapeHTML(key)+'" data-checklist-owner="'+it.reminder.id+'" data-date="'+it.date+'">' +
         '<button type="button" class="flex-check up-check dp-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
@@ -6979,11 +7010,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           var id = btn.getAttribute('data-id');
           var date = btn.getAttribute('data-date');
           var time = btn.getAttribute('data-time');
-          if (btn.getAttribute('data-has-checklist') === '1'){
-            onChecklistToggleAll(id, { type:'current', date: date, time: time });
-          } else {
-            toggleCompletion(id, date, time);
-          }
+          onOccurrenceParentClick(id, date, time, btn.getAttribute('data-has-checklist') === '1', 'current');
         });
       });
     });
