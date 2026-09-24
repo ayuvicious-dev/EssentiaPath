@@ -5191,8 +5191,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+      '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>' +
       '<div class="notes-collapsible">' +
-      '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge +
+      badge +
       renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
       '</div>' +
       '</div>' +
@@ -6213,8 +6214,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</button>' +
           '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
-          '<div class="notes-collapsible">' +
           '<div class="meta">'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
+          '<div class="notes-collapsible">' +
           renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
           '</div>' +
           '</div>' +
