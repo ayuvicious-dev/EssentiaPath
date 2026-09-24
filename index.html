@@ -689,6 +689,7 @@
   }
   .notes-freetext-line{margin:0 0 0.32rem;}
   .notes-freetext-line:last-child{margin-bottom:0;}
+  .notes-freetext-line.is-blank{min-height:0.7rem; margin:0 0 0.32rem;}
   /* Lebar kolom otomatis mengikuti panjang isi selnya (table-layout:auto,
      width:auto): sel berisi kata pendek jadi sempit, sel berisi kalimat
      panjang melebar sampai batas lebar kartu, lalu teksnya turun baris.
@@ -3879,6 +3880,96 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     input.addEventListener('blur', function(){ finish(true); });
     input.addEventListener('click', function(ev){ ev.stopPropagation(); });
   }
+  // ---------- "Enter langsung" pada baris list (judul ❖ / bullet • / angka) ----------
+  // Mengetuk RUANG KOSONG di kanan kata terakhir sebuah baris list = seperti
+  // menekan Enter di akhir baris itu: muncul baris baru di bawahnya (jenis
+  // list yang sama; angka lanjut ke nomor berikutnya) dengan kolom ketik siap
+  // dipakai. Enter lagi menyimpan lalu langsung membuka baris berikutnya;
+  // Enter pada baris kosong (atau Escape) selesai. Mengetuk teksnya sendiri
+  // tetap mengedit baris itu seperti biasa.
+  function clickIsRightOfText(e, textEl){
+    var range = document.createRange();
+    range.selectNodeContents(textEl);
+    var rects = range.getClientRects();
+    if (!rects.length) return false;
+    var last = rects[rects.length - 1];
+    return e.clientX > last.right + 8 && e.clientY >= last.top - 2;
+  }
+  // Menyisipkan SATU baris list baru tepat di bawah baris ke-afterIdx.
+  // Mengembalikan nomor baris baru (atau null kalau gagal).
+  function insertNotesListLineAfter(reminderId, dateStr, afterIdx, text){
+    var lines = tableBaseLines(reminderId, dateStr);
+    if (!lines || afterIdx < 0 || afterIdx >= lines.length) return null;
+    var info = lineMarkerInfo(lines[afterIdx]);
+    if (info.type !== 'bullet' && info.type !== 'judul' && info.type !== 'number') return null;
+    var insertAt = afterIdx + 1;
+    var nextNum = info.type === 'number' ? info.num + 1 : 1;
+    lines.splice(insertAt, 0, markerFor(info.type, nextNum) + text);
+    if (info.type === 'number'){
+      // Nomor di bawahnya (yang berurutan) ikut naik supaya tidak dobel.
+      var n = nextNum;
+      for (var j = insertAt + 1; j < lines.length; j++){
+        var inf = lineMarkerInfo(lines[j]);
+        if (inf.type !== 'number') break;
+        n++;
+        lines[j] = n + '. ' + lines[j].slice(inf.markerLen);
+      }
+    }
+    // Baris di bawah bergeser satu nomor: geser juga status centang checklist
+    // per-tanggal (dikunci dengan nomor baris) supaya tetap menempel ke itemnya.
+    if (dateStr) shiftChecklistProgress(reminderId, dateStr, insertAt);
+    commitTableNotes(reminderId, dateStr, lines, 'Gagal menyimpan baris baru. Coba lagi.');
+    return insertAt;
+  }
+  function openNewListLineEditorAt(reminderId, dateStr, lineIdx){
+    var hosts = document.querySelectorAll('[data-checklist-owner]');
+    for (var i = 0; i < hosts.length; i++){
+      var host = hosts[i];
+      if (host.getAttribute('data-checklist-owner') !== reminderId) continue;
+      if ((host.getAttribute('data-date') || null) !== (dateStr || null)) continue;
+      var li = host.querySelector('.notes-plain-item[data-line="' + lineIdx + '"]');
+      if (li && li.offsetParent !== null){ startNewListLineEditor(li, reminderId, dateStr, lineIdx); return; }
+    }
+  }
+  function startNewListLineEditor(li, reminderId, dateStr, lineIdx){
+    var host = li.closest('[data-checklist-owner]');
+    if (!host || host.querySelector('.notes-newline-row')) return;
+    var lines = tableBaseLines(reminderId, dateStr);
+    if (!lines || lineIdx >= lines.length) return;
+    var info = lineMarkerInfo(lines[lineIdx]);
+    if (info.type !== 'bullet' && info.type !== 'judul' && info.type !== 'number') return;
+    var markerText = info.type === 'number' ? ((info.num + 1) + '.') : (info.type === 'judul' ? '\u2756' : '\u2022');
+    var row = document.createElement('li');
+    row.className = 'notes-plain-item notes-newline-row editing' + (info.type === 'judul' ? ' is-judul' : '');
+    var mk = document.createElement('span');
+    mk.className = 'notes-plain-marker';
+    mk.textContent = markerText;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'notes-line-input';
+    input.setAttribute('aria-label', 'Baris baru');
+    row.appendChild(mk);
+    row.appendChild(input);
+    li.parentNode.insertBefore(row, li.nextSibling);
+    input.focus();
+    var finished = false;
+    function finish(save, keepGoing){
+      if (finished) return;
+      finished = true;
+      var val = input.value.trim();
+      if (row.parentNode) row.parentNode.removeChild(row);
+      if (!save || !val) return;
+      var newIdx = insertNotesListLineAfter(reminderId, dateStr, lineIdx, val);
+      if (newIdx != null && keepGoing) openNewListLineEditorAt(reminderId, dateStr, newIdx);
+    }
+    input.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter'){ ev.preventDefault(); finish(true, true); }
+      else if (ev.key === 'Escape'){ ev.preventDefault(); finish(false, false); }
+    });
+    input.addEventListener('blur', function(){ finish(true, false); });
+    input.addEventListener('click', function(ev){ ev.stopPropagation(); });
+    row.addEventListener('click', function(ev){ ev.stopPropagation(); });
+  }
   function bindNotesListEdit(container){
     Array.prototype.forEach.call(container.querySelectorAll('.notes-plain-item[data-line]'), function(li){
       var textEl = li.querySelector('.notes-plain-text');
@@ -3887,7 +3978,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         e.stopPropagation();
         var host = li.closest('[data-checklist-owner]');
         if (!host) return;
-        startInlineNotesLineEdit(li, textEl, host.getAttribute('data-checklist-owner'), parseInt(li.getAttribute('data-line'), 10), host.getAttribute('data-date'));
+        var ownerId = host.getAttribute('data-checklist-owner');
+        var lineIdx = parseInt(li.getAttribute('data-line'), 10);
+        var dateStr = host.getAttribute('data-date');
+        // Ketuk ruang kosong di kanan kata terakhir -> "Enter langsung" (baris baru).
+        if (!li.classList.contains('editing') && clickIsRightOfText(e, textEl)){
+          startNewListLineEditor(li, ownerId, dateStr || null, lineIdx);
+          return;
+        }
+        startInlineNotesLineEdit(li, textEl, ownerId, lineIdx, dateStr);
       });
     });
   }
@@ -4477,6 +4576,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (last && last.type === type){ last.items.push(item); return; }
       blocks.push({ type: type, items: [item] });
     }
+    // Baris kosong (hasil menekan Enter tanpa mengetik apa pun) ikut
+    // ditampilkan sebagai jarak, jadi 1 Enter di Catatan = 1 baris pemisah di
+    // hasilnya, bukan dibuang. Di dalam blok teks bebas ia jadi baris kosong
+    // (blok tidak terpecah); di antara jenis blok lain ia jadi jarak sendiri.
+    function pushBlankLine(){
+      var last = blocks[blocks.length - 1];
+      if (!last) return; // baris kosong di paling awal diabaikan
+      if (last.type === 'text'){ last.items.push({ blank: true }); return; }
+      if (last.type === 'gap'){ last.count++; return; }
+      blocks.push({ type: 'gap', count: 1, items: [] });
+    }
     lines.forEach(function(line, idx){
       if (Object.prototype.hasOwnProperty.call(checklistByIdx, idx)){
         var chk = checklistByIdx[idx];
@@ -4495,9 +4605,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       } else {
         var trimmed = line.trim();
         if (trimmed) pushToBlock('text', { idx: idx, text: trimmed });
+        else pushBlankLine();
       }
     });
+    // Baris kosong di akhir catatan tidak ditampilkan.
+    while (blocks.length && blocks[blocks.length - 1].type === 'gap') blocks.pop();
+    var lastBlock = blocks[blocks.length - 1];
+    if (lastBlock && lastBlock.type === 'text'){
+      while (lastBlock.items.length && lastBlock.items[lastBlock.items.length - 1].blank) lastBlock.items.pop();
+    }
     return blocks.map(function(b){
+      if (b.type === 'gap'){
+        return '<div class="notes-gap" aria-hidden="true" style="height:'+(b.count * 0.7)+'rem"></div>';
+      }
       if (b.type === 'table'){
         var tblLastIdx = b.items[b.items.length - 1].idx;
         var tblCols = parseTableRow(b.items[0].text).length;
@@ -4545,7 +4665,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         return '<ul class="notes-plain-list">' +
           b.items.map(function(it){
             var marker = it.type === 'number' ? (it.num + '.') : (it.type === 'judul' ? '\u2756' : '\u2022');
-            return '<li class="notes-plain-item'+(it.type==='judul'?' is-judul':'')+'" data-line="'+it.idx+'" title="Ketuk untuk mengedit baris ini">' +
+            return '<li class="notes-plain-item'+(it.type==='judul'?' is-judul':'')+'" data-line="'+it.idx+'" title="Ketuk teks untuk mengedit · ketuk ruang kosong di kanan untuk baris baru">' +
               '<span class="notes-plain-marker">'+escapeHTML(marker)+'</span>' +
               '<span class="notes-plain-text">'+escapeHTML(it.text)+'</span>' +
               '<button type="button" class="notes-line-add-btn" tabindex="-1" aria-hidden="true">✎</button>' +
@@ -4553,7 +4673,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           }).join('') +
         '</ul>';
       }
-      return '<div class="notes-freetext">' + b.items.map(function(it){ return '<div class="notes-freetext-line" data-line="'+it.idx+'"><span class="notes-freetext-text">'+escapeHTML(it.text)+'</span></div>'; }).join('') + '</div>';
+      return '<div class="notes-freetext">' + b.items.map(function(it){ if (it.blank) return '<div class="notes-freetext-line is-blank" aria-hidden="true"></div>'; return '<div class="notes-freetext-line" data-line="'+it.idx+'"><span class="notes-freetext-text">'+escapeHTML(it.text)+'</span></div>'; }).join('') + '</div>';
     }).join('');
   }
 
