@@ -12,9 +12,9 @@
   try{
     var fsRaw = localStorage.getItem('essentiapath.fontSize');
     var fsMap = { small:14, medium:16, large:18 };
-    var fsPx = fsRaw && fsMap[fsRaw] ? fsMap[fsRaw] : (parseInt(fsRaw, 10) || 16);
-    if (fsPx < 13) fsPx = 13;
-    if (fsPx > 20) fsPx = 20;
+    var fsPx = fsRaw && fsMap[fsRaw] ? fsMap[fsRaw] : (parseFloat(fsRaw) || 16);
+    if (fsPx < 12) fsPx = 12;
+    if (fsPx > 24) fsPx = 24;
     document.documentElement.style.setProperty('--user-font-size', fsPx + 'px');
   } catch(e){}
 })();
@@ -100,10 +100,10 @@
     --today-bg:#3A2A18;
     --travel-bg:#1E2E3D;
   }
-  /* Ukuran font aplikasi (Setting → Ukuran Font): mengubah font-size akar
+  /* Ukuran font aplikasi (tombol "Aa" di bilah atas): mengubah font-size akar
      (html), yang otomatis menyesuaikan hampir semua ukuran di aplikasi
      karena nyaris semuanya pakai satuan rem/em relatif terhadap ini.
-     Nilainya kontinu (13–20px) lewat slider, disimpan di --user-font-size. */
+     Nilainya kontinu (12–24px) lewat slider di tombol "Aa" pada bilah atas, disimpan di --user-font-size. */
   :root{ font-size:var(--user-font-size, 16px); }
   *{box-sizing:border-box;}
   html{margin:0;padding:0; overflow-x:hidden; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
@@ -532,7 +532,7 @@
   .toggle-table.active{color:var(--moss-deep); background:var(--line-soft);}
   .flex-item.has-table-btn .title{padding-right:11rem;}
   .table-locked .notes-col-add, .table-locked .notes-col-del,
-  .table-locked .notes-row-del, .table-locked .notes-row-add{display:none;}
+  .table-locked .notes-row-del, .table-locked .notes-row-add, .table-locked .notes-chk-toggle{display:none;}
   .table-locked .notes-plain-table td.notes-cell{cursor:default;}
   .table-locked .notes-plain-table td.notes-cell:hover{background:transparent;}
   .table-locked .notes-plain-table tr:first-child td.notes-cell:hover{background:var(--paper-raised);}
@@ -738,6 +738,22 @@
     border-radius:6px; font:inherit; font-size:0.66rem; padding:0.1rem 0.55rem; cursor:pointer; transition:background 0.12s ease;
   }
   .notes-row-add:hover{background:var(--surface);}
+  .notes-chk-toggle{
+    margin:0.3rem 0 0 0.4rem; border:1px dashed var(--line); background:transparent; color:var(--moss-deep);
+    border-radius:6px; font:inherit; font-size:0.66rem; padding:0.1rem 0.55rem; cursor:pointer; transition:background 0.12s ease;
+  }
+  .notes-chk-toggle:hover{background:var(--surface);}
+  /* Kolom centang per baris (opsional; hanya ada di tabel ber-centang).
+     Tetap bisa diketuk saat tabel terkunci, sama seperti checklist. */
+  .notes-plain-table td.notes-cell-chk{width:1.5rem; min-width:1.5rem; padding:0.15rem 0.3rem; text-align:center; vertical-align:middle; cursor:pointer;}
+  .notes-plain-table tr:first-child td.notes-cell-chk{padding-right:0.3rem; cursor:default;}
+  .notes-row-check{
+    display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:4px;
+    border:1.5px solid var(--line); background:var(--paper-raised); vertical-align:middle;
+  }
+  .notes-row-check svg{width:9px; height:9px;}
+  .notes-row-check.checked{background:var(--moss); border-color:var(--moss);}
+  .notes-plain-table tr.row-checked td.notes-cell .notes-cell-text{text-decoration:line-through; color:var(--ink-soft);}
   .notes-plain-table td.notes-cell{position:relative; cursor:pointer; height:1.7em; min-width:2.5rem; transition:background 0.12s ease;}
   .notes-plain-table td.notes-cell:hover{background:var(--surface);}
   .notes-plain-table td.notes-cell.editing{padding:0.12rem; background:var(--surface); cursor:default;}
@@ -1029,6 +1045,29 @@
     box-shadow:0 1px 4px rgba(0,0,0,0.25); cursor:grab;
   }
   .font-size-slider::-moz-range-thumb:active{cursor:grabbing;}
+
+  /* Popover ukuran font (dari tombol "Aa" di bilah atas). Ukuran pakai px agar
+     tidak ikut berubah ketika root font-size digeser lewat slider-nya sendiri. */
+  .fs-popover{
+    position:fixed; z-index:45; width:250px; max-width:calc(100vw - 16px); box-sizing:border-box;
+    padding:12px 14px 10px; border-radius:14px; background:var(--paper-raised); color:var(--ink);
+    border:1px solid var(--line); box-shadow:var(--shadow, 0 10px 30px -12px rgba(0,0,0,0.35));
+    font-family:var(--font-body); font-size:13px; line-height:1.3;
+  }
+  .fs-popover[hidden]{display:none;}
+  .fs-pop-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px;}
+  .fs-pop-title{font-weight:700; font-size:13px;}
+  .fs-pop-value{font-variant-numeric:tabular-nums; font-weight:700; color:var(--moss-deep); font-size:13px;}
+  .fs-pop-row{display:flex; align-items:center; gap:10px; padding:4px 2px;}
+  .fs-pop-a{color:var(--ink-soft); font-weight:700; flex:none; line-height:1;}
+  .fs-pop-foot{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px;}
+  .fs-pop-hint{font-size:11px; color:var(--ink-soft); line-height:1.3;}
+  .fs-pop-reset{
+    flex:none; border:1px solid var(--line); background:transparent; color:var(--ink-soft); cursor:pointer;
+    border-radius:8px; font:inherit; font-size:11px; font-weight:600; padding:4px 8px;
+  }
+  .fs-pop-reset:hover{background:var(--line-soft); color:var(--ink);}
+  .fs-popover .font-size-slider{touch-action:none;}
 
   .view-section{display:none;}
   .view-section.active{display:block;}
@@ -1588,6 +1627,9 @@
            pintasan lain menyusul. Tombol yang punya data-view otomatis
            membuka tab itu (lihat setView); tombol baru cukup <button class="shortcut-btn">. -->
       <div class="header-shortcuts" id="headerShortcuts">
+        <button type="button" class="shortcut-btn" id="fontSizeShortcut" aria-label="Ukuran font" title="Ukuran font" aria-haspopup="true" aria-expanded="false" aria-controls="fontSizePopover">
+          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="1.5" y="18" font-size="11" font-weight="700" font-family="inherit">A</text><text x="10.5" y="18" font-size="16" font-weight="700" font-family="inherit">A</text></svg>
+        </button>
         <button type="button" class="shortcut-btn" id="settingsShortcut" data-view="display" aria-label="Setting" title="Setting">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -1618,6 +1660,26 @@
     </div>
   </div>
 </header>
+
+<!-- Pengatur ukuran font (dibuka dari tombol "Aa" di bilah atas). Sengaja di luar
+     <header> supaya tidak terpotong overflow header; posisinya dihitung lewat JS
+     (positionFontSizePopover). Semua ukuran di sini pakai px (bukan rem) supaya
+     popover tidak ikut membesar/mengecil saat slider digeser. -->
+<div class="fs-popover" id="fontSizePopover" role="dialog" aria-label="Ukuran font" hidden>
+  <div class="fs-pop-head">
+    <span class="fs-pop-title">Ukuran font</span>
+    <span class="fs-pop-value" id="fontSizeValueLabel">16px</span>
+  </div>
+  <div class="fs-pop-row">
+    <span class="fs-pop-a" style="font-size:12px;" aria-hidden="true">A</span>
+    <input type="range" id="fontSizeSlider" class="font-size-slider" min="12" max="24" step="0.1" value="16" aria-label="Ukuran font">
+    <span class="fs-pop-a" style="font-size:22px;" aria-hidden="true">A</span>
+  </div>
+  <div class="fs-pop-foot">
+    <span class="fs-pop-hint">Geser bebas untuk mengubah ukuran teks di seluruh aplikasi.</span>
+    <button type="button" class="fs-pop-reset" id="fontSizeReset">Setel ulang</button>
+  </div>
+</div>
 
 <main class="shell">
   <div class="notice" id="installNotice" hidden>
@@ -1866,15 +1928,6 @@
       <button type="button" class="btn btn-ghost" id="restoreJsonBtn" style="margin-top:0.6rem;">⬆ Pulihkan dari file backup…</button>
       <input type="file" id="restoreJsonInput" accept="application/json,.json" hidden>
       <p class="hint" id="backupLastInfo" style="margin-top:0.6rem;"></p>
-    </div>
-    <div class="settings-block">
-      <h2>Ukuran Font</h2>
-      <div class="font-size-slider-wrap">
-        <span class="font-size-slider-icon" aria-hidden="true" style="font-size:0.7rem;">A</span>
-        <input type="range" id="fontSizeSlider" class="font-size-slider" min="13" max="20" step="1" value="16" aria-label="Ukuran font">
-        <span class="font-size-slider-icon" aria-hidden="true" style="font-size:1.25rem;">A</span>
-      </div>
-      <p class="hint">Geser untuk mengubah ukuran teks di seluruh aplikasi supaya lebih mudah dibaca. Saat ini: <strong id="fontSizeValueLabel">16px</strong></p>
     </div>
     <div class="settings-block">
       <h2>Akun</h2>
@@ -2152,6 +2205,9 @@
           </button>
           <button type="button" class="notes-fmt-btn" data-fmt="table" aria-label="Tabel" title="Tabel">
             <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M3 16h18M9.5 4v16" stroke="currentColor" stroke-width="1.6"/></svg>
+          </button>
+          <button type="button" class="notes-fmt-btn" data-fmt="tablecheck" aria-label="Tabel dengan centang per baris" title="Tabel dengan centang per baris (ketuk lagi di dalam tabel untuk mematikan)">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M3 16h18M9.5 4v16" stroke="currentColor" stroke-width="1.6" opacity="0.55"/><path d="M4.8 12.6l1.5 1.5 2.4-2.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
         <textarea id="fNotes" placeholder=""></textarea>
@@ -3807,7 +3863,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (cells[colIdx] === newText) return;
     cells[colIdx] = newText;
     var indent = line.match(/^\s*/)[0];
-    lines[lineIdx] = indent + tableRowTemplate(cells.length, cells);
+    lines[lineIdx] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(line));
     var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
     renderFlexible();
     renderUpcoming();
@@ -3906,7 +3962,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     cols = Math.max(1, cols || parseTableRow(lines[afterIdx]).length);
     var indent = lines[afterIdx].match(/^\s*/)[0];
     var insertAt = afterIdx + 1;
-    lines.splice(insertAt, 0, indent + tableRowTemplate(cols, []));
+    lines.splice(insertAt, 0, indent + tableRowTemplate(cols, [], newRowChkFor(lines[afterIdx])));
     if (dateStr) shiftChecklistProgress(reminderId, dateStr, insertAt);
     var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
     renderFlexible();
@@ -3952,7 +4008,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       while (cells.length < colPos) cells.push('');
       cells.splice(colPos, 0, '');
       var indent = lines[li].match(/^\s*/)[0];
-      lines[li] = indent + tableRowTemplate(cells.length, cells);
+      lines[li] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(lines[li]));
       changed = true;
     });
     if (!changed) return false;
@@ -4001,7 +4057,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (colIdx >= cells.length) return;
       cells.splice(colIdx, 1);
       var indent = lines[li].match(/^\s*/)[0];
-      lines[li] = indent + tableRowTemplate(cells.length, cells);
+      lines[li] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(lines[li]));
       changed = true;
     });
     if (!changed) return false;
@@ -4049,7 +4105,80 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     }
     return true;
   }
+  // Menyimpan hasil perubahan baris catatan lalu menggambar ulang kartu.
+  function commitTableNotes(reminderId, dateStr, lines, errMsg){
+    var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
+    renderFlexible();
+    renderUpcoming();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+    if (p && typeof p.catch === 'function'){
+      p.catch(function(err){
+        console.error(err);
+        showToast(errMsg);
+      });
+    }
+  }
+  function tableBaseLines(reminderId, dateStr){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r) return null;
+    return (dateStr ? getNotesForOccurrence(reminderId, dateStr) : (r.notes || '')).split('\n');
+  }
+  // Centang / batal centang SATU baris tabel (hanya untuk tabel ber-centang).
+  function toggleNotesTableRowCheck(reminderId, dateStr, lineIdx){
+    var lines = tableBaseLines(reminderId, dateStr);
+    if (!lines || lineIdx < 0 || lineIdx >= lines.length || !isTableRow(lines[lineIdx])) return;
+    var line = lines[lineIdx];
+    var indent = line.match(/^\s*/)[0];
+    var body = stripRowCheck(line).replace(/^\s+/, '');
+    lines[lineIdx] = indent + (tableRowCheckState(line) === true ? '\u2610' : '\u2611') + body;
+    commitTableNotes(reminderId, dateStr, lines, 'Gagal menyimpan centang. Coba lagi.');
+  }
+  // Hidupkan / matikan fitur centang untuk SATU tabel utuh (lineIdxList =
+  // nomor baris milik tabel itu). Mematikan menghapus penanda centang.
+  function setNotesTableCheckMode(reminderId, dateStr, lineIdxList, on){
+    var lines = tableBaseLines(reminderId, dateStr);
+    if (!lines) return;
+    var changed = false;
+    lineIdxList.forEach(function(li){
+      if (li < 0 || li >= lines.length || !isTableRow(lines[li])) return;
+      var indent = lines[li].match(/^\s*/)[0];
+      var body = stripRowCheck(lines[li]).replace(/^\s+/, '');
+      var st = tableRowCheckState(lines[li]);
+      lines[li] = indent + (on ? (st === true ? '\u2611' : '\u2610') : '') + body;
+      changed = true;
+    });
+    if (!changed) return;
+    commitTableNotes(reminderId, dateStr, lines, 'Gagal menyimpan pengaturan centang tabel. Coba lagi.');
+  }
   function bindNotesTableEdit(container){
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-cell-chk[data-line]'), function(td){
+      td.addEventListener('click', function(e){
+        e.stopPropagation(); // jangan ikut membuka form edit kartu
+        var host = td.closest('[data-checklist-owner]');
+        if (!host) return;
+        toggleNotesTableRowCheck(
+          host.getAttribute('data-checklist-owner'),
+          host.getAttribute('data-date') || null,
+          parseInt(td.getAttribute('data-line'), 10)
+        );
+      });
+    });
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-chk-toggle'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = btn.closest('[data-checklist-owner]');
+        var wrap = btn.closest('.notes-table-wrap');
+        if (!host || !wrap) return;
+        var lineList = (wrap.getAttribute('data-lines') || '').split(',').map(function(x){ return parseInt(x, 10); }).filter(function(x){ return !isNaN(x); });
+        if (!lineList.length) return;
+        setNotesTableCheckMode(
+          host.getAttribute('data-checklist-owner'),
+          host.getAttribute('data-date') || null,
+          lineList,
+          btn.getAttribute('data-on') !== '1'
+        );
+      });
+    });
     Array.prototype.forEach.call(container.querySelectorAll('.notes-row-del'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
@@ -4288,11 +4417,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var tblLastIdx = b.items[b.items.length - 1].idx;
         var tblCols = parseTableRow(b.items[0].text).length;
         var tblLines = b.items.map(function(it){ return it.idx; }).join(',');
+        var tblHasChk = tableRowCheckState(b.items[0].text) !== null;
         return '<div class="notes-table-wrap" data-lines="'+tblLines+'">' +
           '<table class="notes-plain-table"><tbody>' +
           b.items.map(function(it, ri){
             var cells = parseTableRow(it.text);
-            return '<tr data-line="'+it.idx+'">' + cells.map(function(c, ci){
+            var rowChk = tblHasChk && ri > 0 && tableRowCheckState(it.text) === true;
+            var chkCell = '';
+            if (tblHasChk){
+              chkCell = ri === 0
+                ? '<td class="notes-cell-chk notes-chk-head"></td>'
+                : '<td class="notes-cell-chk" data-line="'+it.idx+'" title="Tandai baris ini"><span class="notes-row-check'+(rowChk?' checked':'')+'" role="checkbox" aria-checked="'+(rowChk?'true':'false')+'" aria-label="Centang baris ini">'+(rowChk?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span></td>';
+            }
+            return '<tr data-line="'+it.idx+'"'+(rowChk?' class="row-checked"':'')+'>' + chkCell + cells.map(function(c, ci){
               // Tombol tambah/hapus kolom hanya di sel baris judul (baris pertama tabel).
               var ctrls = '';
               if (ri > 0 && ci === 0) ctrls += '<button type="button" class="notes-row-del" aria-label="Hapus baris ini" title="Hapus baris ini">\u00d7</button>';
@@ -4306,6 +4443,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           }).join('') +
           '</tbody></table>' +
           '<button type="button" class="notes-row-add" data-after="'+tblLastIdx+'" data-cols="'+tblCols+'" aria-label="Tambah baris" title="Tambah baris">+ baris</button>' +
+          '<button type="button" class="notes-chk-toggle" data-on="'+(tblHasChk?'1':'0')+'" aria-label="'+(tblHasChk?'Matikan centang per baris':'Aktifkan centang per baris')+'" title="'+(tblHasChk?'Matikan centang per baris':'Aktifkan centang per baris')+'">'+(tblHasChk?'\u2611 centang: hidup':'\u2610 centang: mati')+'</button>' +
         '</div>';
       }
       if (b.type === 'checklist'){
@@ -6449,33 +6587,52 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // Baris tabel disimpan sebagai teks polos berbentuk "| sel1 | sel2 |"
   // (mirip Markdown) supaya tetap tersimpan sebagai satu string di kolom
   // Catatan seperti format list lain, tanpa perlu struktur data terpisah.
+  //
+  // Centang per baris (OPSIONAL, tidak default): tabel yang dibuat "dengan
+  // centang" menaruh penanda \u2610 (kosong) / \u2611 (tercentang) TEPAT di
+  // depan tanda "|" pertama, mis. "\u2610| sel1 | sel2 |". Baris judul (baris
+  // pertama) ikut diberi penanda supaya tabelnya dikenali sebagai tabel
+  // ber-centang, tapi penanda di baris judul tidak pernah ditampilkan
+  // sebagai kotak centang. Tanpa penanda = tabel biasa seperti semula.
+  // Tidak bentrok dengan checklist (\u2610 + SPASI) karena di sini langsung
+  // diikuti "|". Status centang tersimpan di teks baris itu sendiri, jadi
+  // ikut catatan per-kemunculan (lihat getNotesForOccurrence).
+  var ROW_CHK_RE = /^(\s*)([\u2610\u2611])(?=\|)/;
+  function tableRowCheckState(line){
+    var m = ROW_CHK_RE.exec(line);
+    return m ? (m[2] === '\u2611') : null; // null = baris tanpa fitur centang
+  }
+  function stripRowCheck(line){ return line.replace(ROW_CHK_RE, '$1'); }
   function isTableRow(line){
-    var t = line.trim();
+    var t = stripRowCheck(line).trim();
     return t.length >= 2 && t.charAt(0) === '|' && t.charAt(t.length - 1) === '|';
   }
   function parseTableRow(line){
-    var t = line.trim();
+    var t = stripRowCheck(line).trim();
     if (t.charAt(0) === '|') t = t.slice(1);
     if (t.charAt(t.length - 1) === '|') t = t.slice(0, -1);
     return t.split('|').map(function(c){ return c.trim(); });
   }
-  function tableRowTemplate(cols, cellTexts){
+  function tableRowTemplate(cols, cellTexts, chk){
     var parts = [];
     for (var i=0; i<cols; i++){
       var v = (cellTexts && cellTexts[i]) ? cellTexts[i] : '';
       parts.push(' ' + v + ' ');
     }
-    return '|' + parts.join('|') + '|';
+    var mark = (chk === null || chk === undefined) ? '' : (chk ? '\u2611' : '\u2610');
+    return mark + '|' + parts.join('|') + '|';
   }
+  // Baris baru di tabel ber-centang ikut ber-centang (kosong); tabel biasa tetap biasa.
+  function newRowChkFor(line){ return tableRowCheckState(line) === null ? null : false; }
   // Menyisipkan templat tabel 2x2 (baris judul + satu baris data) di posisi
   // kursor, lalu memilih teks "Kolom 1" supaya bisa langsung diketik ulang.
-  function insertTableTemplate(){
+  function insertTableTemplate(withCheck){
     var text = fNotesEl.value;
     var pos = fNotesEl.selectionStart || 0;
     var b = lineBounds(text, pos);
     var line = text.slice(b.start, b.end);
-    var header = tableRowTemplate(2, ['Kolom 1', 'Kolom 2']);
-    var dataRow = tableRowTemplate(2, []);
+    var header = tableRowTemplate(2, ['Kolom 1', 'Kolom 2'], withCheck ? false : null);
+    var dataRow = tableRowTemplate(2, [], withCheck ? false : null);
     var template = header + '\n' + dataRow;
     var insertAt;
     if (line.trim() === ''){
@@ -6485,17 +6642,52 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       fNotesEl.value = text.slice(0, b.end) + '\n' + template + text.slice(b.end);
       insertAt = b.end + 1;
     }
-    var selStart = insertAt + 2; // setelah "| "
+    var selStart = insertAt + 2 + (withCheck ? 1 : 0); // setelah "| " (+ penanda centang)
     var selEnd = selStart + 'Kolom 1'.length;
     fNotesEl.focus();
     fNotesEl.setSelectionRange(selStart, selEnd);
+  }
+  // Menghidupkan/mematikan fitur centang untuk tabel yang sedang berisi
+  // kursor di kolom Catatan (semua baris tabel yang berurutan). Mengembalikan
+  // false kalau kursor tidak sedang di baris tabel.
+  function toggleTableCheckAtCursor(){
+    var text = fNotesEl.value;
+    var pos = fNotesEl.selectionStart || 0;
+    var lines = text.split('\n');
+    var lineNo = text.slice(0, pos).split('\n').length - 1;
+    if (!isTableRow(lines[lineNo])) return false;
+    var first = lineNo, last = lineNo;
+    while (first > 0 && isTableRow(lines[first - 1])) first--;
+    while (last < lines.length - 1 && isTableRow(lines[last + 1])) last++;
+    var turnOn = tableRowCheckState(lines[first]) === null;
+    for (var i = first; i <= last; i++){
+      var indent = lines[i].match(/^\s*/)[0];
+      var body = stripRowCheck(lines[i]).replace(/^\s+/, '');
+      var st = tableRowCheckState(lines[i]);
+      lines[i] = indent + (turnOn ? (st === true ? '\u2611' : '\u2610') : '') + body;
+    }
+    var newText = lines.join('\n');
+    var lineStart = 0;
+    for (var k = 0; k < lineNo; k++) lineStart += lines[k].length + 1;
+    fNotesEl.value = newText;
+    var newPos = lineStart + lines[lineNo].length;
+    fNotesEl.focus();
+    fNotesEl.setSelectionRange(newPos, newPos);
+    return true;
   }
   if (notesFmtBtns.length){
     notesFmtBtns.forEach(function(btn){
       btn.addEventListener('click', function(){
         var mode = btn.getAttribute('data-fmt');
         if (mode === 'table'){
-          insertTableTemplate();
+          insertTableTemplate(false);
+          setNotesFmtMode('table');
+          return;
+        }
+        if (mode === 'tablecheck'){
+          // Kalau kursor sedang di dalam tabel: hidupkan/matikan centang untuk
+          // SELURUH tabel itu. Kalau tidak: sisipkan tabel baru yang ber-centang.
+          if (!toggleTableCheckAtCursor()) insertTableTemplate(true);
           setNotesFmtMode('table');
           return;
         }
@@ -6538,10 +6730,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           setNotesFmtMode('none');
           return;
         }
-        var newRow = tableRowTemplate(cells.length, []);
+        var newRowChk = newRowChkFor(fullLine);
+        var newRow = tableRowTemplate(cells.length, [], newRowChk);
         var insertT = '\n' + newRow;
         fNotesEl.value = text.slice(0, pos) + insertT + text.slice(pos);
-        var newPosT = pos + 1 + 2; // setelah "\n| "
+        var newPosT = pos + 1 + 2 + (newRowChk === null ? 0 : 1); // setelah "\n| "
         fNotesEl.setSelectionRange(newPosT, newPosT);
         return;
       }
@@ -6615,10 +6808,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         return;
       }
       var colsCount = pipePositions.length - 1;
-      var newRow = tableRowTemplate(colsCount, []);
+      var newRowChkTab = newRowChkFor(line);
+      var newRow = tableRowTemplate(colsCount, [], newRowChkTab);
       var insertStr = '\n' + newRow;
       fNotesEl.value = text.slice(0, b.end) + insertStr + text.slice(b.end);
-      var cellPos = b.end + 1 + 2; // setelah "\n| "
+      var cellPos = b.end + 1 + 2 + (newRowChkTab === null ? 0 : 1); // setelah "\n| "
       fNotesEl.setSelectionRange(cellPos, cellPos);
     });
   }
@@ -7737,18 +7931,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     else if (darkMql.addListener) darkMql.addListener(onSystemChange);
   }
 
-  // ---------- Ukuran Font (slider 13–20px) ----------
+  // ---------- Ukuran Font (slider bebas 12–24px, dari tombol "Aa" di bilah atas) ----------
+  // Nilainya kontinu (kelipatan 0,1px), bukan beberapa pilihan tetap: geser
+  // slider sebebasnya dan ukuran teks seluruh aplikasi mengikuti langsung.
   var FONT_SIZE_KEY = 'essentiapath.fontSize';
-  var FONT_SIZE_MIN = 13, FONT_SIZE_MAX = 20, FONT_SIZE_LEGACY = { small:14, medium:16, large:18 };
+  var FONT_SIZE_MIN = 12, FONT_SIZE_MAX = 24, FONT_SIZE_DEFAULT = 16, FONT_SIZE_LEGACY = { small:14, medium:16, large:18 };
+  function clampFontSize(px){
+    px = parseFloat(px);
+    if (!px || isNaN(px)) px = FONT_SIZE_DEFAULT;
+    if (px < FONT_SIZE_MIN) px = FONT_SIZE_MIN;
+    if (px > FONT_SIZE_MAX) px = FONT_SIZE_MAX;
+    return Math.round(px * 10) / 10;
+  }
   function getFontSizePref(){
     try {
       var raw = localStorage.getItem(FONT_SIZE_KEY);
-      var px = raw && FONT_SIZE_LEGACY[raw] ? FONT_SIZE_LEGACY[raw] : parseInt(raw, 10);
-      if (!px || isNaN(px)) px = 16;
-      if (px < FONT_SIZE_MIN) px = FONT_SIZE_MIN;
-      if (px > FONT_SIZE_MAX) px = FONT_SIZE_MAX;
-      return px;
-    } catch(e){ return 16; }
+      return clampFontSize(raw && FONT_SIZE_LEGACY[raw] ? FONT_SIZE_LEGACY[raw] : raw);
+    } catch(e){ return FONT_SIZE_DEFAULT; }
   }
   function applyFontSize(px){
     document.documentElement.style.setProperty('--user-font-size', px + 'px');
@@ -7758,19 +7957,67 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   var fontSizeSlider = document.getElementById('fontSizeSlider');
   var fontSizeValueLabel = document.getElementById('fontSizeValueLabel');
+  var fontSizeShortcut = document.getElementById('fontSizeShortcut');
+  var fontSizePopover = document.getElementById('fontSizePopover');
+  var fontSizeReset = document.getElementById('fontSizeReset');
   function updateFontSizeUi(px){
     if (fontSizeSlider) fontSizeSlider.value = px;
-    if (fontSizeValueLabel) fontSizeValueLabel.textContent = px + 'px';
+    if (fontSizeValueLabel) fontSizeValueLabel.textContent = (Math.round(px * 10) / 10) + 'px';
   }
   function setFontSizePref(px){
-    px = parseInt(px, 10);
-    if (isNaN(px)) return;
+    px = clampFontSize(px);
     try { localStorage.setItem(FONT_SIZE_KEY, String(px)); } catch(e){}
     applyFontSize(px);
     updateFontSizeUi(px);
+    positionFontSizePopover(); // tinggi bilah atas ikut berubah bersama ukuran font
+  }
+  // Popover memakai position:fixed (agar tidak terpotong overflow header),
+  // jadi posisinya dihitung dari tombol "Aa": tepat di bawahnya, rata kanan
+  // dengan tombol, dan dijaga tetap di dalam layar.
+  function positionFontSizePopover(){
+    if (!fontSizePopover || fontSizePopover.hidden || !fontSizeShortcut) return;
+    var r = fontSizeShortcut.getBoundingClientRect();
+    var w = fontSizePopover.offsetWidth || 250;
+    var left = r.right - w;
+    var maxLeft = window.innerWidth - w - 8;
+    if (left > maxLeft) left = maxLeft;
+    if (left < 8) left = 8;
+    fontSizePopover.style.left = left + 'px';
+    fontSizePopover.style.top = (r.bottom + 8) + 'px';
+  }
+  function setFontSizePopoverOpen(open){
+    if (!fontSizePopover || !fontSizeShortcut) return;
+    fontSizePopover.hidden = !open;
+    fontSizeShortcut.setAttribute('aria-expanded', open ? 'true' : 'false');
+    fontSizeShortcut.classList.toggle('active', open);
+    if (open) positionFontSizePopover();
+  }
+  if (fontSizeShortcut && fontSizePopover){
+    fontSizeShortcut.addEventListener('click', function(e){
+      e.stopPropagation();
+      setFontSizePopoverOpen(fontSizePopover.hidden);
+    });
+    fontSizePopover.addEventListener('click', function(e){ e.stopPropagation(); });
+    // Menggeser slider lalu melepas jari/kursor di luar popover memicu "click"
+    // di elemen induk bersama — jangan anggap itu ketukan di luar (popover
+    // tidak boleh menutup sendiri di tengah menggeser).
+    var fsPointerStartedInside = false;
+    fontSizePopover.addEventListener('pointerdown', function(){ fsPointerStartedInside = true; });
+    document.addEventListener('pointerup', function(){ setTimeout(function(){ fsPointerStartedInside = false; }, 50); });
+    document.addEventListener('click', function(){
+      if (fsPointerStartedInside) return;
+      if (!fontSizePopover.hidden) setFontSizePopoverOpen(false);
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && !fontSizePopover.hidden) setFontSizePopoverOpen(false);
+    });
+    window.addEventListener('resize', positionFontSizePopover);
   }
   if (fontSizeSlider){
     fontSizeSlider.addEventListener('input', function(){ setFontSizePref(fontSizeSlider.value); });
+  }
+  if (fontSizeReset){
+    fontSizeReset.addEventListener('click', function(){ setFontSizePref(FONT_SIZE_DEFAULT); });
   }
   applyFontSize(getFontSizePref());
   updateFontSizeUi(getFontSizePref());
