@@ -636,6 +636,14 @@
      tidak rawan tersentuh tidak sengaja saat menandai selesai. */
   .flex-copy svg, .up-copy svg{width:13px; height:13px;}
   .flex-copy.copied, .up-copy.copied{color:var(--moss-deep);}
+  /* Tombol sembunyikan/tampilkan rincian catatan (di kanan tombol Salin):
+     saat catatan terlihat, panah mengarah ke atas (klik = sembunyikan);
+     saat disembunyikan, panah mengarah ke bawah (klik = tampilkan lagi).
+     Hanya menyembunyikan tampilan (.notes-collapsible), judul tetap terlihat
+     supaya kartu ringkas dan jarak scroll ke pengingat berikutnya lebih dekat. */
+  .flex-collapse svg{width:13px; height:13px; transition:transform 0.15s ease;}
+  .flex-item:not(.notes-collapsed) .flex-collapse svg, .up-item:not(.notes-collapsed) .flex-collapse svg{transform:rotate(180deg);}
+  .flex-item.notes-collapsed .notes-collapsible, .up-item.notes-collapsed .notes-collapsible{display:none;}
   .recurring-history-item{cursor:pointer;}
   .recurring-history-item:hover, .recurring-history-item:active{background:var(--line-soft);}
   /* Tombol centang di daftar "Mendatang" dibuat lebih kecil daripada di
@@ -764,10 +772,11 @@
   .notes-plain-table td.notes-cell .notes-line-input{box-sizing:border-box; display:block; min-width:4ch; max-width:100%;}
   .flex-item .body{flex:1; min-width:0;}
   /* Ditambah lewat JS (bindFlexItemEvents) untuk kartu di tab Fleksibel
-     (Pin/Prioritas/Standar/Selesai/Diarsipkan) — menandai bahwa area ini
-     bisa langsung disentuh untuk membuka form edit, tanpa perlu ikon pensil. */
-  .body-tap-edit{cursor:pointer;}
-  .body-tap-edit .title-link, .body-tap-edit .sub-check-item{cursor:pointer;}
+     (Pin/Prioritas/Standar/Selesai/Diarsipkan) & "Terlewat" — menandai bahwa
+     area ini bisa langsung disentuh untuk membuka/menutup rincian catatan
+     (bukan lagi membuka form edit; form edit tetap lewat ikon pensil ✎). */
+  .body-tap-toggle{cursor:pointer;}
+  .body-tap-toggle .title-link, .body-tap-toggle .sub-check-item{cursor:pointer;}
   /* padding-right di sini HANYA untuk baris judul, supaya judul tidak
      tertutup ikon aksi (arsip/pin/bintang/edit/salin) yang sekarang
      ditumpuk di pojok kanan-atas kartu (lihat .flex-item .acts di bawah)
@@ -3847,7 +3856,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // diedit atau ditambah kata di bagian manapun (bukan cuma field kosong
   // untuk tambahan di akhir) — bukan membuka form edit yang mengubah
   // seluruh isi "Catatan". Menghentikan propagasi supaya tidak ikut memicu
-  // body-tap-edit di kartu. Dipakai bersama oleh baris list biasa
+  // body-tap-toggle di kartu. Dipakai bersama oleh baris list biasa
   // (bindNotesListEdit) maupun label checklist (bindChecklistLineEdit).
   function startInlineNotesLineEdit(li, textEl, reminderId, lineIdx, dateStr){
     if (li.classList.contains('editing')) return;
@@ -5132,6 +5141,32 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     upcomingProgressEl.setAttribute('aria-label', label);
     upcomingProgressEl.title = label;
   }
+  // Status tampilkan rincian catatan (per id pengingat), hanya di memori
+  // (tidak disimpan ke cloud) — dipakai di kartu "Mendatang" (Dashboard)
+  // maupun kartu Fleksibel, mengikuti pola tableEditModes. Defaultnya
+  // TERSEMBUNYI (auto-hide) — id yang tercatat di sini adalah yang sudah
+  // dibuka manual oleh pengguna (mis. saat gilirannya tiba untuk dicek),
+  // bukan yang disembunyikan.
+  var expandedNotesIds = {};
+  // Buka/tutup rincian catatan satu kartu di tempat (tanpa render ulang).
+  // host = elemen <li> kartu (punya data-checklist-owner/data-id), btn =
+  // tombol panah (.flex-collapse) di kartu itu kalau ada (dipakai untuk
+  // memperbarui aria-label/title-nya) — boleh dikosongkan kalau dipicu
+  // dari sentuhan area judul/catatan (body-tap-toggle), bukan dari tombol.
+  function toggleNotesCollapse(host, btn){
+    if (!host) return;
+    var id = host.getAttribute('data-checklist-owner') || host.getAttribute('data-id');
+    if (!id) return;
+    if (expandedNotesIds[id]) delete expandedNotesIds[id]; else expandedNotesIds[id] = true;
+    var hidden = !expandedNotesIds[id];
+    host.classList.toggle('notes-collapsed', hidden);
+    if (!btn) btn = host.querySelector('.flex-collapse[data-id="'+id+'"]') || host.querySelector('.flex-collapse');
+    if (btn){
+      var label = hidden ? 'Tampilkan catatan' : 'Sembunyikan catatan';
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('title', label);
+    }
+  }
   var TIME_PERIOD_ORDER = ['Dini hari','Pagi hari','Siang hari','Sore hari','Malam hari'];
   function timeOfDayLabel(t){
     // t is "HH:MM"; 00:00 counts as end of "Malam hari" (18.00–00.00), while
@@ -5150,18 +5185,24 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
       : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
     var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
-    return '<li class="up-item up-editable'+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
+    var notesHiddenIt = !expandedNotesIds[it.reminder.id];
+    return '<li class="up-item up-editable'+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+(notesHiddenIt?' notes-collapsed':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
       '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+      '<div class="notes-collapsible">' +
       '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>'+badge +
       renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
+      '</div>' +
       '</div>' +
       '<div class="acts">' +
         '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
         '<button type="button" class="icon-btn up-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '</button>' +
+        '<button type="button" class="icon-btn flex-collapse" aria-label="'+(notesHiddenIt?'Tampilkan catatan':'Sembunyikan catatan')+'" title="'+(notesHiddenIt?'Tampilkan catatan':'Sembunyikan catatan')+'" data-id="'+it.reminder.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
       '</div></li>';
   }
@@ -5188,6 +5229,22 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         e.stopPropagation();
         var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
         if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
+      });
+    });
+    // Sembunyikan/tampilkan rincian catatan di kartu "Mendatang": lewat
+    // tombol panah ATAU menyentuh langsung area judul/catatan kartu (sama
+    // seperti Fleksibel) — bukan lagi membuka form edit. Statusnya dibagi
+    // lewat expandedNotesIds (toggleNotesCollapse) supaya konsisten antar tab.
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-collapse'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        toggleNotesCollapse(btn.closest('.up-item'), btn);
+      });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.up-item .body'), function(bodyEl){
+      bodyEl.classList.add('body-tap-toggle');
+      bodyEl.addEventListener('click', function(){
+        toggleNotesCollapse(bodyEl.closest('.up-item'));
       });
     });
     // Judul & catatan bisa diedit langsung di kartu (tanpa membuka form):
@@ -5826,11 +5883,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return hasChecklistR ? (checklistAllChecked(checklistItemsR) && !!r.done) : !!r.done;
   }
 
+  // Status tampilkan rincian catatan sudah dideklarasikan di atas
+  // (expandedNotesIds), dipakai bersama oleh kartu "Mendatang" dan kartu
+  // Fleksibel di bawah ini.
   function flexItemHtml(r){
     var c = catInfo(r.category);
     var checklistItemsR = checklistLines(r.notes);
     var hasChecklistR = checklistItemsR.length > 0;
     var doneR = flexItemIsDone(r);
+    var notesHiddenR = !expandedNotesIds[r.id];
     // CATATAN: dulu di sini ada cuplikan teks bebas (notesFreeTextPreview)
     // ditempel ke baris meta ("Kerja · trial enter · ..."), tapi isi
     // lengkapnya JUGA dirender oleh renderNotesOrderedHTML tepat di
@@ -5838,13 +5899,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // Baris meta sekarang cukup nama kategori saja; isi catatan penuh
     // (checklist / list / teks bebas) hanya muncul sekali, dari
     // renderNotesOrderedHTML di bawah.
-    return '<li class="flex-item'+(doneR?' done':'')+(!doneR && hasChecklistR && r.done?' parent-checked':'')+(r.priority?' priority-item':'')+(r.priority && r.pinned?' pinned-item':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
+    return '<li class="flex-item'+(doneR?' done':'')+(!doneR && hasChecklistR && r.done?' parent-checked':'')+(r.priority?' priority-item':'')+(r.priority && r.pinned?' pinned-item':'')+(notesHiddenR?' notes-collapsed':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
       '<button type="button" class="flex-check" data-id="'+r.id+'" data-has-checklist="'+(hasChecklistR?'1':'0')+'" aria-label="Tandai selesai">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
       '<div class="body"><div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
+      '<div class="notes-collapsible">' +
       '<div class="meta">'+c.label+'</div>' +
       renderNotesOrderedHTML(r.notes) +
+      '</div>' +
       '</div>' +
       '<div class="acts">' +
         '<button type="button" class="icon-btn toggle-archive'+(r.archived?' active':'')+'" aria-label="'+(r.archived?'Keluarkan dari arsip':'Arsipkan')+'" title="'+(r.archived?'Keluarkan dari arsip':'Arsipkan (untuk item yang mungkin sudah tidak relevan, tapi bisa dilihat lagi nanti)')+'" data-id="'+r.id+'">' +
@@ -5858,6 +5921,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button>' +
         '<button type="button" class="icon-btn flex-copy" aria-label="Salin" title="Salin" data-id="'+r.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '</button>' +
+        '<button type="button" class="icon-btn flex-collapse" aria-label="'+(notesHiddenR?'Tampilkan catatan':'Sembunyikan catatan')+'" title="'+(notesHiddenR?'Tampilkan catatan':'Sembunyikan catatan')+'" data-id="'+r.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
       '</div></li>';
   }
@@ -5954,19 +6020,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(listEl.querySelectorAll('.edit-flex'), function(btn){
       btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
     });
-    // Sentuh/klik langsung di area judul & catatan kartu untuk langsung
-    // masuk ke form edit — supaya tidak wajib menyentuh ikon pensil dulu.
-    // Klik pada elemen yang memang punya aksi sendiri (centang checklist,
-    // tautan judul) sudah menghentikan propagasi lewat stopPropagation di
-    // handler masing-masing (lihat bindChecklistClicks & titleWithLinkHTML),
-    // jadi tidak akan ikut membuka form edit.
+    // Sentuh/klik langsung di area judul & catatan kartu untuk buka/tutup
+    // rincian catatan (bukan lagi membuka form edit — edit tetap lewat
+    // ikon pensil ✎, atau langsung ketuk judul/baris catatan untuk edit
+    // inline). Klik pada elemen yang memang punya aksi sendiri (centang
+    // checklist, tautan judul, baris catatan) sudah menghentikan propagasi
+    // lewat stopPropagation di handler masing-masing (lihat
+    // bindChecklistClicks & titleWithLinkHTML), jadi tidak ikut memicu
+    // buka/tutup catatan.
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-item .body'), function(bodyEl){
-      bodyEl.classList.add('body-tap-edit');
+      bodyEl.classList.add('body-tap-toggle');
       bodyEl.addEventListener('click', function(){
-        var host = bodyEl.closest('.flex-item');
-        if (!host) return;
-        var id = host.getAttribute('data-id');
-        if (id) openEditForm(id);
+        toggleNotesCollapse(bodyEl.closest('.flex-item'));
       });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-copy'), function(btn){
@@ -5975,6 +6040,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         // Kalau catatan kosong, salin judulnya saja sebagai fallback —
         // supaya tombol Salin tetap berguna untuk pengingat tanpa catatan.
         if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
+      });
+    });
+    // Tombol panah: cara lain (selain menyentuh area judul/catatan) untuk
+    // buka/tutup rincian catatan kartu ini.
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-collapse'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        toggleNotesCollapse(btn.closest('.flex-item'), btn);
       });
     });
     bindChecklistClicks(listEl, function(){ return { type:'flex' }; });
@@ -6132,18 +6205,24 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var hasChecklistM = checklistItemsM.length > 0;
         var doneM = isOccurrenceDone(it);
         var parentM = !doneM && occurrenceParentTicked(it, hasChecklistM);
-        return '<li class="flex-item missed-item'+(doneM?' done':'')+(parentM?' parent-checked':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
+        var notesHiddenM = !expandedNotesIds[it.reminder.id];
+        return '<li class="flex-item missed-item'+(doneM?' done':'')+(parentM?' parent-checked':'')+(notesHiddenM?' notes-collapsed':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
           '<button type="button" class="flex-check missed-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistM?'1':'0')+'" aria-label="Tandai selesai">' +
             '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</button>' +
           '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+          '<div class="notes-collapsible">' +
           '<div class="meta">'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
           renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
+          '</div>' +
           '</div>' +
           '<div class="acts">' +
             '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+it.reminder.id+'">✎</button>' +
             '<button type="button" class="icon-btn flex-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
               '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+            '</button>' +
+            '<button type="button" class="icon-btn flex-collapse" aria-label="'+(notesHiddenM?'Tampilkan catatan':'Sembunyikan catatan')+'" title="'+(notesHiddenM?'Tampilkan catatan':'Sembunyikan catatan')+'" data-id="'+it.reminder.id+'">' +
+              '<svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' +
           '</div></li>';
       }).join('');
@@ -6158,20 +6237,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
       });
       // Sama seperti kartu Pin/Prioritas/Standar: sentuh langsung judul/catatan
-      // di kartu "Terlewat" juga membuka form edit, tidak wajib lewat ikon pensil.
+      // di kartu "Terlewat" membuka/menutup rincian catatan (bukan form edit).
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-item .body'), function(bodyEl){
-        bodyEl.classList.add('body-tap-edit');
+        bodyEl.classList.add('body-tap-toggle');
         bodyEl.addEventListener('click', function(){
-          var host = bodyEl.closest('.flex-item');
-          if (!host) return;
-          var id = host.getAttribute('data-id');
-          if (id) openEditForm(id);
+          toggleNotesCollapse(bodyEl.closest('.flex-item'));
         });
       });
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-copy'), function(btn){
         btn.addEventListener('click', function(){
           var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
           if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
+        });
+      });
+      Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-collapse'), function(btn){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          toggleNotesCollapse(btn.closest('.flex-item'), btn);
         });
       });
       bindChecklistClicks(flexibleListMissed, function(host){
