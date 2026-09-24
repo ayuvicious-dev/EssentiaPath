@@ -5241,10 +5241,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         toggleNotesCollapse(btn.closest('.up-item'), btn);
       });
     });
-    Array.prototype.forEach.call(listEl.querySelectorAll('.up-item .body'), function(bodyEl){
-      bodyEl.classList.add('body-tap-toggle');
-      bodyEl.addEventListener('click', function(){
-        toggleNotesCollapse(bodyEl.closest('.up-item'));
+    Array.prototype.forEach.call(listEl.querySelectorAll('.up-item'), function(itemEl){
+      itemEl.classList.add('body-tap-toggle');
+      itemEl.addEventListener('click', function(){
+        toggleNotesCollapse(itemEl);
       });
     });
     // Judul & catatan bisa diedit langsung di kartu (tanpa membuka form):
@@ -6002,23 +6002,24 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   function bindFlexItemEvents(listEl){
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-check'), function(btn){
-      btn.addEventListener('click', function(){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
         guardedToggle(btn, function(){
           toggleFlexDone(btn.getAttribute('data-id'));
         });
       });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-priority'), function(btn){
-      btn.addEventListener('click', function(){ toggleFlexPriority(btn.getAttribute('data-id')); });
+      btn.addEventListener('click', function(e){ e.stopPropagation(); toggleFlexPriority(btn.getAttribute('data-id')); });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-pin'), function(btn){
-      btn.addEventListener('click', function(){ toggleFlexPin(btn.getAttribute('data-id')); });
+      btn.addEventListener('click', function(e){ e.stopPropagation(); toggleFlexPin(btn.getAttribute('data-id')); });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-archive'), function(btn){
-      btn.addEventListener('click', function(){ toggleFlexArchive(btn.getAttribute('data-id')); });
+      btn.addEventListener('click', function(e){ e.stopPropagation(); toggleFlexArchive(btn.getAttribute('data-id')); });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.edit-flex'), function(btn){
-      btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+      btn.addEventListener('click', function(e){ e.stopPropagation(); openEditForm(btn.getAttribute('data-id')); });
     });
     // Sentuh/klik langsung di area judul & catatan kartu untuk buka/tutup
     // rincian catatan (bukan lagi membuka form edit — edit tetap lewat
@@ -6028,14 +6029,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // lewat stopPropagation di handler masing-masing (lihat
     // bindChecklistClicks & titleWithLinkHTML), jadi tidak ikut memicu
     // buka/tutup catatan.
-    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-item .body'), function(bodyEl){
-      bodyEl.classList.add('body-tap-toggle');
-      bodyEl.addEventListener('click', function(){
-        toggleNotesCollapse(bodyEl.closest('.flex-item'));
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-item'), function(itemEl){
+      itemEl.classList.add('body-tap-toggle');
+      itemEl.addEventListener('click', function(){
+        toggleNotesCollapse(itemEl);
       });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.flex-copy'), function(btn){
-      btn.addEventListener('click', function(){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
         var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
         // Kalau catatan kosong, salin judulnya saja sebagai fallback —
         // supaya tombol Salin tetap berguna untuk pengingat tanpa catatan.
@@ -6227,25 +6229,28 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '</div></li>';
       }).join('');
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.missed-check'), function(btn){
-        btn.addEventListener('click', function(){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
           guardedToggle(btn, function(){
             onOccurrenceParentClick(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'), btn.getAttribute('data-has-checklist') === '1', 'missed');
           });
         });
       });
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.edit-flex'), function(btn){
-        btn.addEventListener('click', function(){ openEditForm(btn.getAttribute('data-id')); });
+        btn.addEventListener('click', function(e){ e.stopPropagation(); openEditForm(btn.getAttribute('data-id')); });
       });
-      // Sama seperti kartu Pin/Prioritas/Standar: sentuh langsung judul/catatan
-      // di kartu "Terlewat" membuka/menutup rincian catatan (bukan form edit).
-      Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-item .body'), function(bodyEl){
-        bodyEl.classList.add('body-tap-toggle');
-        bodyEl.addEventListener('click', function(){
-          toggleNotesCollapse(bodyEl.closest('.flex-item'));
+      // Sama seperti kartu Pin/Prioritas/Standar: sentuh langsung di mana pun
+      // di kartu "Terlewat" (termasuk area kosong latar krem-nya) membuka/
+      // menutup rincian catatan (bukan form edit).
+      Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-item'), function(itemEl){
+        itemEl.classList.add('body-tap-toggle');
+        itemEl.addEventListener('click', function(){
+          toggleNotesCollapse(itemEl);
         });
       });
       Array.prototype.forEach.call(flexibleListMissed.querySelectorAll('.flex-copy'), function(btn){
-        btn.addEventListener('click', function(){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
           var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
           if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
         });
