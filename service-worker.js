@@ -1,7 +1,7 @@
 // EssentiaPath service worker
 // Bump CACHE_NAME any time index.html (or other cached assets) changes,
 // so returning users get the fresh version instead of a stale cache.
-const CACHE_NAME = "essentiapath-cache-v253";
+const CACHE_NAME = "essentiapath-cache-v254";
 const ASSETS = [
   "./",
   "./index.html",
@@ -30,21 +30,24 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Network-first, fall back to cache. Ini dipilih (bukan cache-first) supaya
+// perubahan pada index.html langsung terlihat begitu di-reload — baik saat
+// tes di server internal/lokal maupun di GitHub Pages — tanpa pengguna
+// "kejebak" versi lama sampai reload kedua. Cache tetap terisi/di-update di
+// setiap fetch sukses, jadi mode offline (network gagal) tetap jalan seperti
+// biasa lewat fallback ke cache di bawah.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
 

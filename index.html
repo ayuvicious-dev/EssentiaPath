@@ -481,7 +481,7 @@
   .dp-chev{width:14px; height:14px; flex:none; color:var(--ink-soft); transition:transform 0.18s ease;}
   .dp-title[aria-expanded="true"] .dp-chev{transform:rotate(180deg);}
   .dp-detail{margin-top:0.3rem;}
-  .dp-detail .sub-check-item{cursor:default;}
+
   .up-badge{display:inline-block; margin-top:0.32rem; font-size:0.64rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:999px; letter-spacing:0.02em;}
   .up-badge.done{background:rgba(63,102,89,0.15); color:var(--moss-deep);}
   .up-badge.ongoing{background:rgba(227,169,124,0.25); color:var(--amber-deep);}
@@ -2565,6 +2565,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     state.completions = next;
     renderUpcoming();
     renderFlexible();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
     writeDotPatch(completionsDocRef(), ['map.' + key, value ? true : deleteField()]).catch(function(err){
       console.error('Gagal menyimpan status centang', key, err);
       // PENTING: kembalikan status lokal ke sebelum diklik, bukan
@@ -2579,6 +2580,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       state.completions = previous;
       renderUpcoming();
       renderFlexible();
+      if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
       // Ditampilkan lebih lama (bukan 2.2 detik biasa) karena ini kegagalan
       // penting. Penyebab paling umum: aturan keamanan Firestore belum
       // meng-cover users/{uid}/settings/{docId}, atau koneksi terputus.
@@ -4604,10 +4606,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (diffDays === 0) return 'Hari Ini';
     if (diffDays === 1) return 'Besok';
     if (diffDays === 2) return 'Lusa';
+    if (diffDays === -1) return 'Kemarin';
     var weekDiff = Math.round((mondayOfWeek(target) - mondayOfWeek(t0)) / (7 * 86400000));
     if (weekDiff === 1) return 'Minggu Depan';
     if (weekDiff === -1) return 'Minggu Lalu';
-    return diffDays > 0 ? 'Beberapa Hari Kedepan' : 'Beberapa Hari Lalu';
+    return diffDays > 0 ? 'Mendatang' : 'Hari Lalu';
   }
   function updateUpcomingSectionTitle(){
     if (upcomingSectionTitleEl) upcomingSectionTitleEl.textContent = upcomingSectionTitleFor(upcomingStartDate);
@@ -4987,12 +4990,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
 
-  // ---------- Missed (overdue, not-daily) occurrences → tab "Terlewat" ----------
+  // ---------- Missed (overdue) occurrences → tab "Terlewat" ----------
   // Kalau sampai hari itu berakhir sebuah kemunculan belum ditandai selesai,
-  // dan jenis pengulangannya BUKAN harian (harian pasti muncul lagi besok,
-  // jadi tidak perlu ditumpuk), kemunculan itu tampil di tab "Terlewat"
-  // (berdiri sendiri, di sebelah kiri Fleksibel) sampai ditandai selesai. Jendela pencarian
-  // dibatasi selaras dengan masa penyimpanan status selesai (3 hari).
+  // kemunculan itu tampil di tab "Terlewat" (berdiri sendiri, di sebelah kiri
+  // Fleksibel) sampai ditandai selesai — termasuk pengingat Harian, supaya
+  // kemunculan harian yang terlewat tetap kelihatan meski hari ini sudah ada
+  // kemunculan barunya. Jendela pencarian dibatasi selaras dengan masa
+  // penyimpanan status selesai (3 hari).
   var MISSED_LOOKBACK_DAYS = 3;
   function getMissedItems(){
     var out = [];
@@ -5001,7 +5005,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var dt = new Date(today.getFullYear(), today.getMonth(), today.getDate()-i);
       var dateStr = toISODate(dt);
       state.reminders.forEach(function(r){
-        if (r.flexible || r.repeat === 'daily') return;
+        if (r.flexible) return;
         var times = occurrencesOnDate(r, dateStr);
         times.forEach(function(t){
           if (isOccurrenceDone({ reminder:r, date:dateStr, time:t })) return;
@@ -6770,7 +6774,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     dayPanelList.innerHTML = items.map(function(it){
       var key = it.reminder.id + '|' + it.time;
       var expanded = !!dayPanelExpanded[key];
-      return '<div class="up-item dp-item" data-key="'+escapeHTML(key)+'" data-checklist-owner="'+it.reminder.id+'" data-date="'+it.date+'">' +
+      var isDone = isOccurrenceDone(it);
+      var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
+      return '<div class="up-item dp-item'+(isDone?' done':'')+'" data-key="'+escapeHTML(key)+'" data-checklist-owner="'+it.reminder.id+'" data-date="'+it.date+'">' +
+        '<button type="button" class="flex-check up-check dp-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
         '<div class="body">' +
           '<div class="title dp-title" role="button" tabindex="0" aria-expanded="'+(expanded?'true':'false')+'">' +
             titleWithLinkHTML(it.reminder.title, it.reminder.link) +
@@ -6787,6 +6796,24 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '</div>' +
       '</div>';
     }).join('');
+    Array.prototype.forEach.call(dayPanelList.querySelectorAll('.dp-check'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        guardedToggle(btn, function(){
+          var id = btn.getAttribute('data-id');
+          var date = btn.getAttribute('data-date');
+          var time = btn.getAttribute('data-time');
+          if (btn.getAttribute('data-has-checklist') === '1'){
+            onChecklistToggleAll(id, { type:'current', date: date, time: time });
+          } else {
+            toggleCompletion(id, date, time);
+          }
+        });
+      });
+    });
+    bindChecklistClicks(dayPanelList, function(host){
+      return { type:'current', date: host.getAttribute('data-date') };
+    });
     Array.prototype.forEach.call(dayPanelList.querySelectorAll('.dp-title'), function(titleEl){
       function toggle(){
         var host = titleEl.closest('.dp-item');
