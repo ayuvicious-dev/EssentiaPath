@@ -763,6 +763,20 @@
   .notes-row-check svg{width:9px; height:9px;}
   .notes-row-check.checked{background:var(--moss); border-color:var(--moss);}
   .notes-plain-table tr.row-checked td.notes-cell .notes-cell-text{text-decoration:line-through; color:var(--ink-soft);}
+  /* Bagian "Riwayat" (baris tabel ber-centang yang sudah tercentang) di
+     bawah tabel utama — tersembunyi (auto-hide) secara default, bisa
+     dibuka lewat tombol chevron. Baris di dalamnya tetap baris tabel yang
+     sama (bisa diedit/dihapus/dibatalkan centangnya seperti biasa),
+     cuma dipisah tampilannya biar tabel utama tetap ringkas. */
+  .notes-table-history{margin-top:0.35rem;}
+  .notes-table-history-toggle{
+    display:flex; align-items:center; gap:0.25rem; border:none; background:none; padding:0.15rem 0.1rem;
+    font-size:0.68rem; font-weight:600; color:var(--ink-soft); cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  .notes-table-history-toggle:hover{color:var(--moss-deep);}
+  .notes-table-history .hist-chev{width:12px; height:12px; flex:none; transition:transform 0.15s ease;}
+  .notes-table-history.expanded .hist-chev{transform:rotate(180deg);}
+  .notes-table-history-body{margin-top:0.2rem; opacity:0.85;}
   .notes-plain-table td.notes-cell{position:relative; cursor:pointer; height:1.7em; min-width:2.5rem; transition:background 0.12s ease;}
   .notes-plain-table td.notes-cell:hover{background:var(--surface);}
   .notes-plain-table td.notes-cell.editing{padding:0.12rem; background:var(--surface); cursor:default;}
@@ -3678,6 +3692,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function isOccurrenceDone(it){
     var items = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
     if (items.length){
+      // "Harian Lanjutan": centang INDUK saja sudah dianggap selesai untuk
+      // hari itu (to-do list hari ini selesai), TANPA perlu semua anak
+      // checklist ikut tercentang — anak yang belum tercentang tetap
+      // terbawa ke hari berikutnya seperti biasa lewat carryNotesForDate;
+      // yang sudah tercentang tidak muncul lagi besok. Beda dari tipe
+      // pengulangan lain, yang masih mensyaratkan semua anak tercentang
+      // dulu sebelum induk dianggap selesai.
+      if (it.reminder.repeat === 'dailyCarry'){
+        if (!parentCheckRequired(it.date)) return checklistAllChecked(items);
+        return occurrenceParentChecked(it.reminder.id, it.date, it.time);
+      }
       if (!checklistAllChecked(items)) return false;
       if (!parentCheckRequired(it.date)) return true;
       return occurrenceParentChecked(it.reminder.id, it.date, it.time);
@@ -3686,9 +3711,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return !!state.completions[key];
   }
   // Induk sudah dicentang tapi anak belum lengkap (untuk tampilan kotak
-  // centang judul saja; belum dianggap selesai).
+  // centang judul saja; belum dianggap selesai). Tidak relevan untuk
+  // "Harian Lanjutan" karena di sana centang induk sendiri sudah langsung
+  // dianggap selesai (lihat isOccurrenceDone).
   function occurrenceParentTicked(it, hasChecklist){
-    return hasChecklist && parentCheckRequired(it.date) && occurrenceParentChecked(it.reminder.id, it.date, it.time);
+    return hasChecklist && it.reminder.repeat !== 'dailyCarry' && parentCheckRequired(it.date) && occurrenceParentChecked(it.reminder.id, it.date, it.time);
   }
   // Klik kotak centang judul pada kemunculan bertanggal.
   function onOccurrenceParentClick(id, date, time, hasChecklist, type){
@@ -4372,6 +4399,24 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         );
       });
     });
+    // Toggle buka/tutup bagian "Riwayat" (baris tabel yang sudah tercentang,
+    // disembunyikan dari tabel utama) — di tempat, tanpa render ulang, sama
+    // seperti pola body-tap-toggle. Status buka/tutupnya disimpan di
+    // expandedTableHistory supaya tidak balik tertutup kalau kartu dirender
+    // ulang karena aksi lain (mis. mencentang baris lain).
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-table-history-toggle'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var wrap = btn.closest('.notes-table-history');
+        if (!wrap) return;
+        var key = wrap.getAttribute('data-hist-key');
+        var expanded = wrap.classList.toggle('expanded');
+        expandedTableHistory[key] = expanded;
+        btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        var body = wrap.querySelector('.notes-table-history-body');
+        if (body) body.hidden = !expanded;
+      });
+    });
     Array.prototype.forEach.call(container.querySelectorAll('.notes-row-del'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
@@ -4632,30 +4677,64 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var tblCols = parseTableRow(b.items[0].text).length;
         var tblLines = b.items.map(function(it){ return it.idx; }).join(',');
         var tblHasChk = tableRowCheckState(b.items[0].text) !== null;
+        // ri di sini dipakai murni untuk menandai "ini baris judul (0) atau
+        // bukan" (kontrol tambah/hapus kolom hanya muncul di baris judul).
+        // suppressHeadCtrls=true dipakai saat baris judul dirender ULANG di
+        // tabel Riwayat (di bawah), supaya tombol tambah/hapus kolom tidak
+        // dobel — kolom tetap diedit lewat tabel utama saja.
+        function tblRowHTML(it, ri, suppressHeadCtrls){
+          var cells = parseTableRow(it.text);
+          var rowChk = tblHasChk && ri > 0 && tableRowCheckState(it.text) === true;
+          var chkCell = '';
+          if (tblHasChk){
+            chkCell = ri === 0
+              ? '<td class="notes-cell-chk notes-chk-head"></td>'
+              : '<td class="notes-cell-chk" data-line="'+it.idx+'" title="Tandai baris ini"><span class="notes-row-check'+(rowChk?' checked':'')+'" role="checkbox" aria-checked="'+(rowChk?'true':'false')+'" aria-label="Centang baris ini">'+(rowChk?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span></td>';
+          }
+          return '<tr data-line="'+it.idx+'"'+(rowChk?' class="row-checked"':'')+'>' + chkCell + cells.map(function(c, ci){
+            var ctrls = '';
+            if (ri > 0 && ci === 0) ctrls += '<button type="button" class="notes-row-del" aria-label="Hapus baris ini" title="Hapus baris ini">\u00d7</button>';
+            if (ri === 0 && !suppressHeadCtrls){
+              if (ci === 0) ctrls += '<button type="button" class="notes-col-add left-edge" data-pos="0" aria-label="Tambah kolom di sini" title="Tambah kolom di sini">+</button>';
+              ctrls += '<button type="button" class="notes-col-add" data-pos="'+(ci + 1)+'" aria-label="Tambah kolom di sini" title="Tambah kolom di sini">+</button>';
+              ctrls += '<button type="button" class="notes-col-del" data-col="'+ci+'" aria-label="Hapus kolom ini" title="Hapus kolom ini">\u00d7</button>';
+            }
+            return '<td class="notes-cell" data-col="'+ci+'" title="Ketuk untuk mengedit sel ini"><span class="notes-cell-text">'+escapeHTML(c)+'</span>'+ctrls+'</td>';
+          }).join('') + '</tr>';
+        }
+        var headItem = b.items[0];
+        var bodyItems = b.items.slice(1);
+        var activeItems = bodyItems;
+        var historyItems = [];
+        if (tblHasChk){
+          activeItems = []; historyItems = [];
+          bodyItems.forEach(function(it){
+            (tableRowCheckState(it.text) === true ? historyItems : activeItems).push(it);
+          });
+        }
+        var histKey = (reminderId||'') + '|' + (dateStr||'') + '|' + headItem.idx;
+        var histExpanded = !!expandedTableHistory[histKey];
+        var historyHTML = '';
+        if (tblHasChk && historyItems.length){
+          historyHTML = '<div class="notes-table-history'+(histExpanded?' expanded':'')+'" data-hist-key="'+escapeHTML(histKey)+'">' +
+            '<button type="button" class="notes-table-history-toggle" aria-expanded="'+(histExpanded?'true':'false')+'">' +
+              '<svg class="hist-chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+              'Riwayat tercentang ('+historyItems.length+')' +
+            '</button>' +
+            '<div class="notes-table-history-body"'+(histExpanded?'':' hidden')+'>' +
+              '<table class="notes-plain-table"><tbody>' +
+                tblRowHTML(headItem, 0, true) +
+                historyItems.map(function(it){ return tblRowHTML(it, 1, false); }).join('') +
+              '</tbody></table>' +
+            '</div>' +
+          '</div>';
+        }
         return '<div class="notes-table-wrap" data-lines="'+tblLines+'">' +
           '<table class="notes-plain-table"><tbody>' +
-          b.items.map(function(it, ri){
-            var cells = parseTableRow(it.text);
-            var rowChk = tblHasChk && ri > 0 && tableRowCheckState(it.text) === true;
-            var chkCell = '';
-            if (tblHasChk){
-              chkCell = ri === 0
-                ? '<td class="notes-cell-chk notes-chk-head"></td>'
-                : '<td class="notes-cell-chk" data-line="'+it.idx+'" title="Tandai baris ini"><span class="notes-row-check'+(rowChk?' checked':'')+'" role="checkbox" aria-checked="'+(rowChk?'true':'false')+'" aria-label="Centang baris ini">'+(rowChk?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span></td>';
-            }
-            return '<tr data-line="'+it.idx+'"'+(rowChk?' class="row-checked"':'')+'>' + chkCell + cells.map(function(c, ci){
-              // Tombol tambah/hapus kolom hanya di sel baris judul (baris pertama tabel).
-              var ctrls = '';
-              if (ri > 0 && ci === 0) ctrls += '<button type="button" class="notes-row-del" aria-label="Hapus baris ini" title="Hapus baris ini">\u00d7</button>';
-              if (ri === 0){
-                if (ci === 0) ctrls += '<button type="button" class="notes-col-add left-edge" data-pos="0" aria-label="Tambah kolom di sini" title="Tambah kolom di sini">+</button>';
-                ctrls += '<button type="button" class="notes-col-add" data-pos="'+(ci + 1)+'" aria-label="Tambah kolom di sini" title="Tambah kolom di sini">+</button>';
-                ctrls += '<button type="button" class="notes-col-del" data-col="'+ci+'" aria-label="Hapus kolom ini" title="Hapus kolom ini">\u00d7</button>';
-              }
-              return '<td class="notes-cell" data-col="'+ci+'" title="Ketuk untuk mengedit sel ini"><span class="notes-cell-text">'+escapeHTML(c)+'</span>'+ctrls+'</td>';
-            }).join('') + '</tr>';
-          }).join('') +
+            tblRowHTML(headItem, 0, false) +
+            activeItems.map(function(it){ return tblRowHTML(it, 1, false); }).join('') +
           '</tbody></table>' +
+          historyHTML +
           '<button type="button" class="notes-row-add" data-after="'+tblLastIdx+'" data-cols="'+tblCols+'" aria-label="Tambah baris" title="Tambah baris">+ baris</button>' +
           '<button type="button" class="notes-chk-toggle" data-on="'+(tblHasChk?'1':'0')+'" aria-label="'+(tblHasChk?'Matikan centang per baris':'Aktifkan centang per baris')+'" title="'+(tblHasChk?'Matikan centang per baris':'Aktifkan centang per baris')+'">'+(tblHasChk?'\u2611 centang: hidup':'\u2610 centang: mati')+'</button>' +
         '</div>';
@@ -5148,6 +5227,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // dibuka manual oleh pengguna (mis. saat gilirannya tiba untuk dicek),
   // bukan yang disembunyikan.
   var expandedNotesIds = {};
+  // Baris tabel ber-centang (fitur "centang per baris") yang sudah
+  // tercentang otomatis dipindah tampilannya ke bagian "Riwayat" yang
+  // tersembunyi (auto-hide) di bawah tabel yang sama — bukan dihapus,
+  // hanya disembunyikan dari tabel utama supaya baris yang belum
+  // dicentang lebih ringkas dilihat. Kunci: reminderId|dateStr|idxHeader.
+  var expandedTableHistory = {};
   // Buka/tutup rincian catatan satu kartu di tempat (tanpa render ulang).
   // host = elemen <li> kartu (punya data-checklist-owner/data-id), btn =
   // tombol panah (.flex-collapse) di kartu itu kalau ada (dipakai untuk
