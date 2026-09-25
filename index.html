@@ -467,17 +467,26 @@
     font-weight:700; padding:0.3rem 0.5rem 0.1rem; font-family:var(--font-mono);
   }
   .up-item{
+    position:relative;
     display:flex; align-items:flex-start; gap:0.55rem; padding:0.5rem 0.5rem; border-radius:9px; background:var(--surface);
     border:1px solid var(--line-soft);
   }
   .up-item .body{flex:1; min-width:0;}
-  .up-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word;}
+  /* padding-right di sini HANYA untuk baris judul, supaya judul tidak
+     tertutup ikon aksi (edit/salin/panah) yang sekarang ditumpuk di pojok
+     kanan-atas kartu (lihat .up-item .acts di bawah) alih-alih memakai
+     kolom flex tersendiri. Baris di bawah judul (meta, catatan, tabel)
+     SENGAJA tidak diberi padding ini, supaya tabel/daftar catatan di kartu
+     Dashboard (Mendatang, Baru Ditambahkan, rincian hari, dll) bisa
+     memakai lebar penuh kartu juga — sama seperti kartu Fleksibel/Pin —
+     bukannya terjepit sempit sehingga isinya turun banyak baris. */
+  .up-item .title{font-size:0.84rem; font-weight:600; line-height:1.3; word-break:break-word; padding-right:5.6rem;}
   .title-link{color:inherit; text-decoration:none; display:inline-flex; align-items:baseline; gap:3px;}
   .title-link:hover, .title-link:focus{color:var(--moss); text-decoration:underline;}
   .title-link .link-ico{width:11px; height:11px; flex:none; align-self:center; opacity:0.7;}
   .up-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
   .up-item .meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
-  .up-item .acts{display:flex; gap:0.3rem; flex:none;}
+  .up-item .acts{position:absolute; top:0.5rem; right:0.5rem; display:flex; gap:0.3rem; z-index:1;}
   .up-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
   .up-item.done .flex-check svg{opacity:1;}
   /* Induk (judul) sudah dicentang, tapi belum semua anak centang -> belum "selesai". */
@@ -1651,6 +1660,13 @@
            pintasan lain menyusul. Tombol yang punya data-view otomatis
            membuka tab itu (lihat setView); tombol baru cukup <button class="shortcut-btn">. -->
       <div class="header-shortcuts" id="headerShortcuts">
+        <button type="button" class="shortcut-btn" id="backupDownloadShortcut" aria-label="Unduh backup (.json)" title="Unduh backup (.json)">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 3v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="shortcut-btn" id="backupRestoreShortcut" aria-label="Pulihkan dari file backup" title="Pulihkan dari file backup">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 20V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 13l5-5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <input type="file" id="restoreJsonInput" accept="application/json,.json" hidden>
         <button type="button" class="shortcut-btn" id="fontSizeShortcut" aria-label="Ukuran font" title="Ukuran font" aria-haspopup="true" aria-expanded="false" aria-controls="fontSizePopover">
           <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="1.5" y="18" font-size="11" font-weight="700" font-family="inherit">A</text><text x="10.5" y="18" font-size="16" font-weight="700" font-family="inherit">A</text></svg>
         </button>
@@ -1944,14 +1960,6 @@
         <button type="button" id="catNext">Selanjutnya ›</button>
       </div>
       <button type="button" class="btn btn-ghost" id="addCategoryBtn">+ Tambah kategori</button>
-    </div>
-    <div class="settings-block">
-      <h2>Cadangkan &amp; Pulihkan Data</h2>
-      <p class="hint">Unduh seluruh isi aplikasi (pengingat, kategori, dan status centang) sebagai satu file JSON untuk jaga-jaga. File ini bisa dipulihkan kembali kapan saja, misalnya setelah ganti perangkat atau kalau data tidak sengaja berubah.</p>
-      <button type="button" class="btn btn-ghost" id="backupJsonBtn">⬇ Unduh backup (.json)</button>
-      <button type="button" class="btn btn-ghost" id="restoreJsonBtn" style="margin-top:0.6rem;">⬆ Pulihkan dari file backup…</button>
-      <input type="file" id="restoreJsonInput" accept="application/json,.json" hidden>
-      <p class="hint" id="backupLastInfo" style="margin-top:0.6rem;"></p>
     </div>
     <div class="settings-block">
       <h2>Akun</h2>
@@ -7980,12 +7988,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
 
   function refreshBackupLastInfo(){
-    var el = document.getElementById('backupLastInfo');
+    var el = document.getElementById('backupDownloadShortcut');
     if (!el) return;
     var last = localStorage.getItem(BACKUP_LAST_KEY);
-    if (!last) { el.textContent = 'Belum pernah membuat backup di perangkat ini.'; return; }
-    var d = new Date(last);
-    el.textContent = 'Backup terakhir diunduh: ' + d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    var label = !last ? 'Unduh backup (.json) — belum pernah dibuat di perangkat ini' :
+      'Unduh backup (.json) — terakhir: ' + new Date(last).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + new Date(last).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    el.setAttribute('title', label);
+    el.setAttribute('aria-label', label);
   }
 
   // Validasi ringan: pastikan file yang dipilih memang berformat backup
@@ -8058,9 +8067,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     reader.readAsText(file);
   }
 
-  document.getElementById('backupJsonBtn').addEventListener('click', downloadBackupJson);
+  document.getElementById('backupDownloadShortcut').addEventListener('click', downloadBackupJson);
   var restoreJsonInput = document.getElementById('restoreJsonInput');
-  document.getElementById('restoreJsonBtn').addEventListener('click', function(){
+  document.getElementById('backupRestoreShortcut').addEventListener('click', function(){
     restoreJsonInput.value = '';
     restoreJsonInput.click();
   });
