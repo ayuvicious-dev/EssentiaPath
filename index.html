@@ -2132,6 +2132,7 @@
                   <option value="hourly" style="text-align:center;">Tiap beberapa jam</option>
                   <option value="daily" style="text-align:center;">Harian</option>
                   <option value="dailyCarry" style="text-align:center;">Harian Lanjutan</option>
+                  <option value="dailyRoutine" style="text-align:center;">Harian Rutin</option>
                   <option value="everyNDays" style="text-align:center;">Setiap X hari sekali</option>
                   <option value="everyNWeeks" style="text-align:center;">Setiap X minggu sekali</option>
                   <option value="weekday" style="text-align:center;">Hari kerja (Sen–Jum)</option>
@@ -2410,7 +2411,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var CATS = DEFAULT_CATS.slice();
 
   var REPEAT_LABEL = {
-    none:"Sekali", hourly:"Tiap jam", daily:"Harian", dailyCarry:"Harian Lanjutan", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", workdaySat:"Hari Kerja (Sen–Sab)", weekend:"Akhir pekan",
+    none:"Sekali", hourly:"Tiap jam", daily:"Harian", dailyCarry:"Harian Lanjutan", dailyRoutine:"Harian Rutin", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", workdaySat:"Hari Kerja (Sen–Sab)", weekend:"Akhir pekan",
     weekly:"Mingguan", biweekly:"Dua mingguan", monthly:"Bulanan", endOfMonth:"Akhir bulan", quarterly:"Triwulanan", annually:"Tahunan"
   };
   function repeatLabel(r){
@@ -2918,15 +2919,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     }
     if (!r.repeat || r.repeat === 'none' || dateStr === r.date) return r.notes || '';
     if (r.repeat === 'dailyCarry') return carryNotesForDate(r, dateStr);
+    if (r.repeat === 'dailyRoutine') return routineNotesForDate(r, dateStr);
     return '';
   }
   // ---------- Harian Lanjutan ----------
   // Pengingat berjenis "Harian Lanjutan" muncul setiap hari seperti Harian,
   // tapi Catatannya "dilanjutkan" dari hari sebelumnya: semua baris ikut
-  // terbawa, KECUALI item sub-checklist (☐/☑) yang sudah dicentang di hari
-  // sebelumnya — itu hilang di hari ini. Item yang belum dicentang terus
-  // terbawa (kembali kosong ☐) sampai akhirnya dicentang. Baris tabel
-  // ber-centang tidak dihapus, hanya centangnya dikosongkan lagi.
+  // terbawa, KECUALI item sub-checklist (☐/☑) atau baris tabel ber-centang
+  // yang sudah dicentang di hari sebelumnya — itu hilang di hari ini (baris
+  // tabelnya ikut hilang juga, bukan cuma centangnya yang dikosongkan).
+  // Item/baris yang belum dicentang terus terbawa (kembali kosong ☐) sampai
+  // akhirnya dicentang.
   //
   // Isi Catatan hari itu dihitung (bukan disimpan) dari rantai hari-hari
   // sebelumnya, mulai dari hari terdekat yang punya isi eksplisit (tanggal
@@ -2952,8 +2955,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         out.push(CHECK_UNCHECKED + line.slice(CHECK_UNCHECKED.length));
         return;
       }
-      // Baris tabel ber-centang yang tercentang: baris tetap ada, centang dikosongkan.
-      out.push(line.replace(/^(\s*)\u2611(?=\|)/, '$1\u2610'));
+      // Baris tabel ber-centang yang tercentang kemarin: baris ikut hilang
+      // hari ini, sama seperti item checklist ☐/☑ di atas (bukan lagi cuma
+      // dikosongkan centangnya) — supaya barang yang sudah dibeli/selesai
+      // tidak terus nongol lagi di tabel hari berikutnya.
+      if (tableRowCheckState(line) === true) return;
+      out.push(line);
     });
     return out.join('\n');
   }
@@ -2999,6 +3006,75 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (Object.prototype.hasOwnProperty.call(state.occurrenceNotes, occurrenceNotesKey(reminderId, dateStr))) return;
     var p = setNotesForOccurrence(reminderId, dateStr, getNotesForOccurrence(reminderId, dateStr));
     if (p && typeof p.catch === 'function') p.catch(function(){});
+  }
+  // ---------- Harian Rutin ----------
+  // Pengingat berjenis "Harian Rutin" muncul setiap hari seperti Harian,
+  // dan daftar baris Catatannya (termasuk item sub-checklist ☐/☑ maupun
+  // baris tabel ber-centang) TETAP SAMA persis setiap hari — tidak ada
+  // baris yang hilang walau sudah dicentang kemarin (beda dari "Harian
+  // Lanjutan", yang barisnya ikut hilang kalau dicentang).
+  //
+  // Status centang ITEM SUB-CHECKLIST (☐/☑) sudah otomatis mulai kosong
+  // lagi tiap tanggal baru dengan sendirinya, karena disimpan terpisah per
+  // (reminder, tanggal, baris) lewat state.checklistProgress (lihat
+  // checklistItemsForDate) — jadi di sini tidak perlu diapa-apakan.
+  //
+  // Status centang BARIS TABEL beda ceritanya: itu disimpan langsung di
+  // teks Catatan itu sendiri (penanda ☐/☑ tepat sebelum "|", lihat
+  // toggleNotesTableRowCheck), bukan lewat checklistProgress. Supaya tetap
+  // ikut "mulai kosong lagi tiap hari" tapi barisnya tidak hilang, di sini
+  // penanda ☑ pada baris tabel sengaja dikembalikan ke ☐ setiap kali
+  // dilanjutkan ke hari berikutnya (lihat routineNextText).
+  //
+  // Kalau isi Catatan untuk suatu tanggal DIUBAH (baris ditambah/diedit/
+  // dihapus lewat setNotesForOccurrence — mis. dari form edit kemunculan
+  // atau aksi tambah/hapus/edit baris langsung, TERMASUK menCENTANG baris
+  // tabel), itu tersimpan eksplisit di state.occurrenceNotes untuk tanggal
+  // itu, dan otomatis jadi acuan untuk semua tanggal SESUDAHNYA yang belum
+  // punya perubahan sendiri (dicari mundur sampai ketemu tanggal dengan
+  // entri eksplisit, atau sampai ke tanggal asli pengingat, lalu maju lagi
+  // menerapkan reset centang tabel tiap harinya). Tanggal-tanggal SEBELUM
+  // perubahan itu tidak ikut berubah karena tetap memakai entri
+  // eksplisitnya sendiri (atau Catatan asli) sebagai acuan.
+  var routineCache = { reminders:null, occ:null, map:{} };
+  function routineNextText(prevText){
+    var lines = (prevText || '').split('\n');
+    return lines.map(function(line){
+      if (tableRowCheckState(line) === true){
+        return line.replace(/^(\s*)\u2611(?=\|)/, '$1\u2610');
+      }
+      return line;
+    }).join('\n');
+  }
+  function routineNotesForDate(r, dateStr){
+    if (!r.date || dateStr < r.date) return '';
+    if (dateStr === r.date) return r.notes || '';
+    if (routineCache.reminders !== state.reminders || routineCache.occ !== state.occurrenceNotes){
+      routineCache = { reminders: state.reminders, occ: state.occurrenceNotes, map: {} };
+    }
+    var map = routineCache.map;
+    var ck = r.id + '|' + dateStr;
+    if (Object.prototype.hasOwnProperty.call(map, ck)) return map[ck];
+    var stack = [];
+    var cur = dateStr;
+    var baseText = '';
+    var guard = 0;
+    while (guard++ < 4000){
+      var curKey = r.id + '|' + cur;
+      if (Object.prototype.hasOwnProperty.call(state.occurrenceNotes, curKey)){ baseText = state.occurrenceNotes[curKey]; break; }
+      if (cur === r.date){ baseText = r.notes || ''; break; }
+      if (Object.prototype.hasOwnProperty.call(map, curKey)){ baseText = map[curKey]; break; }
+      stack.push(cur);
+      cur = prevDateStr(cur);
+    }
+    var prevText = baseText;
+    for (var i = stack.length - 1; i >= 0; i--){
+      var day = stack[i];
+      var text = routineNextText(prevText);
+      map[r.id + '|' + day] = text;
+      prevText = text;
+    }
+    return Object.prototype.hasOwnProperty.call(map, ck) ? map[ck] : prevText;
   }
   // Menyimpan isi Catatan untuk SATU kemunculan bertanggal. Kalau
   // kemunculannya adalah tanggal asli (atau reminder tidak berulang),
@@ -3172,6 +3248,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         return dateStr === r.date ? [resolveOccTime(r, d)] : [];
       case 'daily':
       case 'dailyCarry': // sama seperti Harian; bedanya ada di isi Catatan (lihat carryNotesForDate)
+      case 'dailyRoutine': // sama seperti Harian; bedanya ada di isi Catatan (lihat routineNotesForDate)
         return [resolveOccTime(r, d)];
       case 'everyNDays': {
         var nDays = Math.max(2, parseInt(r.everyNDaysInterval || 2, 10));
