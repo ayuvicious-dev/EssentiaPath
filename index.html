@@ -1354,21 +1354,43 @@
     .date-icon-pos-btn{ width:1rem; height:1rem; }
     .date-icon-pos-btn svg{ width:9px; height:9px; }
   }
-  /* Panel D-pad "Posisi ikon" — kotak tengah putus-putus cuma dekorasi
-     (mewakili field-nya sendiri), 4 tombol di sekelilingnya memilih sisi. */
+  /* Panel "Geser ikon" dibuat jauh lebih kecil & padat dibanding popover
+     ukuran font (yang lebar defaultnya 250px) — supaya tidak menutupi
+     field "Tanggal mulai" di baliknya saat dipakai (posisinya juga dibuka
+     di bawah seluruh baris tanggal/waktu/berakhir, bukan menimpa field,
+     lihat positionDateIconPosPopover() di JS). */
+  .date-icon-pos-popover{ width:168px; padding:9px 10px 8px; }
+  .date-icon-pos-popover .fs-pop-head{ margin-bottom:5px; }
+  .date-icon-pos-popover .fs-pop-title{ font-size:11.5px; }
+  .date-icon-pos-popover .fs-pop-hint{ font-size:9.5px; }
+  .date-icon-pos-popover .fs-pop-foot{ margin-top:5px; gap:6px; }
+  .date-icon-pos-popover .fs-pop-reset{ font-size:10px; padding:3px 6px; }
+  /* Pemilih "Kalender" / "Hari ini" di atas D-pad — menentukan ikon mana
+     yang sedang digeser (masing-masing punya offset tersimpan sendiri). */
+  .date-icon-target-tabs{ display:flex; gap:4px; margin-bottom:6px; }
+  .date-icon-target-tab{
+    flex:1 1 0; border:1px solid var(--line); border-radius:7px; background:var(--surface);
+    color:var(--ink-soft); font:inherit; font-size:10px; font-weight:600; padding:4px 2px;
+    cursor:pointer; text-align:center;
+  }
+  .date-icon-target-tab[aria-selected="true"]{ border-color:var(--moss); background:var(--selected-bg); color:var(--moss-deep); }
+  /* Panel D-pad "Geser ikon" — kotak tengah menampilkan offset saat ini
+     (mis. "0, 0"), 4 tombol panah di sekelilingnya menggeser ikon kalender
+     & "hari ini" 1px per ketuk. Dibuat kecil & padat (bukan D-pad besar
+     seperti sebelumnya) supaya panelnya sendiri tetap ringkas. */
   .date-icon-pos-grid{
     display:grid; grid-template-columns:1fr 1fr 1fr; grid-template-rows:1fr 1fr 1fr;
     grid-template-areas:". top ." "left center right" ". bottom .";
-    gap:5px; width:100%; max-width:180px; aspect-ratio:1; margin:2px auto 8px; box-sizing:border-box;
+    gap:4px; width:100%; max-width:118px; aspect-ratio:1; margin:2px auto 6px; box-sizing:border-box;
   }
-  .date-icon-pos-grid .date-icon-pos-opt[data-pos="top"]{ grid-area:top; }
-  .date-icon-pos-grid .date-icon-pos-opt[data-pos="left"]{ grid-area:left; }
-  .date-icon-pos-grid .date-icon-pos-opt[data-pos="right"]{ grid-area:right; }
-  .date-icon-pos-grid .date-icon-pos-opt[data-pos="bottom"]{ grid-area:bottom; }
+  .date-icon-pos-grid .date-icon-pos-opt[data-nudge="up"]{ grid-area:top; }
+  .date-icon-pos-grid .date-icon-pos-opt[data-nudge="left"]{ grid-area:left; }
+  .date-icon-pos-grid .date-icon-pos-opt[data-nudge="right"]{ grid-area:right; }
+  .date-icon-pos-grid .date-icon-pos-opt[data-nudge="down"]{ grid-area:bottom; }
   .date-icon-pos-center{
     grid-area:center; display:flex; align-items:center; justify-content:center; text-align:center;
-    border:1px dashed var(--line); border-radius:8px; color:var(--ink-soft); font-size:9px; font-weight:600;
-    line-height:1.2; padding:2px;
+    border:1px dashed var(--line); border-radius:8px; color:var(--ink-soft); font-size:8.5px; font-weight:600;
+    line-height:1.2; padding:1px;
   }
   .date-icon-pos-opt{
     grid-area:auto; border:1.5px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink);
@@ -1377,34 +1399,12 @@
   }
   .date-icon-pos-opt:hover{ border-color:var(--moss); }
   .date-icon-pos-opt.active{ border-color:var(--moss); background:var(--selected-bg); color:var(--moss-deep); }
-  /* ---------- Efek posisi ikon "Tanggal mulai" (Kiri/Atas/Bawah) ----------
-     Default (Kanan) TIDAK disentuh sama sekali di sini — tampilannya persis
-     seperti sebelum fitur ini ada, nol risiko regresi. Ketiga varian lain
-     dipasang lewat class di #dateStartField dan pakai !important supaya
-     pasti menang dari aturan responsif per-breakpoint di atas (yang banyak
-     menyetel right/left/padding manual per lebar layar). */
-  #dateStartField.icon-pos-left .date-field-row{ flex-direction:row-reverse !important; }
-  #dateStartField.icon-pos-left .date-field-row .today-check{
-    border-left:none !important; border-right:1px solid var(--line) !important;
-  }
-  #dateStartField.icon-pos-left .date-field-wrap input[type="date"]{
-    padding-left:2.3rem !important; padding-right:0.5rem !important;
-  }
-  #dateStartField.icon-pos-left .date-field-wrap input[type="date"]::-webkit-calendar-picker-indicator{
-    right:auto !important; left:0 !important;
-  }
-  #dateStartField.icon-pos-left .date-field-wrap .date-field-icon{ right:auto !important; left:0 !important; }
-  #dateStartField.icon-pos-left .date-field-wrap .date-field-display{ right:auto !important; left:2.3rem !important; }
-  #dateStartField.icon-pos-top .date-field-row,
-  #dateStartField.icon-pos-bottom .date-field-row{ flex-wrap:wrap !important; }
-  #dateStartField.icon-pos-top .date-field-row .date-field-wrap,
-  #dateStartField.icon-pos-bottom .date-field-row .date-field-wrap{ flex:1 1 100% !important; }
-  #dateStartField.icon-pos-top .date-field-row .today-check{
-    order:-1 !important; width:100% !important; border-left:none !important; border-bottom:1px solid var(--line) !important;
-  }
-  #dateStartField.icon-pos-bottom .date-field-row .today-check{
-    order:2 !important; width:100% !important; border-left:none !important; border-top:1px solid var(--line) !important;
-  }
+  /* ---------- Geser halus ikon "Tanggal mulai" (Atas/Bawah/Kiri/Kanan) ----------
+     Dulu di sini ada 4 opsi yang memindahkan ikon kalender & "hari ini" ke
+     sisi lain field (kiri/atas/bawah). Sekarang disederhanakan: ikon SELALU
+     di kanan (tidak ada lagi pilihan sisi) — panel "Atur posisi ikon" cuma
+     jadi kontrol geser halus (nudge, satuan piksel kecil) lewat 4 tombol
+     panah di JS (lihat dateIconNudge di bawah), bukan lagi pemindah sisi. */
   /* Di bawah 480px, ruang yang disisakan untuk ikon kalender/jam bawaan
      browser (padding-right 1.6rem di atas) ternyata membuat total lebar
      3 kolom melebihi lebar layar HP, sehingga kolom "Berakhir pada" jadi
@@ -1792,25 +1792,56 @@
 </div>
 
 <!-- Panel "Atur posisi ikon" (dibuka dari tombol di sebelah label "Tanggal
-     mulai"). Tata letaknya dibuat menyerupai D-pad: kotak putus-putus di
-     tengah mewakili field "Tanggal mulai" itu sendiri, 4 tombol di
-     sekelilingnya untuk memilih sisi tempat ikon kalender & "hari ini"
-     ditempatkan. Preferensinya per perangkat (localStorage), tidak
-     disinkron ke akun. -->
-<div class="fs-popover date-icon-pos-popover" id="dateIconPosPopover" role="dialog" aria-label="Posisi ikon Tanggal mulai" hidden>
+     mulai"). Ikon kalender & "hari ini" SELALU di kanan field (tidak ada
+     lagi opsi pindah sisi) — panel ini D-pad geser halus (nudge per piksel)
+     4 arah, dengan pemilih di atasnya supaya kalender & "hari ini" bisa
+     digeser terpisah (salah satu saja) atau bergantian (keduanya).
+     Preferensinya per perangkat (localStorage), tidak disinkron ke akun. -->
+<div class="fs-popover date-icon-pos-popover" id="dateIconPosPopover" role="dialog" aria-label="Geser posisi ikon Tanggal mulai" hidden>
   <div class="fs-pop-head">
-    <span class="fs-pop-title">Posisi ikon</span>
+    <span class="fs-pop-title">Geser ikon</span>
+  </div>
+  <div class="date-icon-target-tabs" role="tablist" aria-label="Pilih ikon">
+    <button type="button" class="date-icon-target-tab" data-icon-target="cal" role="tab" aria-selected="true">Kalender</button>
+    <button type="button" class="date-icon-target-tab" data-icon-target="today" role="tab" aria-selected="false">Hari ini</button>
   </div>
   <div class="date-icon-pos-grid">
-    <button type="button" class="date-icon-pos-opt" data-pos="top" aria-label="Atas">Atas</button>
-    <button type="button" class="date-icon-pos-opt" data-pos="left" aria-label="Kiri">Kiri</button>
-    <span class="date-icon-pos-center" aria-hidden="true">Tanggal mulai</span>
-    <button type="button" class="date-icon-pos-opt" data-pos="right" aria-label="Kanan">Kanan</button>
-    <button type="button" class="date-icon-pos-opt" data-pos="bottom" aria-label="Bawah">Bawah</button>
+    <button type="button" class="date-icon-pos-opt" data-nudge="up" aria-label="Geser ke atas">▲</button>
+    <button type="button" class="date-icon-pos-opt" data-nudge="left" aria-label="Geser ke kiri">◀</button>
+    <span class="date-icon-pos-center" aria-hidden="true" id="dateIconNudgeValue">0, 0</span>
+    <button type="button" class="date-icon-pos-opt" data-nudge="right" aria-label="Geser ke kanan">▶</button>
+    <button type="button" class="date-icon-pos-opt" data-nudge="down" aria-label="Geser ke bawah">▼</button>
   </div>
   <div class="fs-pop-foot">
-    <span class="fs-pop-hint">Posisi ikon kalender &amp; "hari ini" di field Tanggal mulai.</span>
+    <span class="fs-pop-hint">Ikon tetap di kanan — pilih ikon di atas, lalu geser dikit buat merapikan posisinya.</span>
     <button type="button" class="fs-pop-reset" id="dateIconPosReset">Setel ulang</button>
+  </div>
+</div>
+
+<!-- Panel "Atur posisi ikon" untuk baris "Ulangi" (dibuka dari tombol di
+     sebelah labelnya) — sama persis strukturnya dengan panel "Tanggal
+     mulai" di atas, cuma target ikonnya beda: panah dropdown "Ulangi"
+     (id fRepeatArrowIcon) & ikon lingkaran-coret "Tidak berulang" (id
+     fRepeatNoneIcon). Preferensi per perangkat (localStorage), terpisah
+     dari nudge "Tanggal mulai". -->
+<div class="fs-popover date-icon-pos-popover" id="repeatIconPosPopover" role="dialog" aria-label="Geser posisi ikon Ulangi" hidden>
+  <div class="fs-pop-head">
+    <span class="fs-pop-title">Geser ikon</span>
+  </div>
+  <div class="date-icon-target-tabs" role="tablist" aria-label="Pilih ikon">
+    <button type="button" class="date-icon-target-tab" data-icon-target="arrow" role="tab" aria-selected="true">Panah</button>
+    <button type="button" class="date-icon-target-tab" data-icon-target="none" role="tab" aria-selected="false">Coret</button>
+  </div>
+  <div class="date-icon-pos-grid">
+    <button type="button" class="date-icon-pos-opt" data-nudge="up" aria-label="Geser ke atas">▲</button>
+    <button type="button" class="date-icon-pos-opt" data-nudge="left" aria-label="Geser ke kiri">◀</button>
+    <span class="date-icon-pos-center" aria-hidden="true" id="repeatIconNudgeValue">0, 0</span>
+    <button type="button" class="date-icon-pos-opt" data-nudge="right" aria-label="Geser ke kanan">▶</button>
+    <button type="button" class="date-icon-pos-opt" data-nudge="down" aria-label="Geser ke bawah">▼</button>
+  </div>
+  <div class="fs-pop-foot">
+    <span class="fs-pop-hint">Ikon tetap di kanan — pilih ikon di atas, lalu geser dikit buat merapikan posisinya.</span>
+    <button type="button" class="fs-pop-reset" id="repeatIconPosReset">Setel ulang</button>
   </div>
 </div>
 
@@ -2219,7 +2250,12 @@
         </div>
         <div class="row-2" id="repeatUntilRow">
           <div class="field">
-            <label for="fRepeat">Ulangi</label>
+            <div class="field-label-row">
+              <label for="fRepeat">Ulangi</label>
+              <button type="button" class="date-icon-pos-btn" id="repeatIconPosBtn" aria-label="Atur posisi ikon" title="Atur posisi ikon" aria-haspopup="true" aria-expanded="false" aria-controls="repeatIconPosPopover">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 5l3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
             <div class="select-field-row">
               <div class="select-field-wrap">
                 <select id="fRepeat" required>
@@ -2242,12 +2278,12 @@
                   <option value="annually" style="text-align:center;">Tahunan</option>
                 </select>
                 <span class="select-field-icon" aria-hidden="true">
-                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <svg class="field-icon" id="fRepeatArrowIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
               </div>
               <input type="checkbox" id="fRepeatNone" class="today-check-input">
               <label class="today-check" for="fRepeatNone" title="Pakai Tidak berulang" aria-label="Pakai Tidak berulang">
-                <svg class="field-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 6.5l11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <svg class="field-icon" id="fRepeatNoneIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 6.5l11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
               </label>
             </div>
           </div>
@@ -6894,14 +6930,22 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // dari fitur "Atur posisi ikon" (tombol di sebelah label, lihat blok di
   // bawah) yang mengatur di SISI MANA ikon-ikon itu ditaruh (kanan/kiri/atas/
   // bawah) — dua-duanya jalan bersamaan, tidak saling menggantikan.
+  // Catatan: kedua fungsi ini juga menambahkan offset "geser halus" yang
+  // bisa diatur pengguna lewat panel D-pad (lihat getDateIconNudge di
+  // bawah; sudah hoisted lewat deklarasi "function" jadi aman dipanggil di
+  // sini meski didefinisikan belakangan di file). Kalender & "hari ini"
+  // masing-masing punya offset SENDIRI (bisa digeser salah satu saja atau
+  // keduanya), ditambahkan di atas offset dasar per breakpoint di bawah,
+  // bukan menggantikannya.
   var DESKTOP_ICON_POS = { calX: -12, calY: 0, todayX: -9, todayY: -5 };
   function applyDesktopIconPos(){
     if (window.innerWidth < 640) return; // biarkan skrip mobile yang menentukan
     var calIcon = document.getElementById('fDateCalIcon');
     var todayIcon = document.getElementById('fDateTodayIcon');
     if (!calIcon || !todayIcon) return;
-    calIcon.style.transform = 'translate(' + DESKTOP_ICON_POS.calX + 'px, ' + DESKTOP_ICON_POS.calY + 'px)';
-    todayIcon.style.transform = 'translate(' + DESKTOP_ICON_POS.todayX + 'px, ' + DESKTOP_ICON_POS.todayY + 'px)';
+    var n = (typeof getDateIconNudge === 'function') ? getDateIconNudge() : { cal: { x: 0, y: 0 }, today: { x: 0, y: 0 } };
+    calIcon.style.transform = 'translate(' + (DESKTOP_ICON_POS.calX + n.cal.x) + 'px, ' + (DESKTOP_ICON_POS.calY + n.cal.y) + 'px)';
+    todayIcon.style.transform = 'translate(' + (DESKTOP_ICON_POS.todayX + n.today.x) + 'px, ' + (DESKTOP_ICON_POS.todayY + n.today.y) + 'px)';
   }
   applyDesktopIconPos();
   var MOBILE_ICON_POS = { calX: 7, calY: 1, todayX: 1, todayY: -6 };
@@ -6910,8 +6954,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var calIcon = document.getElementById('fDateCalIcon');
     var todayIcon = document.getElementById('fDateTodayIcon');
     if (!calIcon || !todayIcon) return;
-    calIcon.style.transform = 'translate(' + MOBILE_ICON_POS.calX + 'px, ' + MOBILE_ICON_POS.calY + 'px)';
-    todayIcon.style.transform = 'translate(' + MOBILE_ICON_POS.todayX + 'px, ' + MOBILE_ICON_POS.todayY + 'px)';
+    var n = (typeof getDateIconNudge === 'function') ? getDateIconNudge() : { cal: { x: 0, y: 0 }, today: { x: 0, y: 0 } };
+    calIcon.style.transform = 'translate(' + (MOBILE_ICON_POS.calX + n.cal.x) + 'px, ' + (MOBILE_ICON_POS.calY + n.cal.y) + 'px)';
+    todayIcon.style.transform = 'translate(' + (MOBILE_ICON_POS.todayX + n.today.x) + 'px, ' + (MOBILE_ICON_POS.todayY + n.today.y) + 'px)';
   }
   applyMobileIconPos();
   window.addEventListener('resize', function(){
@@ -6922,55 +6967,86 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     applyDesktopIconPos();
     applyMobileIconPos();
   });
-  // ---------- Atur posisi ikon "Tanggal mulai" (Kanan/Kiri/Atas/Bawah) ----------
-  // Tombol kecil di sebelah label "Tanggal mulai" membuka panel D-pad untuk
-  // memilih di sisi mana ikon kalender & "hari ini" ditempatkan relatif ke
-  // kotak tanggalnya. Efek tampilannya murni CSS (lihat .icon-pos-left/top/
-  // bottom di atas) — di sini cuma mengatur class mana yang aktif di
-  // #dateStartField dan menyimpan pilihannya. Preferensi PER PERANGKAT
-  // (localStorage), sama seperti ukuran font — sengaja tidak disinkron ke
-  // akun/cloud supaya tiap perangkat (mis. layar lebar vs sempit) bisa
-  // punya pengaturan sendiri-sendiri.
-  var DATE_ICON_POS_KEY = 'essentiapath.dateIconPos';
-  var DATE_ICON_POS_DEFAULT = 'right';
-  var DATE_ICON_POS_VALUES = ['right', 'left', 'top', 'bottom'];
+  // ---------- Geser halus ikon "Tanggal mulai" ----------
+  // Tombol kecil di sebelah label "Tanggal mulai" membuka panel D-pad geser
+  // halus (nudge). Ikon kalender & "hari ini" SELALU tetap di kanan field
+  // (opsi pindah sisi kiri/atas/bawah sudah dihapus) — 4 tombol panah di
+  // sini cuma menggeser posisi keduanya beberapa piksel (naik/turun/kanan/
+  // kiri), ditambahkan di atas offset dasar DESKTOP_ICON_POS/MOBILE_ICON_POS
+  // di atas. Preferensi PER PERANGKAT (localStorage), sama seperti ukuran
+  // font — sengaja tidak disinkron ke akun/cloud supaya tiap perangkat
+  // (mis. layar lebar vs sempit) bisa punya pengaturan sendiri-sendiri.
+  var DATE_ICON_NUDGE_KEY = 'essentiapath.dateIconNudge';
+  var DATE_ICON_NUDGE_STEP = 1; // px per ketuk tombol panah
+  var DATE_ICON_TARGETS = ['cal', 'today'];
+  var dateIconNudgeTarget = 'cal'; // ikon yang sedang aktif dipilih di panel (default: kalender)
   var dateStartField = document.getElementById('dateStartField');
   var dateIconPosBtn = document.getElementById('dateIconPosBtn');
   var dateIconPosPopover = document.getElementById('dateIconPosPopover');
   var dateIconPosReset = document.getElementById('dateIconPosReset');
-  var dateIconPosOpts = dateIconPosPopover
+  var dateIconNudgeValueEl = document.getElementById('dateIconNudgeValue');
+  var dateIconNudgeBtns = dateIconPosPopover
     ? Array.prototype.slice.call(dateIconPosPopover.querySelectorAll('.date-icon-pos-opt'))
     : [];
-  function getDateIconPosPref(){
+  var dateIconTargetTabs = dateIconPosPopover
+    ? Array.prototype.slice.call(dateIconPosPopover.querySelectorAll('.date-icon-target-tab'))
+    : [];
+  // Offset kalender & "hari ini" disimpan TERPISAH supaya masing-masing
+  // bisa digeser sendiri-sendiri (atau keduanya, bergantian lewat tab
+  // pemilih di atas D-pad).
+  function getDateIconNudge(){
+    var fallback = { cal: { x: 0, y: 0 }, today: { x: 0, y: 0 } };
     try {
-      var v = localStorage.getItem(DATE_ICON_POS_KEY);
-      return DATE_ICON_POS_VALUES.indexOf(v) !== -1 ? v : DATE_ICON_POS_DEFAULT;
-    } catch(e){ return DATE_ICON_POS_DEFAULT; }
+      var raw = localStorage.getItem(DATE_ICON_NUDGE_KEY);
+      var v = raw ? JSON.parse(raw) : null;
+      if (v && v.cal && v.today &&
+          typeof v.cal.x === 'number' && typeof v.cal.y === 'number' &&
+          typeof v.today.x === 'number' && typeof v.today.y === 'number') return v;
+      // Migrasi dari format lama (offset tunggal untuk kedua ikon).
+      if (v && typeof v.x === 'number' && typeof v.y === 'number') {
+        return { cal: { x: v.x, y: v.y }, today: { x: v.x, y: v.y } };
+      }
+    } catch(e){}
+    return fallback;
   }
-  function updateDateIconPosUi(pos){
-    dateIconPosOpts.forEach(function(btn){ btn.classList.toggle('active', btn.getAttribute('data-pos') === pos); });
+  function updateDateIconNudgeUi(nudge){
+    var n = nudge[dateIconNudgeTarget];
+    if (dateIconNudgeValueEl && n) dateIconNudgeValueEl.textContent = n.x + ', ' + n.y;
+    dateIconTargetTabs.forEach(function(tab){
+      tab.setAttribute('aria-selected', tab.getAttribute('data-icon-target') === dateIconNudgeTarget ? 'true' : 'false');
+    });
   }
-  function applyDateIconPos(pos){
-    if (!dateStartField) return;
-    DATE_ICON_POS_VALUES.forEach(function(p){ dateStartField.classList.remove('icon-pos-' + p); });
-    if (pos !== DATE_ICON_POS_DEFAULT) dateStartField.classList.add('icon-pos-' + pos);
-    // Class barusan diganti bisa mengubah tinggi/lebar baris (mis. "atas"/
-    // "bawah" bikin baris jadi 2 tingkat) — panggil ulang koreksi pixel
-    // halus supaya tetap pas di layout barunya.
+  function setDateIconNudge(nudge){
+    try { localStorage.setItem(DATE_ICON_NUDGE_KEY, JSON.stringify(nudge)); } catch(e){}
     applyDesktopIconPos();
     applyMobileIconPos();
+    updateDateIconNudgeUi(nudge);
   }
-  function setDateIconPosPref(pos){
-    if (DATE_ICON_POS_VALUES.indexOf(pos) === -1) pos = DATE_ICON_POS_DEFAULT;
-    try { localStorage.setItem(DATE_ICON_POS_KEY, pos); } catch(e){}
-    applyDateIconPos(pos);
-    updateDateIconPosUi(pos);
+  function nudgeDateIcon(dir){
+    var full = getDateIconNudge();
+    var n = full[dateIconNudgeTarget];
+    if (dir === 'up') n.y -= DATE_ICON_NUDGE_STEP;
+    else if (dir === 'down') n.y += DATE_ICON_NUDGE_STEP;
+    else if (dir === 'left') n.x -= DATE_ICON_NUDGE_STEP;
+    else if (dir === 'right') n.x += DATE_ICON_NUDGE_STEP;
+    setDateIconNudge(full);
+  }
+  function setDateIconNudgeTarget(target){
+    if (DATE_ICON_TARGETS.indexOf(target) === -1) return;
+    dateIconNudgeTarget = target;
+    updateDateIconNudgeUi(getDateIconNudge());
   }
   function positionDateIconPosPopover(){
     if (!dateIconPosPopover || dateIconPosPopover.hidden || !dateIconPosBtn) return;
-    var r = dateIconPosBtn.getBoundingClientRect();
-    var w = dateIconPosPopover.offsetWidth || 210;
-    var left = r.left;
+    // Diposisikan di bawah SELURUH baris Tanggal mulai/Waktu/Berakhir (bukan
+    // cuma di bawah tombolnya) supaya panel tidak menimpa field "Tanggal
+    // mulai" — ikon yang sedang digeser tetap terlihat di atas panel selagi
+    // pengguna menekan tombol panah.
+    var anchorEl = document.getElementById('dateTimeUntilRow') || dateStartField || dateIconPosBtn;
+    var r = anchorEl.getBoundingClientRect();
+    var btnR = dateIconPosBtn.getBoundingClientRect();
+    var w = dateIconPosPopover.offsetWidth || 168;
+    var left = btnR.right - w;
     var maxLeft = window.innerWidth - w - 8;
     if (left > maxLeft) left = maxLeft;
     if (left < 8) left = 8;
@@ -6998,20 +7074,149 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
     window.addEventListener('resize', positionDateIconPosPopover);
   }
-  dateIconPosOpts.forEach(function(btn){
-    btn.addEventListener('click', function(){
-      setDateIconPosPref(btn.getAttribute('data-pos'));
-      setDateIconPosPopoverOpen(false);
+  dateIconNudgeBtns.forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      nudgeDateIcon(btn.getAttribute('data-nudge'));
+    });
+  });
+  dateIconTargetTabs.forEach(function(tab){
+    tab.addEventListener('click', function(e){
+      e.stopPropagation();
+      setDateIconNudgeTarget(tab.getAttribute('data-icon-target'));
     });
   });
   if (dateIconPosReset){
     dateIconPosReset.addEventListener('click', function(){
-      setDateIconPosPref(DATE_ICON_POS_DEFAULT);
-      setDateIconPosPopoverOpen(false);
+      // Cuma reset ikon yang sedang dipilih di tab — biar tidak menghapus
+      // tanpa sengaja penyetelan ikon lain yang sudah pas.
+      var full = getDateIconNudge();
+      full[dateIconNudgeTarget] = { x: 0, y: 0 };
+      setDateIconNudge(full);
     });
   }
-  applyDateIconPos(getDateIconPosPref());
-  updateDateIconPosUi(getDateIconPosPref());
+  updateDateIconNudgeUi(getDateIconNudge());
+  // ---------- Geser halus ikon "Ulangi" (panah dropdown & "Tidak berulang") ----------
+  // Struktur & perilaku sama persis dengan geser ikon "Tanggal mulai" di
+  // atas, cuma target elemennya beda dan tidak ada perbedaan desktop/HP
+  // (base offset-nya cuma satu, diambil dari transform CSS statis yang
+  // sudah ada sebelumnya di .select-field-icon .field-icon & .today-check
+  // .field-icon baris "Ulangi"). Preferensi disimpan terpisah dari nudge
+  // "Tanggal mulai" (key localStorage beda), per perangkat.
+  var REPEAT_ICON_POS = { arrowX: 8, arrowY: 1, noneX: 0, noneY: 9 };
+  var REPEAT_ICON_NUDGE_KEY = 'essentiapath.repeatIconNudge';
+  var REPEAT_ICON_TARGETS = ['arrow', 'none'];
+  var repeatIconNudgeTarget = 'arrow';
+  var repeatIconPosBtn = document.getElementById('repeatIconPosBtn');
+  var repeatIconPosPopover = document.getElementById('repeatIconPosPopover');
+  var repeatIconPosReset = document.getElementById('repeatIconPosReset');
+  var repeatIconNudgeValueEl = document.getElementById('repeatIconNudgeValue');
+  var repeatIconNudgeBtns = repeatIconPosPopover
+    ? Array.prototype.slice.call(repeatIconPosPopover.querySelectorAll('.date-icon-pos-opt'))
+    : [];
+  var repeatIconTargetTabs = repeatIconPosPopover
+    ? Array.prototype.slice.call(repeatIconPosPopover.querySelectorAll('.date-icon-target-tab'))
+    : [];
+  function getRepeatIconNudge(){
+    var fallback = { arrow: { x: 0, y: 0 }, none: { x: 0, y: 0 } };
+    try {
+      var raw = localStorage.getItem(REPEAT_ICON_NUDGE_KEY);
+      var v = raw ? JSON.parse(raw) : null;
+      if (v && v.arrow && v.none &&
+          typeof v.arrow.x === 'number' && typeof v.arrow.y === 'number' &&
+          typeof v.none.x === 'number' && typeof v.none.y === 'number') return v;
+    } catch(e){}
+    return fallback;
+  }
+  function applyRepeatIconPos(){
+    var arrowIcon = document.getElementById('fRepeatArrowIcon');
+    var noneIcon = document.getElementById('fRepeatNoneIcon');
+    if (!arrowIcon || !noneIcon) return;
+    var n = getRepeatIconNudge();
+    arrowIcon.style.transform = 'translate(' + (REPEAT_ICON_POS.arrowX + n.arrow.x) + 'px, ' + (REPEAT_ICON_POS.arrowY + n.arrow.y) + 'px)';
+    noneIcon.style.transform = 'translate(' + (REPEAT_ICON_POS.noneX + n.none.x) + 'px, ' + (REPEAT_ICON_POS.noneY + n.none.y) + 'px)';
+  }
+  applyRepeatIconPos();
+  function updateRepeatIconNudgeUi(nudge){
+    var n = nudge[repeatIconNudgeTarget];
+    if (repeatIconNudgeValueEl && n) repeatIconNudgeValueEl.textContent = n.x + ', ' + n.y;
+    repeatIconTargetTabs.forEach(function(tab){
+      tab.setAttribute('aria-selected', tab.getAttribute('data-icon-target') === repeatIconNudgeTarget ? 'true' : 'false');
+    });
+  }
+  function setRepeatIconNudge(nudge){
+    try { localStorage.setItem(REPEAT_ICON_NUDGE_KEY, JSON.stringify(nudge)); } catch(e){}
+    applyRepeatIconPos();
+    updateRepeatIconNudgeUi(nudge);
+  }
+  function nudgeRepeatIcon(dir){
+    var full = getRepeatIconNudge();
+    var n = full[repeatIconNudgeTarget];
+    if (dir === 'up') n.y -= DATE_ICON_NUDGE_STEP;
+    else if (dir === 'down') n.y += DATE_ICON_NUDGE_STEP;
+    else if (dir === 'left') n.x -= DATE_ICON_NUDGE_STEP;
+    else if (dir === 'right') n.x += DATE_ICON_NUDGE_STEP;
+    setRepeatIconNudge(full);
+  }
+  function setRepeatIconNudgeTarget(target){
+    if (REPEAT_ICON_TARGETS.indexOf(target) === -1) return;
+    repeatIconNudgeTarget = target;
+    updateRepeatIconNudgeUi(getRepeatIconNudge());
+  }
+  function positionRepeatIconPosPopover(){
+    if (!repeatIconPosPopover || repeatIconPosPopover.hidden || !repeatIconPosBtn) return;
+    var anchorEl = document.getElementById('repeatUntilRow') || repeatIconPosBtn;
+    var r = anchorEl.getBoundingClientRect();
+    var btnR = repeatIconPosBtn.getBoundingClientRect();
+    var w = repeatIconPosPopover.offsetWidth || 168;
+    var left = btnR.right - w;
+    var maxLeft = window.innerWidth - w - 8;
+    if (left > maxLeft) left = maxLeft;
+    if (left < 8) left = 8;
+    repeatIconPosPopover.style.left = left + 'px';
+    repeatIconPosPopover.style.top = (r.bottom + 8) + 'px';
+  }
+  function setRepeatIconPosPopoverOpen(open){
+    if (!repeatIconPosPopover || !repeatIconPosBtn) return;
+    repeatIconPosPopover.hidden = !open;
+    repeatIconPosBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    repeatIconPosBtn.classList.toggle('active', open);
+    if (open) positionRepeatIconPosPopover();
+  }
+  if (repeatIconPosBtn && repeatIconPosPopover){
+    repeatIconPosBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      setRepeatIconPosPopoverOpen(repeatIconPosPopover.hidden);
+    });
+    repeatIconPosPopover.addEventListener('click', function(e){ e.stopPropagation(); });
+    document.addEventListener('click', function(){
+      if (!repeatIconPosPopover.hidden) setRepeatIconPosPopoverOpen(false);
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && !repeatIconPosPopover.hidden) setRepeatIconPosPopoverOpen(false);
+    });
+    window.addEventListener('resize', positionRepeatIconPosPopover);
+  }
+  repeatIconNudgeBtns.forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      nudgeRepeatIcon(btn.getAttribute('data-nudge'));
+    });
+  });
+  repeatIconTargetTabs.forEach(function(tab){
+    tab.addEventListener('click', function(e){
+      e.stopPropagation();
+      setRepeatIconNudgeTarget(tab.getAttribute('data-icon-target'));
+    });
+  });
+  if (repeatIconPosReset){
+    repeatIconPosReset.addEventListener('click', function(){
+      var full = getRepeatIconNudge();
+      full[repeatIconNudgeTarget] = { x: 0, y: 0 };
+      setRepeatIconNudge(full);
+    });
+  }
+  updateRepeatIconNudgeUi(getRepeatIconNudge());
   var selectedCat = '';
   function openCatDropdown(){
     catDropdownList.hidden = false;
