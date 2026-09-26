@@ -756,6 +756,21 @@
     border-radius:6px; font:inherit; font-size:0.66rem; padding:0.1rem 0.55rem; cursor:pointer; transition:background 0.12s ease;
   }
   .notes-row-add:hover{background:var(--surface);}
+  /* Tombol + kecil di tepi bawah-tengah SETIAP baris tabel (termasuk baris
+     judul) untuk menyisipkan baris baru tepat di bawah baris itu — supaya
+     baris baru tidak cuma bisa ditambah di akhir tabel lewat tombol
+     "+ baris" di bawah, tapi juga di tengah. Diposisikan di tengah (bukan
+     tepi kiri/kanan) supaya tidak bertabrakan dengan tombol hapus baris
+     (.notes-row-del) atau tombol tambah/hapus kolom yang menempel di
+     pojok kiri/kanan sel. */
+  .notes-row-add-inline{
+    position:absolute; bottom:-7px; left:50%; transform:translateX(-50%);
+    width:14px; height:14px; border-radius:50%;
+    border:1px solid var(--moss); background:var(--paper-raised); color:var(--moss-deep);
+    font-size:0.75rem; font-weight:700; line-height:1; padding:0; cursor:pointer; opacity:0.5; z-index:2;
+    display:flex; align-items:center; justify-content:center; transition:background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+  }
+  .notes-row-add-inline:hover, .notes-row-add-inline:focus-visible{background:var(--moss); color:#fff; opacity:1;}
   .notes-chk-toggle{
     margin:0.3rem 0 0 0.4rem; border:1px dashed var(--line); background:transparent; color:var(--moss-deep);
     border-radius:6px; font:inherit; font-size:0.66rem; padding:0.1rem 0.55rem; cursor:pointer; transition:background 0.12s ease;
@@ -4918,6 +4933,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
               if (ci === 0) ctrls += '<button type="button" class="notes-col-add left-edge" data-pos="0" aria-label="Tambah kolom di sini" title="Tambah kolom di sini">+</button>';
               ctrls += '<button type="button" class="notes-col-add" data-pos="'+(ci + 1)+'" aria-label="Tambah kolom di sini" title="Tambah kolom di sini">+</button>';
               ctrls += '<button type="button" class="notes-col-del" data-col="'+ci+'" aria-label="Hapus kolom ini" title="Hapus kolom ini">\u00d7</button>';
+            }
+            // Sisipkan baris baru tepat di bawah baris ini (berlaku untuk
+            // baris judul maupun baris data, tapi cukup dirender sekali per
+            // baris makanya hanya di sel pertama). Dilewati saat baris judul
+            // ini dirender ulang di tabel Riwayat (suppressHeadCtrls) supaya
+            // tidak dobel dengan tombol yang sama di tabel utama.
+            if (ci === 0 && !(ri === 0 && suppressHeadCtrls)){
+              ctrls += '<button type="button" class="notes-row-add notes-row-add-inline" data-after="'+it.idx+'" data-cols="'+cells.length+'" aria-label="Sisipkan baris di bawah ini" title="Sisipkan baris di bawah ini">+</button>';
             }
             return '<td class="notes-cell" data-col="'+ci+'" title="Ketuk untuk mengedit sel ini"><span class="notes-cell-text">'+escapeHTML(c)+'</span>'+ctrls+'</td>';
           }).join('') + '</tr>';
