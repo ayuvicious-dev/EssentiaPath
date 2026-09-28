@@ -4055,7 +4055,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   function onChecklistItemToggle(reminderId, lineIdx, ctx){
     var r = state.reminders.find(function(x){ return x.id===reminderId; });
-    if (!r || !r.notes) return;
+    if (!r) return;
+    // Kartu bertanggal memakai Catatan PER KEMUNCULAN (bisa terisi walau
+    // `notes` dasar reminder kosong), jadi jangan berhenti hanya karena
+    // r.notes kosong — cukup cek isi Catatan untuk tanggal itu.
+    if (ctx.type === 'flex' ? !r.notes : !getNotesForOccurrence(reminderId, ctx.date)) return;
     if (ctx.type === 'flex'){
       var updatedNotes = toggleChecklistLine(r.notes, lineIdx);
       applyChecklistUpdate(reminderId, updatedNotes, ctx);
@@ -4072,7 +4076,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   function onChecklistToggleAll(reminderId, ctx){
     var r = state.reminders.find(function(x){ return x.id===reminderId; });
-    if (!r || !r.notes) return;
+    if (!r) return;
+    if (ctx.type === 'flex' ? !r.notes : !getNotesForOccurrence(reminderId, ctx.date)) return;
     if (ctx.type === 'flex'){
       var itemsF = checklistLines(r.notes);
       if (!itemsF.length) return;
