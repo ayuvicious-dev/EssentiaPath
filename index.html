@@ -495,6 +495,16 @@
   .recent-added-list{max-height:none; overflow:visible;}
   .recent-added-list .up-item .meta{font-style:normal;}
   #recentAddedPagination{margin:0 0.6rem 0.9rem;}
+  .recent-filter-row{display:flex; align-items:stretch; gap:0.5rem; margin-bottom:0.7rem;}
+  .recent-filter-row .search-box{flex:1; min-width:0;}
+  .recent-filter-select{
+    display:block; flex:0 0 auto; width:auto; max-width:46%; box-sizing:border-box; margin:0;
+    padding:0.42rem 2rem 0.42rem 0.75rem; text-overflow:ellipsis; border:1px solid var(--line); border-radius:10px;
+    background-color:var(--paper-raised); color:var(--ink); font-size:0.84rem; font-weight:600; font-family:inherit; line-height:1.3;
+    -webkit-appearance:none; appearance:none; cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'><path d='M6 9l6 6 6-6' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat; background-position:right 0.6rem center; background-size:16px 16px;
+  }
 
   .dp-title{display:flex; align-items:center; gap:0.3rem; cursor:pointer; user-select:none;}
   .dp-chev{width:14px; height:14px; flex:none; color:var(--ink-soft); transition:transform 0.18s ease;}
@@ -2056,10 +2066,13 @@
     <div class="settings-block">
       <h2>Riwayat</h2>
       <p class="hint">Pengingat yang paling baru ditambahkan, lengkap dengan tanggal &amp; jam saat dibuat.</p>
-      <div class="search-box" id="recentAddedSearchBox" style="margin-bottom:0.7rem;">
+      <div class="recent-filter-row">
+      <div class="search-box" id="recentAddedSearchBox">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <input type="text" id="recentAddedSearchInput" placeholder="" autocomplete="off">
         <button type="button" class="search-clear" id="recentAddedSearchClear" aria-label="Hapus pencarian">✕</button>
+      </div>
+      <select id="recentAddedRepeatFilter" class="recent-filter-select" aria-label="Filter berdasarkan jenis Ulangi"></select>
       </div>
       <ul class="upcoming-list recent-added-list" id="recentAddedList"></ul>
       <div class="upgrade-pagination" id="recentAddedPagination" hidden>
@@ -2286,11 +2299,14 @@
                   <option value="workdaySat" style="text-align:center;">Hari Kerja (Sen–Sab)</option>
                   <option value="weekend" style="text-align:center;">Akhir pekan (Sab–Min)</option>
                   <option value="weekly" style="text-align:center;">Mingguan</option>
+                  <option value="weeklyRoutine" style="text-align:center;">Mingguan Rutin</option>
                   <option value="biweekly" style="text-align:center;">Dua mingguan</option>
                   <option value="monthly" style="text-align:center;">Bulanan</option>
+                  <option value="monthlyRoutine" style="text-align:center;">Bulanan Rutin</option>
                   <option value="endOfMonth" style="text-align:center;">Akhir bulan</option>
                   <option value="quarterly" style="text-align:center;">Triwulanan (tiap 3 bulan)</option>
                   <option value="annually" style="text-align:center;">Tahunan</option>
+                  <option value="annuallyRoutine" style="text-align:center;">Tahunan Rutin</option>
                 </select>
                 <span class="select-field-icon" aria-hidden="true">
                   <svg class="field-icon" id="fRepeatArrowIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2559,7 +2575,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   var REPEAT_LABEL = {
     none:"Sekali", hourly:"Tiap jam", daily:"Harian", dailyCarry:"Harian Lanjutan", dailyRoutine:"Harian Rutin", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", workdaySat:"Hari Kerja (Sen–Sab)", weekend:"Akhir pekan",
-    weekly:"Mingguan", biweekly:"Dua mingguan", monthly:"Bulanan", endOfMonth:"Akhir bulan", quarterly:"Triwulanan", annually:"Tahunan"
+    weekly:"Mingguan", weeklyRoutine:"Mingguan Rutin", biweekly:"Dua mingguan", monthly:"Bulanan", monthlyRoutine:"Bulanan Rutin", endOfMonth:"Akhir bulan", quarterly:"Triwulanan", annually:"Tahunan", annuallyRoutine:"Tahunan Rutin"
   };
   function repeatLabel(r){
     var base;
@@ -3066,7 +3082,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     }
     if (!r.repeat || r.repeat === 'none' || dateStr === r.date) return r.notes || '';
     if (r.repeat === 'dailyCarry') return carryNotesForDate(r, dateStr);
-    if (r.repeat === 'dailyRoutine') return routineNotesForDate(r, dateStr);
+    if (r.repeat === 'dailyRoutine' || r.repeat === 'weeklyRoutine' || r.repeat === 'monthlyRoutine' || r.repeat === 'annuallyRoutine') return routineNotesForDate(r, dateStr);
     return '';
   }
   // ---------- Harian Lanjutan ----------
@@ -3157,7 +3173,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var p = setNotesForOccurrence(reminderId, dateStr, getNotesForOccurrence(reminderId, dateStr));
     if (p && typeof p.catch === 'function') p.catch(function(){});
   }
-  // ---------- Harian Rutin ----------
+  // ---------- Harian, Mingguan, Bulanan & Tahunan Rutin ----------
+  // "Tahunan Rutin" sama saja, hanya munculnya setahun sekali seperti Tahunan.
+  // "Bulanan Rutin" sama saja, hanya munculnya sebulan sekali seperti Bulanan.
+  // "Mingguan Rutin" memakai logika Catatan yang sama persis dengan Harian
+  // Rutin (daftar baris tetap, centang mulai kosong lagi di kemunculan
+  // berikutnya), hanya saja munculnya seminggu sekali seperti Mingguan.
   // Pengingat berjenis "Harian Rutin" muncul setiap hari seperti Harian,
   // dan daftar baris Catatannya (termasuk item sub-checklist ☐/☑ maupun
   // baris tabel ber-centang) TETAP SAMA persis setiap hari — tidak ada
@@ -3209,7 +3230,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var cur = dateStr;
     var baseText = '';
     var guard = 0;
-    while (guard++ < 4000){
+    while (guard++ < 20000){
       var curKey = r.id + '|' + cur;
       if (Object.prototype.hasOwnProperty.call(state.occurrenceNotes, curKey)){ baseText = state.occurrenceNotes[curKey]; break; }
       if (cur === r.date){ baseText = r.notes || ''; break; }
@@ -3422,7 +3443,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var we = d.getDay();
         return (we===0 || we===6) ? [resolveOccTime(r, d)] : [];
       }
-      case 'weekly': {
+      case 'weekly':
+      case 'weeklyRoutine': { // sama seperti Mingguan; bedanya ada di isi Catatan (lihat routineNotesForDate)
         var diffDaysW = Math.round((d - start) / 86400000);
         return (diffDaysW>=0 && diffDaysW % 7 === 0) ? [resolveOccTime(r, d)] : [];
       }
@@ -3430,7 +3452,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var diffDays = Math.round((d - start) / 86400000);
         return (diffDays>=0 && diffDays % 14 === 0) ? [resolveOccTime(r, d)] : [];
       }
-      case 'monthly': {
+      case 'monthly':
+      case 'monthlyRoutine': { // sama seperti Bulanan; bedanya ada di isi Catatan (lihat routineNotesForDate)
         var lastDay = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
         var target = Math.min(start.getDate(), lastDay);
         return (d.getDate()===target) ? [resolveOccTime(r, d)] : [];
@@ -3448,7 +3471,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var targetQ = Math.min(start.getDate(), lastDayQ);
         return (monthsDiff>=0 && monthsDiff % 3 === 0 && d.getDate()===targetQ) ? [resolveOccTime(r, d)] : [];
       }
-      case 'annually': {
+      case 'annually':
+      case 'annuallyRoutine': { // sama seperti Tahunan; bedanya ada di isi Catatan (lihat routineNotesForDate)
         var lastDayA = new Date(d.getFullYear(), start.getMonth()+1, 0).getDate();
         var targetA = Math.min(start.getDate(), lastDayA);
         return (d.getMonth()===start.getMonth() && d.getDate()===targetA) ? [resolveOccTime(r, d)] : [];
@@ -5694,6 +5718,29 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var recentAddedSearchInput = document.getElementById('recentAddedSearchInput');
   var recentAddedSearchBox = document.getElementById('recentAddedSearchBox');
   var recentAddedSearchClear = document.getElementById('recentAddedSearchClear');
+  // Filter jenis "Ulangi" ('' = semua jenis). Pengingat tanpa field repeat
+  // dianggap 'none' (Tidak berulang).
+  var recentAddedRepeatFilter = '';
+  var recentAddedRepeatSelect = document.getElementById('recentAddedRepeatFilter');
+  if (recentAddedRepeatSelect){
+    var filterOpts = '<option value="">Semua Ulangi</option>';
+    Object.keys(REPEAT_LABEL).forEach(function(k){
+      filterOpts += '<option value="' + k + '">' + (k === 'none' ? 'Tidak berulang' : REPEAT_LABEL[k]) + '</option>';
+    });
+    recentAddedRepeatSelect.innerHTML = filterOpts;
+    recentAddedRepeatSelect.addEventListener('change', function(){
+      recentAddedRepeatFilter = recentAddedRepeatSelect.value;
+      recentAddedPage = 0;
+      renderRecentAdded();
+    });
+  }
+  function recentAddedFiltered(){
+    return state.reminders.filter(function(r){
+      if (recentAddedRepeatFilter && (r.repeat || 'none') !== recentAddedRepeatFilter) return false;
+      if (recentAddedSearchQuery && (r.title || '').toLowerCase().indexOf(recentAddedSearchQuery) === -1) return false;
+      return true;
+    });
+  }
   if (recentAddedSearchInput){
     recentAddedSearchInput.addEventListener('input', function(){
       recentAddedSearchQuery = recentAddedSearchInput.value.trim().toLowerCase();
@@ -5748,18 +5795,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   function renderRecentAdded(){
     if (!recentAddedList) return;
-    var sorted = state.reminders.slice().sort(function(a, b){
+    var sorted = recentAddedFiltered().sort(function(a, b){
       return reminderCreatedAtMs(b) - reminderCreatedAtMs(a);
     });
-    if (recentAddedSearchQuery){
-      sorted = sorted.filter(function(r){
-        return (r.title || '').toLowerCase().indexOf(recentAddedSearchQuery) !== -1;
-      });
-    }
     var total = sorted.length;
     if (total === 0){
       recentAddedList.innerHTML = recentAddedSearchQuery
-        ? '<div class="empty-state">Tidak ada pengingat yang cocok dengan "' + escapeHTML(recentAddedSearchInput.value.trim()) + '".</div>'
+        ? '<div class="empty-state">Tidak ada pengingat yang cocok dengan "' + escapeHTML(recentAddedSearchInput.value.trim()) + '"' + (recentAddedRepeatFilter ? ' pada jenis Ulangi yang dipilih' : '') + '.</div>'
+        : recentAddedRepeatFilter
+        ? '<div class="empty-state">Belum ada pengingat dengan jenis Ulangi ini.</div>'
         : '<div class="empty-state">Belum ada pengingat yang ditambahkan.</div>';
       recentAddedPaginationEl.hidden = true;
       return;
@@ -5775,7 +5819,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var ms = reminderCreatedAtMs(r);
       return '<li class="up-item" data-id="' + r.id + '">' +
         '<div class="body"><div class="title">' + titleWithLinkHTML(r.title, r.link) + '</div>' +
-        '<div class="meta">Ditambahkan ' + (ms ? formatDMYHM(ms) : 'tidak diketahui') + '</div></div>' +
+        '<div class="meta">Ditambahkan ' + (ms ? formatDMYHM(ms) : 'tidak diketahui') + ' · ' + escapeHTML(repeatLabel(r)) + '</div></div>' +
         '<div class="acts">' +
           '<button type="button" class="icon-btn edit-recent" aria-label="Ubah" data-id="' + r.id + '">✎</button>' +
         '</div></li>';
@@ -5800,9 +5844,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   if (recentAddedNextBtn){
     recentAddedNextBtn.addEventListener('click', function(){
-      var filteredCount = recentAddedSearchQuery
-        ? state.reminders.filter(function(r){ return (r.title || '').toLowerCase().indexOf(recentAddedSearchQuery) !== -1; }).length
-        : state.reminders.length;
+      var filteredCount = recentAddedFiltered().length;
       var totalPages = Math.max(1, Math.ceil(filteredCount / RECENT_ADDED_PAGE_SIZE));
       if (recentAddedPage < totalPages - 1){ recentAddedPage++; renderRecentAdded(); }
     });
@@ -7017,11 +7059,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // Offset kalender & "hari ini" disimpan TERPISAH supaya masing-masing
   // bisa digeser sendiri-sendiri (atau keduanya, bergantian lewat tab
   // pemilih di atas D-pad).
+  // Posisi disimpan terpisah untuk layar HP (<640px, akhiran ".m") dan
+  // desktop (akhiran ".d"), karena offset dasarnya beda. Kalau belum ada
+  // nilai untuk kelasnya, dipakai key lama (tanpa akhiran) sebagai cadangan.
+  function iconNudgeSuffix(){ return window.innerWidth < 640 ? '.m' : '.d'; }
+  function readStoredNudge(baseKey){
+    try {
+      var raw = localStorage.getItem(baseKey + iconNudgeSuffix());
+      if (!raw) raw = localStorage.getItem(baseKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
   function getDateIconNudge(){
     var fallback = { cal: { x: 0, y: 0 }, today: { x: 0, y: 0 } };
     try {
-      var raw = localStorage.getItem(DATE_ICON_NUDGE_KEY);
-      var v = raw ? JSON.parse(raw) : null;
+      var v = readStoredNudge(DATE_ICON_NUDGE_KEY);
       if (v && v.cal && v.today &&
           typeof v.cal.x === 'number' && typeof v.cal.y === 'number' &&
           typeof v.today.x === 'number' && typeof v.today.y === 'number') return v;
@@ -7040,7 +7092,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
   function setDateIconNudge(nudge){
-    try { localStorage.setItem(DATE_ICON_NUDGE_KEY, JSON.stringify(nudge)); } catch(e){}
+    try { localStorage.setItem(DATE_ICON_NUDGE_KEY + iconNudgeSuffix(), JSON.stringify(nudge)); } catch(e){}
+    queueIconPosCloudSave('date', nudge);
     applyDesktopIconPos();
     applyMobileIconPos();
     updateDateIconNudgeUi(nudge);
@@ -7143,8 +7196,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function getRepeatIconNudge(){
     var fallback = { arrow: { x: 0, y: 0 }, none: { x: 0, y: 0 } };
     try {
-      var raw = localStorage.getItem(REPEAT_ICON_NUDGE_KEY);
-      var v = raw ? JSON.parse(raw) : null;
+      var v = readStoredNudge(REPEAT_ICON_NUDGE_KEY);
       if (v && v.arrow && v.none &&
           typeof v.arrow.x === 'number' && typeof v.arrow.y === 'number' &&
           typeof v.none.x === 'number' && typeof v.none.y === 'number') return v;
@@ -7168,7 +7220,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
   function setRepeatIconNudge(nudge){
-    try { localStorage.setItem(REPEAT_ICON_NUDGE_KEY, JSON.stringify(nudge)); } catch(e){}
+    try { localStorage.setItem(REPEAT_ICON_NUDGE_KEY + iconNudgeSuffix(), JSON.stringify(nudge)); } catch(e){}
+    queueIconPosCloudSave('repeat', nudge);
     applyRepeatIconPos();
     updateRepeatIconNudgeUi(nudge);
   }
@@ -7240,6 +7293,74 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
   updateRepeatIconNudgeUi(getRepeatIconNudge());
+
+  // ---------- Sinkron posisi ikon ke akun (Firestore) ----------
+  // Selain di localStorage perangkat, perubahan terakhir posisi ikon
+  // (Tanggal mulai & Ulangi) juga disimpan di users/{uid}/settings/
+  // iconPositions, terpisah untuk HP (M) dan desktop (D). Jadi kalau
+  // localStorage HP terhapus (refresh keras, PWA dibuka ulang, browser
+  // membersihkan data), posisi terakhir tetap dipulihkan dari akun.
+  var iconPosUnsub = null;
+  var iconPosSaveTimer = null;
+  var iconPosPending = {};
+  function iconPosDocRef(){
+    return doc(db, 'users', currentUser.uid, 'settings', 'iconPositions');
+  }
+  function iconPosClass(){ return window.innerWidth < 640 ? 'M' : 'D'; }
+  function validNudge(v, a, b){
+    return !!(v && v[a] && v[b] &&
+      typeof v[a].x === 'number' && typeof v[a].y === 'number' &&
+      typeof v[b].x === 'number' && typeof v[b].y === 'number');
+  }
+  function queueIconPosCloudSave(kind, nudge){
+    if (!currentUser) return;
+    iconPosPending[kind + iconPosClass()] = nudge;
+    if (iconPosSaveTimer) clearTimeout(iconPosSaveTimer);
+    iconPosSaveTimer = setTimeout(function(){
+      iconPosSaveTimer = null;
+      var patch = iconPosPending;
+      iconPosPending = {};
+      setDoc(iconPosDocRef(), patch, { merge: true }).catch(function(err){
+        console.error('Gagal menyimpan posisi ikon ke akun', err);
+      });
+    }, 500);
+  }
+  function subscribeIconPositions(){
+    if (iconPosUnsub) iconPosUnsub();
+    iconPosUnsub = onSnapshot(iconPosDocRef(), function(snap){
+      // Abaikan gema dari tulisan lokal yang belum selesai supaya tidak
+      // menimpa ketukan terbaru.
+      if (snap.metadata.hasPendingWrites || iconPosSaveTimer) return;
+      var d = snap.exists() ? snap.data() : {};
+      var sfx = iconNudgeSuffix();
+      var cls = iconPosClass();
+      var changed = false;
+      var dv = d['date' + cls];
+      var rv = d['repeat' + cls];
+      try {
+        if (validNudge(dv, 'cal', 'today')){
+          localStorage.setItem(DATE_ICON_NUDGE_KEY + sfx, JSON.stringify(dv)); changed = true;
+        } else if (localStorage.getItem(DATE_ICON_NUDGE_KEY + sfx) || localStorage.getItem(DATE_ICON_NUDGE_KEY)){
+          // Belum ada di akun tapi sudah ada di perangkat ini: unggah.
+          queueIconPosCloudSave('date', getDateIconNudge());
+        }
+        if (validNudge(rv, 'arrow', 'none')){
+          localStorage.setItem(REPEAT_ICON_NUDGE_KEY + sfx, JSON.stringify(rv)); changed = true;
+        } else if (localStorage.getItem(REPEAT_ICON_NUDGE_KEY + sfx) || localStorage.getItem(REPEAT_ICON_NUDGE_KEY)){
+          queueIconPosCloudSave('repeat', getRepeatIconNudge());
+        }
+      } catch(e){}
+      if (changed){
+        applyDesktopIconPos();
+        applyMobileIconPos();
+        applyRepeatIconPos();
+        updateDateIconNudgeUi(getDateIconNudge());
+        updateRepeatIconNudgeUi(getRepeatIconNudge());
+      }
+    }, function(err){
+      console.error('Firestore icon position sync error', err);
+    });
+  }
   var selectedCat = '';
   function openCatDropdown(){
     catDropdownList.hidden = false;
@@ -8735,6 +8856,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       subscribeCompletions();
       subscribeChecklistProgress();
       subscribeOccurrenceNotes();
+      subscribeIconPositions();
       refreshNotifyBanner();
       // Kalau cache offline Firestore gagal aktif (lihat inisialisasi `db`
       // di atas), tulisan (misalnya centang "Terlewat"/Fleksibel) yang
@@ -8751,6 +8873,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (unsubscribeCompletions){ unsubscribeCompletions(); unsubscribeCompletions = null; }
       if (unsubscribeChecklistProgress){ unsubscribeChecklistProgress(); unsubscribeChecklistProgress = null; }
       if (unsubscribeOccurrenceNotes){ unsubscribeOccurrenceNotes(); unsubscribeOccurrenceNotes = null; }
+      if (iconPosUnsub){ iconPosUnsub(); iconPosUnsub = null; }
       state.reminders = [];
       state.completions = {};
       state.checklistProgress = {};
