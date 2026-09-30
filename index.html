@@ -2406,6 +2406,9 @@
           <button type="button" class="notes-fmt-btn" data-fmt="tablecheck" aria-label="Tabel dengan centang per baris" title="Tabel dengan centang per baris (ketuk lagi di dalam tabel untuk mematikan)">
             <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M3 16h18M9.5 4v16" stroke="currentColor" stroke-width="1.6" opacity="0.55"/><path d="M4.8 12.6l1.5 1.5 2.4-2.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
+          <button type="button" class="notes-once-btn" id="notesOnceBtn" hidden aria-label="Hanya hari ini" title="Hanya hari ini: baris ini tidak ikut ke hari-hari berikutnya (ketuk lagi untuk membatalkan)" style="width:34px;height:34px;display:none;align-items:center;justify-content:center;border:1.5px solid var(--line, rgba(0,0,0,0.15));border-radius:10px;background:transparent;color:var(--ink-soft);cursor:pointer;padding:0;">
+            <svg viewBox="0 0 24 24" fill="none" width="15" height="15"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 6.5l11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
         </div>
         <textarea id="fNotes" placeholder=""></textarea>
       </div>
@@ -3208,8 +3211,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // perubahan itu tidak ikut berubah karena tetap memakai entri
   // eksplisitnya sendiri (atau Catatan asli) sebagai acuan.
   var routineCache = { reminders:null, occ:null, map:{} };
+  // Penanda "hanya hari ini": baris Catatan yang diakhiri " ⊘" TIDAK dibawa
+  // ke hari berikutnya (baris lain tetap dibawa seperti biasa).
+  var ONCE_MARK = ' \u2298';
+  function isOnceLine(line){ return /\s\u2298\s*$/.test(line || ''); }
+  // Tanda ⊘ hanya penanda internal: disimpan di teks Catatan, tapi tidak
+  // ditampilkan di kartu/daftar (tetap terlihat di kolom Catatan saat edit).
+  function dispTxt(t){ return String(t == null ? '' : t).replace(/\s\u2298\s*$/, ''); }
   function routineNextText(prevText){
-    var lines = (prevText || '').split('\n');
+    var lines = (prevText || '').split('\n').filter(function(line){ return !isOnceLine(line); });
     return lines.map(function(line){
       if (tableRowCheckState(line) === true){
         return line.replace(/^(\s*)\u2611(?=\|)/, '$1\u2610');
@@ -4019,7 +4029,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       items.map(function(it){
         return '<li class="sub-check-item'+(it.checked?' checked':'')+'" data-line="'+it.idx+'">' +
           '<span class="sub-check-box">'+(it.checked?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>' +
-          '<span class="sub-check-label">'+escapeHTML(it.text)+'</span>' +
+          '<span class="sub-check-label">'+escapeHTML(dispTxt(it.text))+'</span>' +
         '</li>';
       }).join('') +
     '</ul>';
@@ -4130,7 +4140,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (lineIdx < 0 || lineIdx >= lines.length) return;
     var info = lineMarkerInfo(lines[lineIdx]);
     var prefix = lines[lineIdx].slice(0, info.markerLen);
-    lines[lineIdx] = prefix + newText;
+    var keepOnce = isOnceLine(lines[lineIdx]) && !isOnceLine(newText);
+    lines[lineIdx] = prefix + newText + (keepOnce ? ONCE_MARK : '');
     var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
     renderFlexible();
     renderUpcoming();
@@ -4815,7 +4826,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // supaya beberapa baris list tetap terbaca ringkas di pratinjau.
   function notesPreview(notes){
     if (!notes) return '';
-    return notes.split('\n').map(function(l){ return l.trim(); }).filter(Boolean).map(function(l){
+    return notes.split('\n').map(function(l){ return dispTxt(l.trim()); }).filter(Boolean).map(function(l){
       return isTableRow(l) ? parseTableRow(l).join(', ') : l;
     }).join(' · ');
   }
@@ -4846,7 +4857,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var marker = it.type === 'number' ? (it.num + '.') : (it.type === 'judul' ? '\u2756' : '\u2022');
         return '<li class="notes-plain-item'+(it.type==='judul'?' is-judul':'')+'">' +
           '<span class="notes-plain-marker">'+escapeHTML(marker)+'</span>' +
-          '<span class="notes-plain-text">'+escapeHTML(it.text)+'</span>' +
+          '<span class="notes-plain-text">'+escapeHTML(dispTxt(it.text))+'</span>' +
         '</li>';
       }).join('') +
     '</ul>';
@@ -5016,7 +5027,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           b.items.map(function(it){
             return '<li class="sub-check-item'+(it.checked?' checked':'')+'" data-line="'+it.idx+'">' +
               '<span class="sub-check-box" title="Tandai selesai">'+(it.checked?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>' +
-              '<span class="sub-check-label" title="Ketuk untuk mengedit baris ini">'+escapeHTML(it.text)+'</span>' +
+              '<span class="sub-check-label" title="Ketuk untuk mengedit baris ini">'+escapeHTML(dispTxt(it.text))+'</span>' +
             '</li>';
           }).join('') +
         '</ul>';
@@ -5027,13 +5038,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             var marker = it.type === 'number' ? (it.num + '.') : (it.type === 'judul' ? '\u2756' : '\u2022');
             return '<li class="notes-plain-item'+(it.type==='judul'?' is-judul':'')+'" data-line="'+it.idx+'" title="Ketuk teks untuk mengedit · ketuk ruang kosong di kanan untuk baris baru">' +
               '<span class="notes-plain-marker">'+escapeHTML(marker)+'</span>' +
-              '<span class="notes-plain-text">'+escapeHTML(it.text)+'</span>' +
+              '<span class="notes-plain-text">'+escapeHTML(dispTxt(it.text))+'</span>' +
               '<button type="button" class="notes-line-add-btn" tabindex="-1" aria-hidden="true">✎</button>' +
             '</li>';
           }).join('') +
         '</ul>';
       }
-      return '<div class="notes-freetext">' + b.items.map(function(it){ if (it.blank) return '<div class="notes-freetext-line is-blank" aria-hidden="true"></div>'; return '<div class="notes-freetext-line" data-line="'+it.idx+'"><span class="notes-freetext-text">'+escapeHTML(it.text)+'</span></div>'; }).join('') + '</div>';
+      return '<div class="notes-freetext">' + b.items.map(function(it){ if (it.blank) return '<div class="notes-freetext-line is-blank" aria-hidden="true"></div>'; return '<div class="notes-freetext-line" data-line="'+it.idx+'"><span class="notes-freetext-text">'+escapeHTML(dispTxt(it.text))+'</span></div>'; }).join('') + '</div>';
     }).join('');
   }
 
@@ -7511,6 +7522,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
 
   fRepeat.addEventListener('change', function(){
     fRepeat.classList.remove('invalid');
+    syncOnceBtn();
     hourlyRow.style.display = fRepeat.value === 'hourly' ? 'grid' : 'none';
     everyNDaysRow.style.display = fRepeat.value === 'everyNDays' ? 'grid' : 'none';
     everyNWeeksRow.style.display = fRepeat.value === 'everyNWeeks' ? 'grid' : 'none';
@@ -7651,7 +7663,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     }
     var selStart = insertAt + 2 + (withCheck ? 1 : 0); // setelah "| " (+ penanda centang)
     var selEnd = selStart + 'Kolom 1'.length;
-    fNotesEl.focus();
+    fNotesEl.focus({ preventScroll: true });
     fNotesEl.setSelectionRange(selStart, selEnd);
   }
   // Menghidupkan/mematikan fitur centang untuk tabel yang sedang berisi
@@ -7678,9 +7690,29 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     for (var k = 0; k < lineNo; k++) lineStart += lines[k].length + 1;
     fNotesEl.value = newText;
     var newPos = lineStart + lines[lineNo].length;
-    fNotesEl.focus();
+    fNotesEl.focus({ preventScroll: true });
     fNotesEl.setSelectionRange(newPos, newPos);
     return true;
+  }
+  var notesOnceBtn = document.getElementById('notesOnceBtn');
+  function syncOnceBtn(){
+    var v = fRepeat ? fRepeat.value : '';
+    var show = v === 'dailyRoutine' || v === 'weeklyRoutine' || v === 'monthlyRoutine' || v === 'annuallyRoutine';
+    if (notesOnceBtn){ notesOnceBtn.hidden = !show; notesOnceBtn.style.display = show ? 'inline-flex' : 'none'; }
+  }
+  if (notesOnceBtn){
+    notesOnceBtn.addEventListener('click', function(){
+      var text = fNotesEl.value;
+      var pos = fNotesEl.selectionStart || 0;
+      var b = lineBounds(text, pos);
+      var line = text.slice(b.start, b.end);
+      if (!line.trim() || isTableRow(line)) return; // baris kosong / tabel: tidak berlaku
+      var newLine = isOnceLine(line) ? line.replace(/\s\u2298\s*$/, '') : line.replace(/\s+$/, '') + ONCE_MARK;
+      fNotesEl.value = text.slice(0, b.start) + newLine + text.slice(b.end);
+      var newPos = b.start + newLine.length;
+      fNotesEl.focus({ preventScroll: true });
+      fNotesEl.setSelectionRange(newPos, newPos);
+    });
   }
   if (notesFmtBtns.length){
     notesFmtBtns.forEach(function(btn){
@@ -7709,7 +7741,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var newLine = newMarker + bare;
         fNotesEl.value = text.slice(0, b.start) + newLine + text.slice(b.end);
         var newPos = b.start + newLine.length;
-        fNotesEl.focus();
+        fNotesEl.focus({ preventScroll: true });
         fNotesEl.setSelectionRange(newPos, newPos);
       });
     });
@@ -7847,6 +7879,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fUntilEl.value = '';
     updateDateDisplay(fUntilEl, fUntilDisplay);
     fRepeat.value = '';
+    syncOnceBtn();
     fRepeat.disabled = false;
     fRepeatNone.checked = false;
     hourlyRow.style.display = 'none';
@@ -7926,6 +7959,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fDateToday.checked = false;
     updateDateDisplay(fDateEl, fDateDisplay);
     fRepeat.value = r.repeat && r.repeat!=='none' ? r.repeat : 'none';
+    syncOnceBtn();
     fRepeat.disabled = false;
     fRepeatNone.checked = false;
     hourlyRow.style.display = r.repeat==='hourly' ? 'grid' : 'none';
