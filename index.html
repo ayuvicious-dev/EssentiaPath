@@ -3323,7 +3323,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function lineMark(line){ return isStayLine(line) ? STAY_MARK : (isOnceLine(line) ? ONCE_MARK : ''); }
   // Tanda ↻ / ⊘ hanya penanda internal: disimpan di teks Catatan, tapi tidak
   // ditampilkan di kartu/daftar (tetap terlihat di kolom Catatan saat edit).
-  function dispTxt(t){ return String(t == null ? '' : t).replace(/\s[\u2298\u21BB]\s*$/, ''); }
+  function dispTxt(t){
+    var str = String(t == null ? '' : t);
+    if (!/[\u2298\u21BB]/.test(str)) return str;
+    // Buang penanda di posisi mana pun (biasanya di akhir baris, tapi kalau
+    // ada teks yang diketik sesudahnya penandanya bisa ada di tengah/awal),
+    // lalu rapikan spasi ganda yang tersisa.
+    return str.replace(/[\u2298\u21BB]/g, '').replace(/[ \t]{2,}/g, ' ').trim();
+  }
+  // Versi untuk satu blok catatan utuh (banyak baris) — dipakai saat menyalin.
+  function stripMarksFromNotes(notes){
+    return String(notes == null ? '' : notes).split('\n').map(function(l){
+      if (!/[\u2298\u21BB]/.test(l)) return l;
+      return l.replace(/[\u2298\u21BB]/g, '').replace(/([^\s])[ \t]{2,}/g, '$1 ').replace(/[ \t]+$/, '');
+    }).join('\n');
+  }
   function routineNextText(prevText){
     var out = [];
     (prevText || '').split('\n').forEach(function(line){
@@ -5037,7 +5051,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function renderFreeTextNotesHTML(notes){
     var text = notesFreeTextPreview(notes);
     if (!text) return '';
-    return '<div class="notes-freetext">' + text.split(' · ').map(function(line){ return '<div class="notes-freetext-line">'+escapeHTML(line)+'</div>'; }).join('') + '</div>';
+    return '<div class="notes-freetext">' + text.split(' · ').map(function(line){ return '<div class="notes-freetext-line">'+escapeHTML(dispTxt(line))+'</div>'; }).join('') + '</div>';
   }
   // Gabungan renderChecklistHTML + renderNotesListHTML + renderFreeTextNotesHTML,
   // TAPI menjaga urutan baris ASLI seperti yang diketik pengguna di kolom
@@ -6999,7 +7013,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // lalu beri umpan balik singkat (ikon berubah + toast) supaya pengguna
   // tahu penyalinan berhasil.
   function copyNotesToClipboard(notes, btn){
-    var text = notes || '';
+    var text = stripMarksFromNotes(notes || '');
     function onCopied(){
       showToast('Catatan disalin');
       if (btn){
