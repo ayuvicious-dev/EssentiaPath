@@ -412,6 +412,18 @@
   .sidebar{display:flex; flex-direction:column; gap:1rem; margin-top:1rem;}
   .sidebar-head{padding:1rem 1.1rem 0.4rem; display:flex; align-items:center; justify-content:space-between;}
   .sidebar-head h2{font-family:var(--font-display); font-size:1.05rem; margin:0; font-weight:600;}
+  /* Header Dashboard (judul "Hari Ini" + cari + persen + tanggal + reset, dan
+     kolom cari kalau terbuka) dibungkus .up-sticky-head yang position:sticky,
+     menempel PAS di bawah header utama (.hero, sticky juga) saat halaman
+     discroll, jadi tidak ikut "tenggelam". Syarat sticky: tidak ada induk
+     ber-overflow (.panel/.sidebar memang tidak). Tingginya diukur lewat JS
+     ke --up-head-h supaya label grup (.up-group-label) menempel tepat di
+     bawahnya. */
+  .up-sticky-head{
+    position:-webkit-sticky; position:sticky; top:var(--hero-h, 0px); z-index:9;
+    background:var(--paper-raised); border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .sidebar .up-group-label{top:calc(var(--hero-h, 0px) + var(--up-head-h, 0px));}
   .up-title-nav{display:flex; align-items:center; gap:0.15rem; min-width:0;}
   .up-title-nav h2{white-space:nowrap;}
   .up-title-nav-btn{flex:none;}
@@ -576,7 +588,11 @@
   .toggle-table.active{color:var(--moss-deep); background:var(--line-soft);}
   .flex-item.has-table-btn .title{padding-right:11rem;}
   .table-locked .notes-col-add, .table-locked .notes-col-del,
-  .table-locked .notes-row-del, .table-locked .notes-row-add, .table-locked .notes-chk-toggle{display:none;}
+  /* Tombol "+ baris" di bawah tabel (.notes-row-add-bottom) SENGAJA tetap
+     tampil walau struktur terkunci, supaya menambah baris paling bawah tidak
+     perlu membuka mode ubah tabel dulu. Yang tetap disembunyikan saat terkunci:
+     tombol + sisip baris di tengah (inline), hapus baris, dan toggle centang. */
+  .table-locked .notes-row-del, .table-locked .notes-row-add:not(.notes-row-add-bottom), .table-locked .notes-chk-toggle{display:none;}
   .table-locked .notes-plain-table tr:first-child td{padding-right:0.4rem;}
   .icon-btn{
     width:24px; height:24px; border-radius:6px; border:none; background:transparent; color:var(--ink-soft);
@@ -1981,6 +1997,7 @@
 
     <aside class="sidebar view-section" data-view="dashboard" aria-label="Dashboard">
       <section class="panel" aria-label="Pengingat mendatang" style="flex:1;">
+        <div class="up-sticky-head" id="upStickyHead">
         <div class="sidebar-head">
           <div class="up-title-nav">
             <button type="button" class="icon-btn up-title-nav-btn" id="upcomingPrevDay" aria-label="Hari sebelumnya" title="Hari sebelumnya">
@@ -2012,6 +2029,7 @@
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           <input type="text" id="upcomingSearchInput" placeholder="Cari judul atau catatan…" autocomplete="off" aria-label="Cari pengingat pada tanggal ini">
           <button type="button" class="search-clear" id="upcomingSearchClear" aria-label="Hapus pencarian">✕</button>
+        </div>
         </div>
         <ul class="upcoming-list" id="upcomingList"></ul>
         <div class="flex-done-toggle-wrap" id="upcomingDoneToggleWrap" hidden>
@@ -3925,6 +3943,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   updateHeroHeightVar();
 
+  // Tinggi header sticky Dashboard (.up-sticky-head) → --up-head-h, dipakai
+  // label grup tanggal supaya nempel tepat di bawahnya. Dihitung ulang
+  // otomatis kalau kolom cari dibuka/ditutup atau ukuran font berubah.
+  var upHeadEl = document.getElementById('upStickyHead');
+  function updateUpHeadHeightVar(){
+    if (!upHeadEl) return;
+    document.documentElement.style.setProperty('--up-head-h', upHeadEl.getBoundingClientRect().height + 'px');
+  }
+  if (upHeadEl && 'ResizeObserver' in window){
+    new ResizeObserver(updateUpHeadHeightVar).observe(upHeadEl);
+  } else {
+    window.addEventListener('resize', updateUpHeadHeightVar);
+  }
+  updateUpHeadHeightVar();
+
   function escapeHTML(s){
     return String(s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -5152,7 +5185,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             activeItems.map(function(it){ return tblRowHTML(it, 1, false); }).join('') +
           '</tbody></table>' +
           historyHTML +
-          '<button type="button" class="notes-row-add" data-after="'+tblLastIdx+'" data-cols="'+tblCols+'" aria-label="Tambah baris" title="Tambah baris">+ baris</button>' +
+          '<button type="button" class="notes-row-add notes-row-add-bottom" data-after="'+tblLastIdx+'" data-cols="'+tblCols+'" aria-label="Tambah baris" title="Tambah baris">+ baris</button>' +
           '<button type="button" class="notes-chk-toggle" data-on="'+(tblHasChk?'1':'0')+'" aria-label="'+(tblHasChk?'Matikan centang per baris':'Aktifkan centang per baris')+'" title="'+(tblHasChk?'Matikan centang per baris':'Aktifkan centang per baris')+'">'+(tblHasChk?'\u2611 centang: hidup':'\u2610 centang: mati')+'</button>' +
         '</div>';
       }
