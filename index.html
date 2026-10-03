@@ -39,6 +39,7 @@
     --hero-top:#D9E6D0;
     --hero-bottom:#EEF3E6;
     --amber:#E3A97C;
+    --hl-bg:#FFF1A8;
     --amber-deep:#CE8F5C;
     --paper:#FBF7EF;
     --paper-raised:#FFFFFF;
@@ -78,6 +79,7 @@
     --hero-top:#212E26;
     --hero-bottom:#161E19;
     --amber:#E7B488;
+    --hl-bg:rgba(250,204,21,0.32);
     --amber-deep:#D89A66;
     --paper:#17130F;
     --paper-raised:#231C16;
@@ -439,6 +441,27 @@
     font-size:0.72rem; font-family:inherit; color:var(--ink); pointer-events:none; white-space:nowrap;
   }
   .up-date-today-btn svg{width:14px; height:14px;}
+  /* Ikon pencarian di kiri chip persentase (header Dashboard). Mengetuknya
+     membuka/menutup kolom cari di bawah header; menyaring daftar "Mendatang"
+     pada tanggal yang sedang dipilih. */
+  .up-search-btn{flex:none;}
+  .up-search-btn svg{width:15px; height:15px;}
+  .up-search-btn.active{color:var(--moss-deep); background:var(--line-soft);}
+  .up-search-row{margin:0.1rem 0.6rem 0.5rem;}
+  .up-search-row[hidden]{display:none;}
+  /* Teks cari dibuat sebesar judul kartu (0.84rem). Input tetap 16px
+     (di bawah itu iOS/Android memperbesar layar otomatis saat difokus),
+     lalu diperkecil dengan scale 0.84. Lebar layout input dikali 1/0.84
+     dari sisa ruang (lebar kolom - ikon - jarak - area tombol hapus),
+     jadi setelah diperkecil pas memenuhi sisa ruang. Tombol hapus dibuat
+     absolut supaya tidak ikut memakan ruang. */
+  .up-search-row{position:relative;}
+  .up-search-row input{
+    font-size:16px; flex:none; min-width:0;
+    width:calc((100% - 14px - 0.4rem - 1.5rem) / 0.84);
+    transform:scale(0.84); transform-origin:left center;
+  }
+  .up-search-row .search-clear{position:absolute; right:0.55rem; top:50%; transform:translateY(-50%);}
   /* Chip persentase ketercapaian to-do pada tanggal yang sedang ditampilkan di
      daftar "Mendatang" (default hari ini). Letaknya di kiri input tanggal. */
   .up-progress{
@@ -542,19 +565,18 @@
   .notes-freetext-line.is-editable:hover, .notes-freetext-line.is-editable.editing{background:var(--paper-raised);}
   .notes-freetext-line.is-editable.editing{cursor:default;}
   .notes-freetext-line .notes-line-input{display:block; width:100%; box-sizing:border-box; font-size:0.76rem;}
-  /* Tabel di catatan (kartu Fleksibel, "Terlewat", dan "Mendatang") terkunci
-     secara default supaya tidak teredit/terhapus karena tersentuh tidak
-     sengaja. Ikon tabel di deretan tombol aksi kartu (.toggle-table) membuka
-     kuncinya — baru setelah itu sel bisa diketuk dan tombol +/× muncul.
+  /* Tabel di catatan (kartu Fleksibel, "Terlewat", dan "Mendatang"): teks
+     di dalam sel SELALU bisa langsung diketuk untuk diedit. Yang terkunci
+     secara default hanya perubahan STRUKTUR tabel (tombol +/× untuk
+     tambah/hapus baris & kolom, serta tombol centang: hidup/mati) supaya
+     tidak terhapus karena tersentuh tidak sengaja. Ikon tabel di deretan
+     tombol aksi kartu (.toggle-table) membuka kunci struktur itu.
      Kelasnya dipasang lewat JS (applyTableEditMode). */
   .toggle-table svg{width:15px; height:15px;}
   .toggle-table.active{color:var(--moss-deep); background:var(--line-soft);}
   .flex-item.has-table-btn .title{padding-right:11rem;}
   .table-locked .notes-col-add, .table-locked .notes-col-del,
   .table-locked .notes-row-del, .table-locked .notes-row-add, .table-locked .notes-chk-toggle{display:none;}
-  .table-locked .notes-plain-table td.notes-cell{cursor:default;}
-  .table-locked .notes-plain-table td.notes-cell:hover{background:transparent;}
-  .table-locked .notes-plain-table tr:first-child td.notes-cell:hover{background:var(--paper-raised);}
   .table-locked .notes-plain-table tr:first-child td{padding-right:0.4rem;}
   .icon-btn{
     width:24px; height:24px; border-radius:6px; border:none; background:transparent; color:var(--ink-soft);
@@ -796,6 +818,21 @@
   }
   .notes-row-check svg{width:9px; height:9px;}
   .notes-row-check.checked{background:var(--moss); border-color:var(--moss);}
+  /* Stabilo per baris: kolom sempit berisi tombol stabilo, tetap bisa
+     diketuk saat tabel terkunci. Baris yang distabilo diberi warna latar
+     kuning di semua selnya. Baris yang sudah tercentang (Riwayat) tidak
+     pernah tampil terstabilo. */
+  .notes-plain-table td.notes-cell-hl{width:1.4rem; min-width:1.4rem; padding:0.15rem 0.2rem; text-align:center; vertical-align:middle; cursor:pointer;}
+  .notes-plain-table tr:first-child td.notes-cell-hl{padding-right:0.2rem; cursor:default;}
+  .notes-row-hl-btn{
+    display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:5px;
+    color:var(--ink-soft); opacity:0.55; vertical-align:middle; transition:background 0.12s ease, opacity 0.12s ease, color 0.12s ease;
+  }
+  .notes-row-hl-btn svg{width:13px; height:13px;}
+  .notes-cell-hl:hover .notes-row-hl-btn{opacity:1; background:var(--line-soft);}
+  .notes-row-hl-btn.on{opacity:1; color:#8A6A00; background:var(--hl-bg);}
+  :root[data-theme="dark"] .notes-row-hl-btn.on{color:#FACC15;}
+  .notes-plain-table tr.row-hl td:not(.editing){background:var(--hl-bg) !important;}
   .notes-plain-table tr.row-checked td.notes-cell .notes-cell-text{text-decoration:line-through; color:var(--ink-soft);}
   /* Bagian "Riwayat" (baris tabel ber-centang yang sudah tercentang) di
      bawah tabel utama — tersembunyi (auto-hide) secara default, bisa
@@ -969,6 +1006,18 @@
      (lewat panel geser yang sudah dihapus) ke offset ini — dipertahankan
      di sini secara permanen. */
   .select-field-row .select-field-wrap .select-field-icon .field-icon{ transform:translate(8px, 1px); }
+  /* Kotak centang di sebelah Judul: sekali centang = hari ini, 23:55,
+     tidak berulang (lihat fEndOfDay di JS). */
+  .title-row{display:flex; align-items:stretch; gap:0.4rem;}
+  .field .title-row input[type="text"]{flex:1; width:auto; min-width:0;}
+  .title-eod{
+    display:flex !important; align-items:center; justify-content:center; flex:none; width:2.6rem; margin:0 !important;
+    border:1px solid var(--line); border-radius:9px; background:var(--surface); cursor:pointer;
+  }
+  .title-eod .field-icon{width:18px; height:18px; color:var(--ink-soft);}
+  .today-check-input:checked + .title-eod{background:var(--selected-bg); border-color:var(--moss);}
+  .today-check-input:checked + .title-eod .field-icon{color:var(--moss-deep);}
+  .today-check-input:focus-visible + .title-eod{outline:2.5px solid var(--amber); outline-offset:-2px;}
   .today-check-input{
     position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
     clip:rect(0,0,0,0); white-space:nowrap; border:0;
@@ -1940,6 +1989,9 @@
             </button>
           </div>
           <div class="up-date-control">
+            <button type="button" class="icon-btn up-search-btn" id="upcomingSearchBtn" aria-label="Cari pengingat" title="Cari pengingat" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
             <div class="up-progress" id="upcomingProgress" role="img" aria-label="" title="" hidden>
               <svg viewBox="0 0 20 20" aria-hidden="true"><circle class="up-progress-track" cx="10" cy="10" r="7"/><circle class="up-progress-bar" id="upcomingProgressBar" cx="10" cy="10" r="7" transform="rotate(-90 10 10)"/></svg>
               <span id="upcomingProgressText">0%</span>
@@ -1952,6 +2004,11 @@
               <svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 4v5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </div>
+        </div>
+        <div class="search-box up-search-row" id="upcomingSearchBox" hidden>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input type="text" id="upcomingSearchInput" placeholder="Cari judul atau catatan…" autocomplete="off" aria-label="Cari pengingat pada tanggal ini">
+          <button type="button" class="search-clear" id="upcomingSearchClear" aria-label="Hapus pencarian">✕</button>
         </div>
         <ul class="upcoming-list" id="upcomingList"></ul>
         <div class="flex-done-toggle-wrap" id="upcomingDoneToggleWrap" hidden>
@@ -2182,7 +2239,13 @@
       <input type="hidden" id="reminderId">
       <div class="field">
         <label for="fTitle">Judul</label>
-        <input type="text" id="fTitle" required placeholder="" maxlength="80">
+        <div class="title-row">
+          <input type="text" id="fTitle" required placeholder="" maxlength="80">
+          <input type="checkbox" id="fEndOfDay" class="today-check-input">
+          <label class="title-eod" for="fEndOfDay" title="Hari ini pukul 23:55, tidak berulang" aria-label="Hari ini pukul 23:55, tidak berulang">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </label>
+        </div>
       </div>
       <div class="row-2">
         <div class="field">
@@ -3222,7 +3285,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var lines = (prevText || '').split('\n').filter(function(line){ return !isOnceLine(line); });
     return lines.map(function(line){
       if (tableRowCheckState(line) === true){
-        return line.replace(/^(\s*)\u2611(?=\|)/, '$1\u2610');
+        return line.replace(/^(\s*)(\u25C6?)\u2611(?=\|)/, '$1$2\u2610');
       }
       return line;
     }).join('\n');
@@ -4358,7 +4421,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (cells[colIdx] === newText) return;
     cells[colIdx] = newText;
     var indent = line.match(/^\s*/)[0];
-    lines[lineIdx] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(line));
+    lines[lineIdx] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(line), tableRowHL(line));
     var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
     renderFlexible();
     renderUpcoming();
@@ -4503,7 +4566,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       while (cells.length < colPos) cells.push('');
       cells.splice(colPos, 0, '');
       var indent = lines[li].match(/^\s*/)[0];
-      lines[li] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(lines[li]));
+      lines[li] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(lines[li]), tableRowHL(lines[li]));
       changed = true;
     });
     if (!changed) return false;
@@ -4552,7 +4615,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (colIdx >= cells.length) return;
       cells.splice(colIdx, 1);
       var indent = lines[li].match(/^\s*/)[0];
-      lines[li] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(lines[li]));
+      lines[li] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(lines[li]), tableRowHL(lines[li]));
       changed = true;
     });
     if (!changed) return false;
@@ -4625,8 +4688,24 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var line = lines[lineIdx];
     var indent = line.match(/^\s*/)[0];
     var body = stripRowCheck(line).replace(/^\s+/, '');
-    lines[lineIdx] = indent + (tableRowCheckState(line) === true ? '\u2610' : '\u2611') + body;
+    var newChk = tableRowCheckState(line) !== true;
+    // Dicentang -> stabilonya hilang (masuk Riwayat tanpa stabilo).
+    var keepHL = tableRowHL(line) && !newChk;
+    lines[lineIdx] = indent + tableRowPrefix(newChk, keepHL) + body;
     commitTableNotes(reminderId, dateStr, lines, 'Gagal menyimpan centang. Coba lagi.');
+  }
+  // Stabilo / hapus stabilo SATU baris tabel (baris yang sudah tercentang
+  // tidak bisa distabilo).
+  function toggleNotesTableRowHL(reminderId, dateStr, lineIdx){
+    var lines = tableBaseLines(reminderId, dateStr);
+    if (!lines || lineIdx < 0 || lineIdx >= lines.length || !isTableRow(lines[lineIdx])) return;
+    var line = lines[lineIdx];
+    var chk = tableRowCheckState(line);
+    if (chk === true) return;
+    var indent = line.match(/^\s*/)[0];
+    var body = stripRowCheck(line).replace(/^\s+/, '');
+    lines[lineIdx] = indent + tableRowPrefix(chk, !tableRowHL(line)) + body;
+    commitTableNotes(reminderId, dateStr, lines, 'Gagal menyimpan stabilo. Coba lagi.');
   }
   // Hidupkan / matikan fitur centang untuk SATU tabel utuh (lineIdxList =
   // nomor baris milik tabel itu). Mematikan menghapus penanda centang.
@@ -4639,7 +4718,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var indent = lines[li].match(/^\s*/)[0];
       var body = stripRowCheck(lines[li]).replace(/^\s+/, '');
       var st = tableRowCheckState(lines[li]);
-      lines[li] = indent + (on ? (st === true ? '\u2611' : '\u2610') : '') + body;
+      lines[li] = indent + tableRowPrefix(on ? (st === true) : null, tableRowHL(lines[li])) + body;
       changed = true;
     });
     if (!changed) return;
@@ -4652,6 +4731,18 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var host = td.closest('[data-checklist-owner]');
         if (!host) return;
         toggleNotesTableRowCheck(
+          host.getAttribute('data-checklist-owner'),
+          host.getAttribute('data-date') || null,
+          parseInt(td.getAttribute('data-line'), 10)
+        );
+      });
+    });
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-cell-hl[data-line]'), function(td){
+      td.addEventListener('click', function(e){
+        e.stopPropagation(); // jangan ikut membuka form edit kartu
+        var host = td.closest('[data-checklist-owner]');
+        if (!host) return;
+        toggleNotesTableRowHL(
           host.getAttribute('data-checklist-owner'),
           host.getAttribute('data-date') || null,
           parseInt(td.getAttribute('data-line'), 10)
@@ -4753,9 +4844,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var tr = td.parentNode;
         var host = td.closest('[data-checklist-owner]');
         if (!host || !tr) return;
-        // Tabel terkunci (lihat applyTableEditMode): ketukan diabaikan,
-        // tidak mengedit sel dan tidak ikut membuka form edit kartu.
-        if (host.classList.contains('table-locked')) return;
+        // Sel selalu bisa diedit langsung, walau tabel "terkunci" (kunci
+        // hanya berlaku untuk tombol tambah/hapus baris & kolom).
         startInlineTableCellEdit(
           td,
           host.getAttribute('data-checklist-owner'),
@@ -4784,12 +4874,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     host.classList.toggle('table-locked', !on);
     btn.classList.toggle('active', on);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    var label = on ? 'Kunci tabel (selesai mengedit)' : 'Edit tabel';
+    var label = on ? 'Kunci struktur tabel (selesai ubah baris/kolom)' : 'Ubah struktur tabel (tambah/hapus baris & kolom)';
     btn.setAttribute('aria-label', label);
     btn.setAttribute('title', label);
     Array.prototype.forEach.call(host.querySelectorAll('.notes-plain-table td.notes-cell'), function(td){
-      if (on) td.setAttribute('title', 'Ketuk untuk mengedit sel ini');
-      else td.removeAttribute('title');
+      td.setAttribute('title', 'Ketuk untuk mengedit sel ini');
     });
   }
   function applyTableEditMode(container){
@@ -4966,7 +5055,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
               ? '<td class="notes-cell-chk notes-chk-head"></td>'
               : '<td class="notes-cell-chk" data-line="'+it.idx+'" title="Tandai baris ini"><span class="notes-row-check'+(rowChk?' checked':'')+'" role="checkbox" aria-checked="'+(rowChk?'true':'false')+'" aria-label="Centang baris ini">'+(rowChk?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span></td>';
           }
-          return '<tr data-line="'+it.idx+'"'+(rowChk?' class="row-checked"':'')+'>' + chkCell + cells.map(function(c, ci){
+          // Kolom stabilo (semua tabel). Baris tercentang (Riwayat) tidak
+          // terstabilo dan tidak punya tombol stabilo.
+          var rowHL = ri > 0 && !rowChk && tableRowHL(it.text);
+          var hlCell;
+          if (ri === 0) hlCell = '<td class="notes-cell-hl notes-hl-head"></td>';
+          else if (rowChk) hlCell = '<td class="notes-cell-hl"></td>';
+          else hlCell = '<td class="notes-cell-hl" data-line="'+it.idx+'" title="'+(rowHL?'Hapus stabilo baris ini':'Stabilo baris ini')+'"><span class="notes-row-hl-btn'+(rowHL?' on':'')+'" role="button" aria-pressed="'+(rowHL?'true':'false')+'" aria-label="'+(rowHL?'Hapus stabilo baris ini':'Stabilo baris ini')+'"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14.5 4.5l5 5L10 19H5v-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12.5 6.5l5 5" stroke="currentColor" stroke-width="1.8"/></svg></span></td>';
+          var trCls = (rowChk ? 'row-checked' : '') + (rowHL ? (rowChk ? ' ' : '') + 'row-hl' : '');
+          return '<tr data-line="'+it.idx+'"'+(trCls?' class="'+trCls+'"':'')+'>' + chkCell + hlCell + cells.map(function(c, ci){
             var ctrls = '';
             if (ri > 0 && ci === 0) ctrls += '<button type="button" class="notes-row-del" aria-label="Hapus baris ini" title="Hapus baris ini">\u00d7</button>';
             if (ri === 0 && !suppressHeadCtrls){
@@ -5633,6 +5730,52 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // Bagian "Selesai" di bawah "Mendatang": begitu dicentang, pengingat
   // otomatis hilang dari daftar utama dan pindah ke sini (disembunyikan
   // secara default, sama seperti pola "Selesai"/"Diarsipkan" di Fleksibel).
+  // Pencarian di daftar "Mendatang" (judul + catatan), hanya untuk tanggal
+  // yang sedang dipilih. Persentase di sebelahnya tetap dihitung dari SEMUA
+  // pengingat hari itu, tidak ikut tersaring.
+  var upcomingSearchQuery = '';
+  var upcomingSearchBtn = document.getElementById('upcomingSearchBtn');
+  var upcomingSearchBox = document.getElementById('upcomingSearchBox');
+  var upcomingSearchInput = document.getElementById('upcomingSearchInput');
+  var upcomingSearchClear = document.getElementById('upcomingSearchClear');
+  function syncUpcomingSearchUI(){
+    var open = upcomingSearchBox && !upcomingSearchBox.hidden;
+    if (upcomingSearchBtn){
+      upcomingSearchBtn.classList.toggle('active', !!open || upcomingSearchQuery.length > 0);
+      upcomingSearchBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    if (upcomingSearchBox) upcomingSearchBox.classList.toggle('has-value', upcomingSearchQuery.length > 0);
+  }
+  if (upcomingSearchBtn && upcomingSearchBox && upcomingSearchInput){
+    upcomingSearchBtn.addEventListener('click', function(){
+      upcomingSearchBox.hidden = !upcomingSearchBox.hidden;
+      if (upcomingSearchBox.hidden){
+        // Menutup kolom cari juga membatalkan pencarian.
+        upcomingSearchInput.value = '';
+        upcomingSearchQuery = '';
+        syncUpcomingSearchUI();
+        renderUpcoming();
+      } else {
+        syncUpcomingSearchUI();
+        upcomingSearchInput.focus();
+      }
+    });
+    upcomingSearchInput.addEventListener('input', function(){
+      upcomingSearchQuery = upcomingSearchInput.value.trim().toLowerCase();
+      syncUpcomingSearchUI();
+      renderUpcoming();
+    });
+    upcomingSearchInput.addEventListener('keydown', function(e){
+      if (e.key === 'Escape'){ e.preventDefault(); upcomingSearchBtn.click(); }
+    });
+    upcomingSearchClear.addEventListener('click', function(){
+      upcomingSearchInput.value = '';
+      upcomingSearchQuery = '';
+      syncUpcomingSearchUI();
+      renderUpcoming();
+      upcomingSearchInput.focus();
+    });
+  }
   function hideUpcomingDoneSection(){
     upcomingDoneToggleWrap.hidden = true;
     upcomingShowDone = false;
@@ -5656,6 +5799,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var d = parseISODate(upcomingStartDate);
     var dateStr = toISODate(d);
     var items = itemsForDate(dateStr);
+    var itemsBeforeSearch = items.length;
+    if (upcomingSearchQuery){
+      items = items.filter(function(it){ return reminderMatchesQuery(it.reminder, upcomingSearchQuery); });
+    }
     if (items.length) groups.push({ date:dateStr, dt:d, items:items });
     if (state.reminders.length === 0){
       upcomingList.innerHTML = '<div class="empty-state">' +
@@ -5665,7 +5812,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       return;
     }
     if (groups.length === 0){
-      upcomingList.innerHTML = '<div class="empty-state">Tidak ada pengingat pada tanggal ini untuk kategori yang dipilih.</div>';
+      upcomingList.innerHTML = (upcomingSearchQuery && itemsBeforeSearch > 0)
+        ? '<div class="empty-state">Tidak ada yang cocok dengan "'+escapeHTML(upcomingSearchInput.value.trim())+'".</div>'
+        : '<div class="empty-state">Tidak ada pengingat pada tanggal ini untuk kategori yang dipilih.</div>';
       hideUpcomingDoneSection();
       return;
     }
@@ -7554,6 +7703,60 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       fRepeat.disabled = false;
     }
   });
+  // Centang di sebelah Judul: langsung isi Tanggal = hari ini (lewat centang
+  // "pakai tanggal hari ini"), Waktu = 23:55, dan Ulangi = Tidak berulang
+  // (lewat centang "pakai Tidak berulang"), dan Kategori = Pribadi. Kalau Fleksibel sedang aktif,
+  // dimatikan dulu karena pengingat ini terjadwal. Melepas centang
+  // membuka kunci dan mengosongkan isian yang tadi diisi otomatis.
+  var fEndOfDay = document.getElementById('fEndOfDay');
+  var EOD_TIME = '23:55';
+  // Kategori ikut diisi "Pribadi" (dicari lewat id atau nama, karena
+  // kategori bisa diubah/dihapus pengguna — kalau tidak ada, dilewati).
+  // eodPrevCat menyimpan kategori sebelumnya supaya bisa dikembalikan
+  // saat centang dilepas (hanya kalau kategorinya belum diganti manual).
+  var eodPrevCat = null;
+  function findPribadiCat(){
+    return CATS.find(function(c){ return c.id === 'pribadi'; }) ||
+           CATS.find(function(c){ return String(c.label || '').trim().toLowerCase() === 'pribadi'; }) || null;
+  }
+  function resetEndOfDayUI(){
+    fEndOfDay.checked = false;
+    fTimeEl.disabled = false;
+    eodPrevCat = null;
+  }
+  fEndOfDay.addEventListener('change', function(){
+    if (fEndOfDay.checked){
+      if (fFlexible.checked){ fFlexible.checked = false; toggleFlexibleUI(false); }
+      if (!fDateToday.checked){ fDateToday.checked = true; fDateToday.dispatchEvent(new Event('change')); }
+      fTimeEl.value = EOD_TIME;
+      fTimeEl.disabled = true;
+      var pc = findPribadiCat();
+      if (pc && selectedCat !== pc.id){
+        eodPrevCat = selectedCat || '';
+        selectedCat = pc.id;
+        renderCatOptions();
+        catDropdownWrap.classList.remove('invalid');
+      }
+      if (!fRepeatNone.checked){ fRepeatNone.checked = true; fRepeatNone.dispatchEvent(new Event('change')); }
+    } else {
+      if (fDateToday.checked){
+        fDateToday.checked = false; fDateToday.dispatchEvent(new Event('change'));
+        fDateEl.value = ''; updateDateDisplay(fDateEl, fDateDisplay);
+      }
+      fTimeEl.disabled = false;
+      if (fTimeEl.value === EOD_TIME) fTimeEl.value = '';
+      var pc2 = findPribadiCat();
+      if (eodPrevCat !== null && pc2 && selectedCat === pc2.id){
+        selectedCat = eodPrevCat;
+        renderCatOptions();
+      }
+      eodPrevCat = null;
+      if (fRepeatNone.checked){
+        fRepeatNone.checked = false; fRepeatNone.dispatchEvent(new Event('change'));
+        fRepeat.value = ''; fRepeat.dispatchEvent(new Event('change'));
+      }
+    }
+  });
   fByDayType.addEventListener('change', function(){
 
     dayTypeTimesRow.style.display = fByDayType.checked ? 'grid' : 'none';
@@ -7616,12 +7819,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // Tidak bentrok dengan checklist (\u2610 + SPASI) karena di sini langsung
   // diikuti "|". Status centang tersimpan di teks baris itu sendiri, jadi
   // ikut catatan per-kemunculan (lihat getNotesForOccurrence).
-  var ROW_CHK_RE = /^(\s*)([\u2610\u2611])(?=\|)/;
+  var ROW_CHK_RE = /^(\s*)\u25C6?([\u2610\u2611])(?=\|)/;
   function tableRowCheckState(line){
     var m = ROW_CHK_RE.exec(line);
     return m ? (m[2] === '\u2611') : null; // null = baris tanpa fitur centang
   }
-  function stripRowCheck(line){ return line.replace(ROW_CHK_RE, '$1'); }
+  // Stabilo per baris: penanda \u25C6 di PALING DEPAN baris (sebelum penanda
+  // centang, kalau ada), mis. "\u25C6\u2610| sel1 | sel2 |" atau "\u25C6| sel1 | sel2 |"
+  // untuk tabel tanpa centang. Disimpan di teks baris itu sendiri, jadi ikut
+  // catatan per-kemunculan. Saat baris dicentang, penanda ini dihapus
+  // (baris di Riwayat tidak terstabilo).
+  var ROW_HL = '\u25C6';
+  var ROW_HL_RE = /^\s*\u25C6[\u2610\u2611]?\|/;
+  function tableRowHL(line){ return ROW_HL_RE.test(line); }
+  function tableRowPrefix(chk, hl){
+    return (hl ? ROW_HL : '') + ((chk === null || chk === undefined) ? '' : (chk ? '\u2611' : '\u2610'));
+  }
+  function stripRowCheck(line){ return line.replace(/^(\s*)\u25C6?[\u2610\u2611]?(?=\|)/, '$1'); }
   function isTableRow(line){
     var t = stripRowCheck(line).trim();
     return t.length >= 2 && t.charAt(0) === '|' && t.charAt(t.length - 1) === '|';
@@ -7632,14 +7846,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (t.charAt(t.length - 1) === '|') t = t.slice(0, -1);
     return t.split('|').map(function(c){ return c.trim(); });
   }
-  function tableRowTemplate(cols, cellTexts, chk){
+  function tableRowTemplate(cols, cellTexts, chk, hl){
     var parts = [];
     for (var i=0; i<cols; i++){
       var v = (cellTexts && cellTexts[i]) ? cellTexts[i] : '';
       parts.push(' ' + v + ' ');
     }
-    var mark = (chk === null || chk === undefined) ? '' : (chk ? '\u2611' : '\u2610');
-    return mark + '|' + parts.join('|') + '|';
+    return tableRowPrefix(chk, hl) + '|' + parts.join('|') + '|';
   }
   // Baris baru di tabel ber-centang ikut ber-centang (kosong); tabel biasa tetap biasa.
   function newRowChkFor(line){ return tableRowCheckState(line) === null ? null : false; }
@@ -7683,7 +7896,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var indent = lines[i].match(/^\s*/)[0];
       var body = stripRowCheck(lines[i]).replace(/^\s+/, '');
       var st = tableRowCheckState(lines[i]);
-      lines[i] = indent + (turnOn ? (st === true ? '\u2611' : '\u2610') : '') + body;
+      lines[i] = indent + tableRowPrefix(turnOn ? (st === true) : null, tableRowHL(lines[i])) + body;
     }
     var newText = lines.join('\n');
     var lineStart = 0;
@@ -7875,6 +8088,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('fTime').value = '';
     fDateEl.disabled = false;
     fDateToday.checked = false;
+    resetEndOfDayUI();
     updateDateDisplay(fDateEl, fDateDisplay);
     fUntilEl.value = '';
     updateDateDisplay(fUntilEl, fUntilDisplay);
@@ -7957,6 +8171,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.getElementById('fTime').value = r.time || '09:00';
     fDateEl.disabled = false;
     fDateToday.checked = false;
+    resetEndOfDayUI();
     updateDateDisplay(fDateEl, fDateDisplay);
     fRepeat.value = r.repeat && r.repeat!=='none' ? r.repeat : 'none';
     syncOnceBtn();
