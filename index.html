@@ -5204,14 +5204,42 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '</div>';
       }
       if (b.type === 'checklist'){
-        return '<ul class="sub-checklist">' +
-          b.items.map(function(it){
-            return '<li class="sub-check-item'+(it.checked?' checked':'')+'" data-line="'+it.idx+'">' +
-              '<span class="sub-check-box" title="Tandai selesai">'+(it.checked?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>' +
-              '<span class="sub-check-label" title="Ketuk untuk mengedit baris ini">'+escapeHTML(dispTxt(it.text))+'</span>' +
-            '</li>';
-          }).join('') +
-        '</ul>';
+        var chkLiHTML = function(it){
+          return '<li class="sub-check-item'+(it.checked?' checked':'')+'" data-line="'+it.idx+'">' +
+            '<span class="sub-check-box" title="Tandai selesai">'+(it.checked?'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</span>' +
+            '<span class="sub-check-label" title="Ketuk untuk mengedit baris ini">'+escapeHTML(dispTxt(it.text))+'</span>' +
+          '</li>';
+        };
+        // "Harian Rutin": item checklist yang sudah dicentang otomatis
+        // disembunyikan dari daftar utama (hilang begitu dicentang) dan
+        // dipindah ke bagian "Riwayat tercentang" yang bisa dibuka — pola
+        // yang sama seperti baris tabel ber-centang. Kalau salah centang,
+        // buka Riwayat lalu ketuk item itu lagi untuk membatalkan.
+        var hideCheckedItems = false;
+        if (reminderId && dateStr){
+          var ownerR = state.reminders.find(function(x){ return x.id === reminderId; });
+          hideCheckedItems = !!(ownerR && ownerR.repeat === 'dailyRoutine');
+        }
+        if (!hideCheckedItems){
+          return '<ul class="sub-checklist">' + b.items.map(chkLiHTML).join('') + '</ul>';
+        }
+        var chkActive = b.items.filter(function(it){ return !it.checked; });
+        var chkDone = b.items.filter(function(it){ return it.checked; });
+        var chkHTML = chkActive.length ? ('<ul class="sub-checklist">' + chkActive.map(chkLiHTML).join('') + '</ul>') : '';
+        if (chkDone.length){
+          var chkHistKey = 'chk|' + reminderId + '|' + dateStr + '|' + b.items[0].idx;
+          var chkExpanded = !!expandedTableHistory[chkHistKey];
+          chkHTML += '<div class="notes-table-history'+(chkExpanded?' expanded':'')+'" data-hist-key="'+escapeHTML(chkHistKey)+'" style="margin-left:1.3rem;">' +
+            '<button type="button" class="notes-table-history-toggle" aria-expanded="'+(chkExpanded?'true':'false')+'">' +
+              '<svg class="hist-chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+              'Riwayat tercentang ('+chkDone.length+')' +
+            '</button>' +
+            '<div class="notes-table-history-body"'+(chkExpanded?'':' hidden')+'>' +
+              '<ul class="sub-checklist" style="margin-left:0;">' + chkDone.map(chkLiHTML).join('') + '</ul>' +
+            '</div>' +
+          '</div>';
+        }
+        return chkHTML;
       }
       if (b.type === 'list'){
         return '<ul class="notes-plain-list">' +
