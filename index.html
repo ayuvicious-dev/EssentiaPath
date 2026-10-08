@@ -5744,16 +5744,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       btn.setAttribute('title', label);
     }
   }
-  var TIME_PERIOD_ORDER = ['Dini hari','Pagi hari','Siang hari','Sore hari','Malam hari'];
+  var TIME_PERIOD_ORDER = ['Dini hari','Pagi hari','Siang hari','Sore Jeda','Sore Hari','Malam hari'];
   function timeOfDayLabel(t){
-    // t is "HH:MM"; 00:00 counts as end of "Malam hari" (18.00–00.00), while
-    // 00.01–04.59 is "Dini hari".
+    // t is "HH:MM"; 00:00 counts as end of "Malam hari" (18.01–00.00), while
+    // 00.01–04.59 is "Dini hari". Siang 10.00–15.59, Sore Jeda 16.00–16.59, Sore Hari 17.00–18.00 (18.00 pas masuk Sore Hari).
     if (t === '00:00') return 'Malam hari';
     if (t >= '00:01' && t <= '04:59') return 'Dini hari';
     if (t >= '05:00' && t <= '09:59') return 'Pagi hari';
-    if (t >= '10:00' && t <= '14:59') return 'Siang hari';
-    if (t >= '15:00' && t <= '17:59') return 'Sore hari';
-    return 'Malam hari'; // 18:00–23:59
+    if (t >= '10:00' && t <= '15:59') return 'Siang hari';
+    if (t >= '16:00' && t <= '16:59') return 'Sore Jeda';
+    if (t >= '17:00' && t <= '18:00') return 'Sore Hari';
+    return 'Malam hari'; // 18:01–23:59
   }
   function upcomingItemHtml(it, cur){
     var isDone = isOccurrenceDone(it);
@@ -5934,7 +5935,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var PDF_DAY_NAMES = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   var PDF_PERIOD_COLORS = {
     'Dini hari':[94,106,140], 'Pagi hari':[201,140,61], 'Siang hari':[63,102,89],
-    'Sore hari':[190,105,80], 'Malam hari':[70,80,110]
+    'Sore Jeda':[190,105,80], 'Sore Hari':[165,85,100], 'Malam hari':[70,80,110]
   };
   var PDF_CAT_PALETTE = [[63,102,89],[201,122,61],[94,106,140],[170,90,110],[120,140,70],[60,130,150]];
   // Font bawaan PDF hanya mendukung Latin-1 + sedikit tanda baca; karakter
