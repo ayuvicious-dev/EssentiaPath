@@ -524,6 +524,13 @@
   .up-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
   .up-item .meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
   .up-item .acts{position:absolute; top:0.5rem; right:0.5rem; display:flex; gap:0.3rem; z-index:1;}
+  /* Drag pindah atas/bawah untuk pengingat yang jamnya sama (Dashboard).
+     Handle ⠿ hanya muncul kalau ada >=2 pengingat belum selesai di jam
+     yang sama; judul diberi ruang ekstra supaya tidak tertutup. */
+  .up-item.has-drag .title{padding-right:7.6rem;}
+  .up-drag-handle{cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; font-size:1rem; line-height:1;}
+  .up-drag-handle:active{cursor:grabbing;}
+  .up-item.dragging{position:relative; z-index:20; box-shadow:var(--shadow); background:var(--paper-raised); opacity:0.97; transition:none;}
   .up-item.done .flex-check{background:var(--moss); border-color:var(--moss);}
   .up-item.done .flex-check svg{opacity:1;}
   /* Induk (judul) sudah dicentang, tapi belum semua anak centang -> belum "selesai". */
@@ -3676,6 +3683,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return [];
   }
 
+  // Urutan: jam dulu; untuk pengingat yang jamnya SAMA, ikuti timeRank hasil
+  // drag di Dashboard (yang belum pernah digeser = paling akhir, urutan asli
+  // dipertahankan karena sort bersifat stabil).
+  function timeRankOf(it){
+    var n = it && it.reminder ? it.reminder.timeRank : null;
+    return (typeof n === 'number' && isFinite(n)) ? n : 1e9;
+  }
+  function compareByTimeThenRank(a, b){
+    return a.time.localeCompare(b.time) || (timeRankOf(a) - timeRankOf(b));
+  }
   function itemsForDate(dateStr){
     var out = [];
     state.reminders.forEach(function(r){
@@ -3683,7 +3700,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var times = occurrencesOnDate(r, dateStr);
       times.forEach(function(t){ out.push({ reminder:r, time:t, date:dateStr }); });
     });
-    out.sort(function(a,b){ return a.time.localeCompare(b.time); });
+    out.sort(compareByTimeThenRank);
     return out;
   }
 
@@ -3700,7 +3717,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var times = occurrencesOnDate(r, dateStr);
       times.forEach(function(t){ out.push({ reminder:r, time:t, date:dateStr }); });
     });
-    out.sort(function(a,b){ return a.time.localeCompare(b.time); });
+    out.sort(compareByTimeThenRank);
     return out;
   }
 
@@ -5823,7 +5840,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
     var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
     var notesHiddenIt = !expandedNotesIds[it.reminder.id];
-    return '<li class="up-item up-editable'+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+(notesHiddenIt?' notes-collapsed':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-checklist-owner="'+it.reminder.id+'">' +
+    var canDragIt = !!it.dragOk && !isDone;
+    return '<li class="up-item up-editable'+(canDragIt?' has-drag':'')+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+(notesHiddenIt?' notes-collapsed':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-checklist-owner="'+it.reminder.id+'">' +
       '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
@@ -5835,6 +5853,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '</div>' +
       '</div>' +
       '<div class="acts">' +
+        (canDragIt ? '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' : '') +
         '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
         '<button type="button" class="icon-btn up-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
@@ -5844,7 +5863,83 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '</button>' +
       '</div></li>';
   }
+  // ---------- Drag atas/bawah untuk pengingat yang jamnya sama ----------
+  // Pointer-based (mirip drag kategori). Hanya kartu dengan data-time sama
+  // di daftar yang sama yang saling bertukar posisi. Hasilnya disimpan
+  // sebagai timeRank (0,1,2,...) di dokumen tiap pengingat yang berubah,
+  // jadi urutannya ikut berlaku di hari-hari lain & di kalender.
+  function startUpcomingDrag(e, handle){
+    if (!currentUser) return;
+    var row = handle.closest('.up-item');
+    if (!row) return;
+    e.preventDefault();
+    var timeKey = row.getAttribute('data-time');
+    var listEl = row.parentNode;
+    var group = Array.prototype.filter.call(listEl.querySelectorAll('.up-item'), function(li){
+      return li.getAttribute('data-time') === timeKey && li.querySelector('.up-drag-handle');
+    });
+    if (group.length < 2) return;
+    var pointerId = e.pointerId;
+    var startY = e.clientY;
+    upDragActive = true;
+    row.classList.add('dragging');
+    try { handle.setPointerCapture(pointerId); } catch(err){}
+
+    function onMove(ev){
+      row.style.transform = 'translateY(' + (ev.clientY - startY) + 'px)';
+      for (var i=0; i<group.length; i++){
+        var sib = group[i];
+        if (sib === row) continue;
+        var r = sib.getBoundingClientRect();
+        if (ev.clientY > r.top && ev.clientY < r.bottom){
+          var before = !!(row.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_FOLLOWING);
+          if (before) listEl.insertBefore(row, sib.nextSibling); else listEl.insertBefore(row, sib);
+          // kartu sudah pindah posisi di DOM; mulai hitung offset dari titik ini
+          row.style.transform = 'translateY(0px)';
+          startY = ev.clientY;
+          break;
+        }
+      }
+    }
+    function onUp(){
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+      row.classList.remove('dragging');
+      row.style.transform = '';
+      var orderedIds = Array.prototype.filter.call(listEl.querySelectorAll('.up-item'), function(li){
+        return li.getAttribute('data-time') === timeKey && li.querySelector('.up-drag-handle');
+      }).map(function(li){ return li.getAttribute('data-id'); });
+      var changed = [];
+      var rs = state.reminders.slice();
+      orderedIds.forEach(function(id, rank){
+        var idx = rs.findIndex(function(x){ return x.id === id; });
+        if (idx === -1 || rs[idx].timeRank === rank) return;
+        rs[idx] = Object.assign({}, rs[idx], { timeRank: rank });
+        changed.push(rs[idx]);
+      });
+      upDragActive = false;
+      if (changed.length){
+        state.reminders = rs;
+        changed.forEach(function(u){
+          saveReminderToCloud(u).catch(function(err){
+            console.error(err);
+            showToast('Gagal menyimpan urutan. Coba lagi.');
+          });
+        });
+      }
+      renderUpcoming();
+      renderCalendar();
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+  }
   function bindUpcomingItemEvents(listEl){
+    Array.prototype.forEach.call(listEl.querySelectorAll('.up-drag-handle'), function(h){
+      h.addEventListener('pointerdown', function(e){ e.stopPropagation(); startUpcomingDrag(e, h); });
+      h.addEventListener('click', function(e){ e.stopPropagation(); });
+    });
     Array.prototype.forEach.call(listEl.querySelectorAll('.up-check'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
@@ -6296,9 +6391,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!ae || ae.tagName !== 'INPUT') return false;
     return upcomingList.contains(ae) || !!(upcomingListDone && upcomingListDone.contains(ae));
   }
+  var upDragActive = false;
   function renderUpcoming(){
     updateUpcomingProgress();
-    if (upcomingHasActiveEdit()) return;
+    if (upcomingHasActiveEdit() || upDragActive) return;
     var groups = [];
     var d = parseISODate(upcomingStartDate);
     var dateStr = toISODate(d);
@@ -6330,6 +6426,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var doneItems = [];
     groups.forEach(function(g){
       var byPeriod = {};
+      var timeCounts = {};
       g.items.forEach(function(it){
         // Yang sudah tercentang/selesai TIDAK ditampilkan di daftar utama —
         // dikumpulkan dulu, nanti dirender di bagian "Selesai" yang bisa
@@ -6338,7 +6435,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var p = timeOfDayLabel(it.time);
         if (!byPeriod[p]) byPeriod[p] = [];
         byPeriod[p].push(it);
+        timeCounts[it.time] = (timeCounts[it.time] || 0) + 1;
       });
+      // Handle drag hanya untuk jam yang dipakai >=2 pengingat (dan tidak
+      // saat sedang mencari, supaya urutan yang disimpan tidak parsial).
+      if (!upcomingSearchQuery) g.items.forEach(function(it){ it.dragOk = timeCounts[it.time] > 1; });
       var hasAnyNotDone = TIME_PERIOD_ORDER.some(function(period){ return byPeriod[period] && byPeriod[period].length; });
       if (!hasAnyNotDone) return;
       // Label kelompok tanggal ("Hari ini", "Besok", "Kemarin", atau nama
@@ -8838,6 +8939,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         flexible: false,
         priority: false,
         pinned: false,
+        timeRank: (existing && typeof existing.timeRank === 'number') ? existing.timeRank : null,
         travel: fTravel.checked,
         done: null,
         createdAt: existing ? (existing.createdAt || null) : Date.now(),
