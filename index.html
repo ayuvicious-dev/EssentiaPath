@@ -40,6 +40,7 @@
     --hero-bottom:#EEF3E6;
     --amber:#E3A97C;
     --hl-bg:#FFF1A8;
+    --hl-cell-bg:#FFD59A;
     --amber-deep:#CE8F5C;
     --paper:#FBF7EF;
     --paper-raised:#FFFFFF;
@@ -80,6 +81,7 @@
     --hero-bottom:#161E19;
     --amber:#E7B488;
     --hl-bg:rgba(250,204,21,0.32);
+    --hl-cell-bg:rgba(251,146,60,0.42);
     --amber-deep:#D89A66;
     --paper:#17130F;
     --paper-raised:#231C16;
@@ -850,6 +852,20 @@
   :root[data-theme="dark"] .notes-row-hl-btn.on{color:#FACC15;}
   .notes-plain-table tr.row-hl td:not(.editing){background:var(--hl-bg) !important;}
   .notes-plain-table tr.row-checked td.notes-cell .notes-cell-text{text-decoration:line-through; color:var(--ink-soft);}
+  /* Stabilo per SEL: hanya satu kolom di satu baris yang diberi warna
+     (beda dengan stabilo baris di atas yang mewarnai seluruh baris). Warna
+     dibuat sedikit lebih oranye supaya tetap terlihat walau barisnya juga
+     distabilo. Dihidupkan lewat tombol kecil yang muncul saat sel diketuk
+     untuk diedit (lihat startInlineTableCellEdit). */
+  .notes-plain-table td.notes-cell.cell-hl:not(.editing){background:var(--hl-cell-bg) !important; font-weight:600; color:var(--ink);}
+  .notes-cell-hl-toggle{
+    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; margin-left:3px; padding:0;
+    border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink-soft);
+    vertical-align:middle; cursor:pointer; flex:none;
+  }
+  .notes-cell-hl-toggle svg{width:13px; height:13px;}
+  .notes-cell-hl-toggle.on{color:#8A4B00; background:var(--hl-cell-bg); border-color:transparent;}
+  :root[data-theme="dark"] .notes-cell-hl-toggle.on{color:#FDBA74;}
   /* Bagian "Riwayat" (baris tabel ber-centang yang sudah tercentang) di
      bawah tabel utama — tersembunyi (auto-hide) secara default, bisa
      dibuka lewat tombol chevron. Baris di dalamnya tetap baris tabel yang
@@ -907,6 +923,16 @@
      atas di kolom Prioritas (diatur lewat sorting di JS). */
   .flex-item.pinned-item{background:var(--notice-bg);}
   .toggle-pin svg{width:15px; height:15px;}
+  /* Tombol pindah antar tabel di tab Prioritas Pin (Sangat Prioritas <->
+     Standar Prioritas). Hanya muncul di kartu yang di-pin, jadi judul
+     diberi ruang ekstra supaya tidak tertutup ikon tambahan ini. */
+  .toggle-pinlevel svg{width:15px; height:15px;}
+  .toggle-pinlevel.active{color:var(--danger);}
+  .flex-item.pinned-item .title{padding-right:11.5rem;}
+  .flex-item.pinned-item.has-table-btn .title{padding-right:13rem;}
+  .flex-column-head.pin-high{color:var(--danger);}
+  .flex-column-head.pin-high .dot{background:var(--danger);}
+  .flex-column .flex-list:empty{display:none;}
   .toggle-pin.active{color:var(--amber-deep);}
   .toggle-archive svg{width:15px; height:15px;}
   .toggle-archive.active{color:var(--moss-deep);}
@@ -2070,8 +2096,13 @@
       <button type="button" class="search-clear" id="pinSearchClear" aria-label="Hapus pencarian">✕</button>
     </div>
     <div class="flex-columns">
-      <div class="flex-column" id="flexPinnedBlock">
-        <ul class="flex-list" id="flexibleListPinned"></ul>
+      <div class="flex-column" id="flexPinnedHighBlock">
+        <div class="flex-column-head pinned pin-high"><span class="dot"></span>Sangat Prioritas</div>
+        <ul class="flex-list" id="flexibleListPinnedHigh"></ul>
+      </div>
+      <div class="flex-column" id="flexPinnedStdBlock">
+        <div class="flex-column-head"><span class="dot"></span>Standar Prioritas</div>
+        <ul class="flex-list" id="flexibleListPinnedStd"></ul>
       </div>
     </div>
   </section>
@@ -4491,7 +4522,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // tidak (kartu Fleksibel), yang diedit adalah `notes` reminder-nya.
   // Sel boleh dikosongkan. Karakter "|" diganti "/" supaya tidak merusak
   // pemisah kolom.
-  function setNotesTableCell(reminderId, dateStr, lineIdx, colIdx, newText){
+  // hlOverride: undefined = pertahankan penanda stabilo sel yang ada;
+  // true/false = hidupkan/matikan stabilo sel ini.
+  function setNotesTableCell(reminderId, dateStr, lineIdx, colIdx, newText, hlOverride){
     newText = (newText || '').replace(/\|/g, '/').replace(/\s+/g, ' ').trim();
     var r = state.reminders.find(function(x){ return x.id === reminderId; });
     if (!r) return;
@@ -4502,8 +4535,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!isTableRow(line)) return;
     var cells = parseTableRow(line);
     if (colIdx < 0 || colIdx >= cells.length) return;
-    if (cells[colIdx] === newText) return;
-    cells[colIdx] = newText;
+    var keepHL = (typeof hlOverride === 'boolean') ? hlOverride : cellIsHL(cells[colIdx]);
+    var newCell = cellWithHL(newText, keepHL);
+    if (cells[colIdx] === newCell) return;
+    cells[colIdx] = newCell;
     var indent = line.match(/^\s*/)[0];
     lines[lineIdx] = indent + tableRowTemplate(cells.length, cells, tableRowCheckState(line), tableRowHL(line));
     var p = setNotesForOccurrence(reminderId, dateStr || null, lines.join('\n'));
@@ -4525,6 +4560,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var textEl = td.querySelector('.notes-cell-text');
     if (!textEl) return;
     var originalText = textEl.textContent;
+    var originalHL = td.classList.contains('cell-hl');
+    var cellHL = originalHL;
     td.classList.add('editing');
     var input = document.createElement('input');
     input.type = 'text';
@@ -4536,6 +4573,26 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fit();
     textEl.style.display = 'none';
     td.insertBefore(input, textEl.nextSibling);
+    // Tombol stabilo SEL: hanya mewarnai sel ini (bukan seluruh baris).
+    var hlBtn = document.createElement('button');
+    hlBtn.type = 'button';
+    hlBtn.className = 'notes-cell-hl-toggle' + (cellHL ? ' on' : '');
+    hlBtn.setAttribute('aria-label', 'Stabilo sel ini saja');
+    hlBtn.setAttribute('aria-pressed', cellHL ? 'true' : 'false');
+    hlBtn.title = 'Stabilo sel ini saja';
+    hlBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14.5 4.5l5 5L10 19H5v-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12.5 6.5l5 5" stroke="currentColor" stroke-width="1.8"/></svg>';
+    // mousedown/touchstart di-preventDefault supaya input tidak kehilangan
+    // fokus (yang akan menutup mode edit) saat tombol diketuk.
+    hlBtn.addEventListener('mousedown', function(ev){ ev.preventDefault(); });
+    hlBtn.addEventListener('touchstart', function(ev){ ev.preventDefault(); }, { passive:false });
+    hlBtn.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      cellHL = !cellHL;
+      hlBtn.classList.toggle('on', cellHL);
+      hlBtn.setAttribute('aria-pressed', cellHL ? 'true' : 'false');
+      input.focus();
+    });
+    td.insertBefore(hlBtn, input.nextSibling);
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
     var done = false;
@@ -4544,9 +4601,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       done = true;
       var val = input.value;
       if (input.parentNode) input.parentNode.removeChild(input);
+      if (hlBtn.parentNode) hlBtn.parentNode.removeChild(hlBtn);
       textEl.style.display = '';
       td.classList.remove('editing');
-      if (save && val.trim() !== originalText) setNotesTableCell(reminderId, dateStr, lineIdx, colIdx, val);
+      if (save && (val.trim() !== originalText || cellHL !== originalHL)) setNotesTableCell(reminderId, dateStr, lineIdx, colIdx, val, cellHL);
     }
     input.addEventListener('input', fit);
     input.addEventListener('keydown', function(ev){
@@ -4686,10 +4744,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     lineIdxList.forEach(function(li){
       if (li < 0 || li >= lines.length || !isTableRow(lines[li])) return;
       var cells = parseTableRow(lines[li]);
-      if (colIdx < cells.length && cells[colIdx] !== '') hasContent = true;
+      if (colIdx < cells.length && cellText(cells[colIdx]) !== '') hasContent = true;
     });
     if (hasContent){
-      var name = headerCells[colIdx] ? ('"' + headerCells[colIdx] + '"') : 'ini';
+      var name = cellText(headerCells[colIdx] || '') ? ('"' + cellText(headerCells[colIdx]) + '"') : 'ini';
       if (!confirm('Hapus kolom ' + name + ' beserta seluruh isinya?')) return false;
     }
     var changed = false;
@@ -4729,7 +4787,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (lineIdx < 0 || lineIdx >= lines.length || !isTableRow(lines[lineIdx])) return false;
     var cells = parseTableRow(lines[lineIdx]);
     var firstFilled = '';
-    for (var i = 0; i < cells.length; i++){ if (cells[i] !== ''){ firstFilled = cells[i]; break; } }
+    for (var i = 0; i < cells.length; i++){ if (cellText(cells[i]) !== ''){ firstFilled = cellText(cells[i]); break; } }
     if (firstFilled){
       if (!confirm('Hapus baris "' + firstFilled + '" beserta seluruh isinya?')) return false;
     }
@@ -5000,7 +5058,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function notesPreview(notes){
     if (!notes) return '';
     return notes.split('\n').map(function(l){ return dispTxt(l.trim()); }).filter(Boolean).map(function(l){
-      return isTableRow(l) ? parseTableRow(l).join(', ') : l;
+      return isTableRow(l) ? parseTableRow(l).map(cellText).join(', ') : l;
     }).join(' · ');
   }
   // Baris catatan yang diformat sebagai list bullet (•) atau angka ("1. ").
@@ -5163,7 +5221,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             if (ci === 0 && !(ri === 0 && suppressHeadCtrls)){
               ctrls += '<button type="button" class="notes-row-add notes-row-add-inline" data-after="'+it.idx+'" data-cols="'+cells.length+'" aria-label="Sisipkan baris di bawah ini" title="Sisipkan baris di bawah ini">+</button>';
             }
-            return '<td class="notes-cell" data-col="'+ci+'" title="Ketuk untuk mengedit sel ini"><span class="notes-cell-text">'+escapeHTML(c)+'</span>'+ctrls+'</td>';
+            var cellHL = cellIsHL(c);
+            return '<td class="notes-cell'+(cellHL?' cell-hl':'')+'" data-col="'+ci+'" title="Ketuk untuk mengedit / stabilo sel ini"><span class="notes-cell-text">'+escapeHTML(cellText(c))+'</span>'+ctrls+'</td>';
           }).join('') + '</tr>';
         }
         var headItem = b.items[0];
@@ -5975,7 +6034,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         tblIdx++;
         if (rowChk === true && !isHeader) return; // baris tabel yang sudah dicentang tidak ditampilkan
         rows.push({ kind:'table', header: isHeader, chk: rowChk,
-          cells: parseTableRow(line).map(pdfSafe) });
+          cells: parseTableRow(line).map(cellText).map(pdfSafe), hl: parseTableRow(line).map(cellIsHL) });
         return;
       }
       tblIdx = 0;
@@ -6079,6 +6138,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           var rh = mx * lh(9) + 2.4;
           ensure(rh);
           if (row.header){ doc.setFillColor(232,238,228); doc.rect(X0, y, W, rh, 'F'); }
+          if (row.hl) row.hl.forEach(function(on, ci){
+            if (on){ doc.setFillColor(255,213,154); doc.rect(X0 + off + ci * cw, y, cw, rh, 'F'); }
+          });
           var done = row.chk === true;
           font(row.header ? 'bold' : 'normal', 9, done ? GRAY : INK);
           cl.forEach(function(lines, ci){
@@ -6610,8 +6672,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // ---------- Flexible (no-date) reminders ----------
   var flexibleListMissed = document.getElementById('flexibleListMissed');
   var flexMissedBlock = document.getElementById('flexMissedBlock');
-  var flexibleListPinned = document.getElementById('flexibleListPinned');
-  var flexPinnedBlock = document.getElementById('flexPinnedBlock');
+  var flexibleListPinnedHigh = document.getElementById('flexibleListPinnedHigh');
+  var flexibleListPinnedStd = document.getElementById('flexibleListPinnedStd');
+  var flexPinnedHighBlock = document.getElementById('flexPinnedHighBlock');
+  var flexPinnedStdBlock = document.getElementById('flexPinnedStdBlock');
   var flexCols = {
     priority: {
       list: document.getElementById('flexibleListPriority'),
@@ -6895,6 +6959,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '<button type="button" class="icon-btn toggle-pin'+(r.pinned?' active':'')+'" aria-label="'+(r.pinned?'Lepas sematan':'Sematkan di atas')+'" title="'+(r.pinned?'Lepas sematan':'Sematkan di atas')+'" data-id="'+r.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 10c0 6.5-9 12-9 12s-9-5.5-9-12a9 9 0 0118 0z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="'+(r.pinned?'currentColor':'none')+'" fill-opacity="'+(r.pinned?'0.18':'0')+'"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="1.8" fill="'+(r.pinned?'currentColor':'none')+'"/></svg>' +
         '</button>') : '') +
+        (r.priority && r.pinned ? (
+        '<button type="button" class="icon-btn toggle-pinlevel'+(r.pinLevel==='high'?' active':'')+'" aria-label="'+(r.pinLevel==='high'?'Turunkan ke Standar Prioritas':'Naikkan ke Sangat Prioritas')+'" title="'+(r.pinLevel==='high'?'Turunkan ke Standar Prioritas':'Naikkan ke Sangat Prioritas')+'" data-id="'+r.id+'">' +
+          (r.pinLevel==='high'
+            ? '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 11l6-6 6 6M6 18l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>') +
+        '</button>') : '') +
         '<button type="button" class="icon-btn toggle-priority" aria-label="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" title="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" data-id="'+r.id+'">'+(r.priority?'★':'☆')+'</button>' +
         '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button>' +
         '<button type="button" class="icon-btn flex-copy" aria-label="Salin" title="Salin" data-id="'+r.id+'">' +
@@ -6992,6 +7062,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-pin'), function(btn){
       btn.addEventListener('click', function(e){ e.stopPropagation(); toggleFlexPin(btn.getAttribute('data-id')); });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-pinlevel'), function(btn){
+      btn.addEventListener('click', function(e){ e.stopPropagation(); toggleFlexPinLevel(btn.getAttribute('data-id')); });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-archive'), function(btn){
       btn.addEventListener('click', function(e){ e.stopPropagation(); toggleFlexArchive(btn.getAttribute('data-id')); });
@@ -7136,16 +7209,23 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     pinned.sort(function(a,b){
       return flexSortOrder === 'asc' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id);
     });
-    if (!pinned.length){
-      flexibleListPinned.innerHTML = '<div class="empty-state">' +
-        (allPinned.length
-          ? 'Tidak ada yang cocok dengan "'+escapeHTML(pinSearchInput.value.trim())+'".'
-          : 'Belum ada pengingat yang di-pin.') +
+    // Dua tabel: Sangat Prioritas (pinLevel 'high') dan Standar Prioritas
+    // (sisanya, termasuk item pin lama yang belum punya pinLevel).
+    var high = pinned.filter(function(r){ return r.pinLevel === 'high'; });
+    var std = pinned.filter(function(r){ return r.pinLevel !== 'high'; });
+    function emptyMsg(listLen, allLen, label){
+      if (listLen) return '';
+      var searching = !!pinSearchQuery && allLen > 0;
+      return '<div class="empty-state">' +
+        (searching ? 'Tidak ada yang cocok dengan "'+escapeHTML(pinSearchInput.value.trim())+'".' : 'Belum ada pengingat di ' + label + '.') +
         '</div>';
-      return;
     }
-    flexibleListPinned.innerHTML = pinned.map(flexItemHtml).join('');
-    bindFlexItemEvents(flexibleListPinned);
+    var allHigh = allPinned.filter(function(r){ return r.pinLevel === 'high'; }).length;
+    var allStd = allPinned.length - allHigh;
+    flexibleListPinnedHigh.innerHTML = high.length ? high.map(flexItemHtml).join('') : emptyMsg(0, allHigh, 'Sangat Prioritas');
+    flexibleListPinnedStd.innerHTML = std.length ? std.map(flexItemHtml).join('') : emptyMsg(0, allStd, 'Standar Prioritas');
+    bindFlexItemEvents(flexibleListPinnedHigh);
+    bindFlexItemEvents(flexibleListPinnedStd);
   }
 
   // ---------- Tab "Terlewat" (berdiri sendiri) ----------
@@ -7413,6 +7493,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     saveReminderToCloud(updated).catch(function(err){
       console.error(err);
       showToast('Gagal menyematkan. Coba lagi.');
+    });
+  }
+  // Pindah antar tabel di tab Prioritas Pin: pinLevel 'high' = Sangat
+  // Prioritas, selain itu (kosong / 'standard') = Standar Prioritas.
+  function toggleFlexPinLevel(id){
+    var idx = state.reminders.findIndex(function(x){ return x.id===id; });
+    if (idx === -1) return;
+    var next = state.reminders[idx].pinLevel === 'high' ? 'standard' : 'high';
+    var updated = Object.assign({}, state.reminders[idx], { pinLevel: next });
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
+    renderFlexible();
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal memindahkan item. Coba lagi.');
     });
   }
   // Arsipkan: untuk item yang mungkin sudah tidak relevan tapi masih ingin
@@ -8278,6 +8373,15 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return (hl ? ROW_HL : '') + ((chk === null || chk === undefined) ? '' : (chk ? '\u2611' : '\u2610'));
   }
   function stripRowCheck(line){ return line.replace(/^(\s*)\u25C6?[\u2610\u2611]?(?=\|)/, '$1'); }
+  // Stabilo per SEL: penanda \u25C8 di depan teks sel, mis. "| \u25C8 Lunas | 50.000 |".
+  // Disimpan di teks sel itu sendiri (ikut catatan per-kemunculan). parseTableRow
+  // tetap mengembalikan teks MENTAH (berpenanda) supaya penyusunan ulang baris
+  // (tambah/hapus kolom, edit sel) tidak menghilangkan penanda; untuk
+  // ditampilkan / dicetak pakai cellText().
+  var CELL_HL = '\u25C8';
+  function cellIsHL(c){ return typeof c === 'string' && c.charAt(0) === CELL_HL; }
+  function cellText(c){ return cellIsHL(c) ? c.slice(1).replace(/^\s+/, '') : c; }
+  function cellWithHL(text, hl){ text = cellText(text || ''); return hl ? (CELL_HL + ' ' + text).trim() : text; }
   function isTableRow(line){
     var t = stripRowCheck(line).trim();
     return t.length >= 2 && t.charAt(0) === '|' && t.charAt(t.length - 1) === '|';
@@ -8699,6 +8803,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         // jadi status "disematkan" ikut tersimpan dari centang itu, tidak
         // lagi cuma bisa diubah lewat tombol pin di daftar Fleksibel.
         pinned: fPin.checked,
+        // pinLevel (Sangat Prioritas / Standar Prioritas di tab Pin) dipertahankan dari data lama.
+        pinLevel: (existing && existing.pinLevel === 'high') ? 'high' : 'standard',
         // sama seperti pinned di atas — archived juga harus dipertahankan
         // dari data lama supaya item yang sudah diarsipkan tidak tiba-tiba
         // muncul lagi di kolom utama hanya karena diedit.
