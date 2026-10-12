@@ -866,11 +866,15 @@
      untuk diedit (lihat startInlineTableCellEdit). */
   .notes-plain-table td.notes-cell.cell-hl:not(.editing){background:var(--hl-cell-bg) !important; font-weight:600; color:var(--ink);}
   .notes-cell-hl-toggle{
-    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; margin-left:3px; padding:0;
+    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; margin:0; padding:0;
     border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink-soft);
     vertical-align:middle; cursor:pointer; flex:none;
   }
   .notes-cell-hl-toggle svg{width:13px; height:13px;}
+  /* Tombol stabilo sel diletakkan di SAMPING KIRI kolom input (satu baris),
+     bukan di bawahnya. */
+  .notes-cell-edit-wrap{display:flex; align-items:center; gap:4px; flex-wrap:nowrap;}
+  .notes-cell-edit-wrap .notes-line-input{flex:0 1 auto; min-width:4ch;}
   .notes-cell-hl-toggle.on{color:#8A4B00; background:var(--hl-cell-bg); border-color:transparent;}
   :root[data-theme="dark"] .notes-cell-hl-toggle.on{color:#FDBA74;}
   /* Bagian "Riwayat" (baris tabel ber-centang yang sudah tercentang) di
@@ -4589,7 +4593,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     function fit(){ input.style.width = Math.max(input.value.length + 3, 5) + 'ch'; }
     fit();
     textEl.style.display = 'none';
-    td.insertBefore(input, textEl.nextSibling);
+    var editWrap = document.createElement('div');
+    editWrap.className = 'notes-cell-edit-wrap';
+    td.insertBefore(editWrap, textEl.nextSibling);
     // Tombol stabilo SEL: hanya mewarnai sel ini (bukan seluruh baris).
     var hlBtn = document.createElement('button');
     hlBtn.type = 'button';
@@ -4609,7 +4615,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       hlBtn.setAttribute('aria-pressed', cellHL ? 'true' : 'false');
       input.focus();
     });
-    td.insertBefore(hlBtn, input.nextSibling);
+    // Urutan: tombol stabilo (kiri) lalu kolom input (kanan).
+    editWrap.appendChild(hlBtn);
+    editWrap.appendChild(input);
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
     var done = false;
@@ -4619,6 +4627,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var val = input.value;
       if (input.parentNode) input.parentNode.removeChild(input);
       if (hlBtn.parentNode) hlBtn.parentNode.removeChild(hlBtn);
+      if (editWrap.parentNode) editWrap.parentNode.removeChild(editWrap);
       textEl.style.display = '';
       td.classList.remove('editing');
       if (save && (val.trim() !== originalText || cellHL !== originalHL)) setNotesTableCell(reminderId, dateStr, lineIdx, colIdx, val, cellHL);
