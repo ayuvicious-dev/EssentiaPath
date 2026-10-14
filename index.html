@@ -716,6 +716,23 @@
      "Fleksibel" — area sentuh tetap diperlebar lewat ::before supaya masih
      mudah disentuh di HP. */
   .up-check{width:18px; height:18px; border-radius:5px;}
+  /* Centang bulat kecil di kanan centang kotak: penanda "sudah diupdate tapi
+     belum difinalisasi". Merah = belum diklik; krem (warna latar aplikasi,
+     ikut tema terang/gelap) = sudah diklik. Hilang otomatis setelah centang
+     kotak utama (finalisasi) dicentang. */
+  .up-upd{
+    width:7px; height:7px; box-sizing:border-box; border-radius:50%; flex:none; margin:6px 0 0 -0.25rem; padding:0;
+    border:1px solid #C73E3A; background:#D64545; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    position:relative; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+    transition:background 0.12s ease, border-color 0.12s ease;
+  }
+  .up-upd::before{content:''; position:absolute; inset:-9px;}
+  .up-upd svg{width:5px; height:5px; display:block;}
+  .up-upd svg path{stroke:#fff;}
+  .up-upd.on{background:var(--paper); border-color:var(--line);}
+  .flex-item .up-upd{margin-top:10px;} /* kotak centang Fleksibel lebih besar (26px), bulatan sejajar tengahnya */
+  .up-upd.on svg path{stroke:var(--moss);}
   .up-check::before{inset:-11px;}
   .up-check svg{width:11px; height:11px;}
   .sub-checklist{list-style:none; margin:0.4rem 0 0 1.3rem; padding:0; display:flex; flex-direction:column; gap:0.28rem;}
@@ -941,6 +958,26 @@
   .toggle-pinlevel.active{color:var(--danger);}
   .flex-item.pinned-item .title{padding-right:11.5rem;}
   .flex-item.pinned-item.has-table-btn .title{padding-right:13rem;}
+  /* Penyederhanaan ikon aksi kartu Fleksibel/Pin: di pojok kanan-atas kini
+     cuma tombol "⋯" (menu aksi) + panah catatan, jadi judul hanya perlu
+     sisa ruang kecil. Ikon lengkap (arsip, sematan, naik/turun level,
+     bintang, ubah, salin) muncul di baris di bawah judul saat "⋯" diketuk. */
+  .flex-item .title, .flex-item.pinned-item .title{padding-right:6.1rem;}
+  .flex-item.has-table-btn .title, .flex-item.pinned-item.has-table-btn .title{padding-right:8.7rem;}
+  .flex-more svg{width:15px; height:15px;}
+  /* Kartu Dashboard (Mendatang, Baru Ditambahkan, rincian hari) memakai pola
+     menu aksi yang sama: ⋯ + ✎ + panah di pojok, sisanya (seret urutan, salin)
+     di baris di bawah meta saat ⋯ diketuk. */
+  .up-item .title, .up-item.has-drag .title{padding-right:6.1rem;}
+  .up-item.has-table-btn .title{padding-right:8.7rem;}
+  .up-item.actions-open .flex-more{background:var(--line-soft); color:var(--moss-deep);}
+  .up-item.actions-open .flex-more-row{display:flex;}
+  .flex-item.actions-open .flex-more{background:var(--line-soft); color:var(--moss-deep);}
+  .flex-more-row{
+    display:none; align-items:center; flex-wrap:wrap; gap:0.15rem; margin-top:0.35rem;
+    width:fit-content; max-width:100%; padding:0.1rem 0.25rem; border-radius:8px; background:var(--line-soft);
+  }
+  .flex-item.actions-open .flex-more-row{display:flex;}
   .flex-column-head.pin-high{color:var(--danger);}
   .flex-column-head.pin-high .dot{background:var(--danger);}
   .flex-column .flex-list:empty{display:none;}
@@ -2998,8 +3035,22 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       .finally(function(){ completionsPruneInFlight = false; });
   }
   function setCompletion(reminderId, dateStr, time, value){
+    setCompletionByKey(completionKey(reminderId, dateStr, time), value);
+  }
+  // Penanda "sudah diupdate, belum difinalisasi" (centang bulat kecil di kartu
+  // Mendatang). Disimpan di dokumen completions yang sama dengan awalan
+  // "UPD:" pada key-nya, jadi ikut sinkron antar perangkat & ikut dibersihkan
+  // otomatis setelah 3 hari (bagian tanggal tetap di posisi ke-2 saat dipecah
+  // dengan "|"). Tidak memengaruhi status selesai (isOccurrenceDone).
+  function updMarkKey(reminderId, dateStr, time){ return 'UPD:' + completionKey(reminderId, dateStr, time); }
+  function isUpdMarked(reminderId, dateStr, time){ return !!state.completions[updMarkKey(reminderId, dateStr, time)]; }
+  function toggleUpdMark(reminderId, dateStr, time){
     if (!currentUser) return;
-    var key = completionKey(reminderId, dateStr, time);
+    var key = updMarkKey(reminderId, dateStr, time);
+    setCompletionByKey(key, !state.completions[key]);
+  }
+  function setCompletionByKey(key, value){
+    if (!currentUser) return;
     var previous = state.completions;
     // Perbarui tampilan lokal langsung supaya terasa responsif, tapi tetap
     // kirim ke cloud sebagai patch satu field saja.
@@ -5804,6 +5855,28 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // dibuka manual oleh pengguna (mis. saat gilirannya tiba untuk dicek),
   // bukan yang disembunyikan.
   var expandedNotesIds = {};
+  // Kartu (Fleksibel/Pin dan Dashboard) yang menu aksinya (baris ikon di bawah
+  // judul) sedang terbuka — hanya di memori, supaya tetap terbuka walau daftar
+  // dirender ulang. Kunci: id pengingat (Fleksibel/Pin) atau
+  // "u|id|tanggal|jam" (kartu Dashboard, per kemunculan).
+  var actionsOpenIds = {};
+  function bindMoreMenus(listEl){
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-more-row'), function(row){
+      row.addEventListener('click', function(e){ e.stopPropagation(); }); // ketukan di sela ikon tidak membuka/menutup catatan
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-more'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = btn.closest('.flex-item, .up-item');
+        var key = btn.getAttribute('data-akey');
+        if (!host || !key) return;
+        if (actionsOpenIds[key]) delete actionsOpenIds[key]; else actionsOpenIds[key] = true;
+        var open = !!actionsOpenIds[key];
+        host.classList.toggle('actions-open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    });
+  }
   // Baris tabel ber-centang (fitur "centang per baris") yang sudah
   // tercentang otomatis dipindah tampilannya ke bagian "Riwayat" yang
   // tersembunyi (auto-hide) di bawah tabel yang sama — bukan dihapus,
@@ -5850,23 +5923,35 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
     var notesHiddenIt = !expandedNotesIds[it.reminder.id];
     var canDragIt = !!it.dragOk && !isDone;
-    return '<li class="up-item up-editable'+(canDragIt?' has-drag':'')+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+(notesHiddenIt?' notes-collapsed':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-checklist-owner="'+it.reminder.id+'">' +
+    var akeyIt = 'u|'+it.reminder.id+'|'+it.date+'|'+it.time;
+    return '<li class="up-item up-editable'+(canDragIt?' has-drag':'')+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+(notesHiddenIt?' notes-collapsed':'')+(actionsOpenIds[akeyIt]?' actions-open':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-checklist-owner="'+it.reminder.id+'">' +
       '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
+      (isDone ? '' : (function(){
+        var updOn = isUpdMarked(it.reminder.id, it.date, it.time);
+        return '<button type="button" class="up-upd'+(updOn?' on':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" aria-pressed="'+(updOn?'true':'false')+'" aria-label="'+(updOn?'Sudah diupdate (belum difinalisasi)':'Belum diupdate')+'" title="'+(updOn?'Sudah diupdate, belum difinalisasi — ketuk untuk batalkan':'Tandai sudah diupdate (belum difinalisasi)')+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>';
+      })()) +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
       '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>' +
+      '<div class="flex-more-row">' +
+        (canDragIt ? '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' : '') +
+        '<button type="button" class="icon-btn up-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '</button>' +
+      '</div>' +
       '<div class="notes-collapsible">' +
       badge +
       renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
       '</div>' +
       '</div>' +
       '<div class="acts">' +
-        (canDragIt ? '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' : '') +
-        '<button type="button" class="icon-btn edit-up" aria-label="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
-        '<button type="button" class="icon-btn up-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
-          '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '<button type="button" class="icon-btn flex-more" aria-label="Menu aksi" title="Menu aksi (seret urutan, salin)" aria-expanded="'+(actionsOpenIds[akeyIt]?'true':'false')+'" data-akey="'+akeyIt+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>' +
         '</button>' +
+        '<button type="button" class="icon-btn edit-up" aria-label="Ubah" title="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
         '<button type="button" class="icon-btn flex-collapse" aria-label="'+(notesHiddenIt?'Tampilkan catatan':'Sembunyikan catatan')+'" title="'+(notesHiddenIt?'Tampilkan catatan':'Sembunyikan catatan')+'" data-id="'+it.reminder.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
@@ -5945,6 +6030,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.addEventListener('pointercancel', onUp);
   }
   function bindUpcomingItemEvents(listEl){
+    bindMoreMenus(listEl);
     Array.prototype.forEach.call(listEl.querySelectorAll('.up-drag-handle'), function(h){
       h.addEventListener('pointerdown', function(e){ e.stopPropagation(); startUpcomingDrag(e, h); });
       h.addEventListener('click', function(e){ e.stopPropagation(); });
@@ -5957,6 +6043,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           var date = btn.getAttribute('data-date');
           var time = btn.getAttribute('data-time');
           onOccurrenceParentClick(id, date, time, btn.getAttribute('data-has-checklist') === '1', 'current');
+        });
+      });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.up-upd'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        guardedToggle(btn, function(){
+          toggleUpdMark(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
         });
       });
     });
@@ -7051,17 +7145,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // Baris meta sekarang cukup nama kategori saja; isi catatan penuh
     // (checklist / list / teks bebas) hanya muncul sekali, dari
     // renderNotesOrderedHTML di bawah.
-    return '<li class="flex-item'+(doneR?' done':'')+(!doneR && hasChecklistR && r.done?' parent-checked':'')+(r.priority?' priority-item':'')+(r.priority && r.pinned?' pinned-item':'')+(notesHiddenR?' notes-collapsed':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
+    return '<li class="flex-item'+(doneR?' done':'')+(!doneR && hasChecklistR && r.done?' parent-checked':'')+(r.priority?' priority-item':'')+(r.priority && r.pinned?' pinned-item':'')+(notesHiddenR?' notes-collapsed':'')+(actionsOpenIds[r.id]?' actions-open':'')+'" data-id="'+r.id+'" data-checklist-owner="'+r.id+'">' +
       '<button type="button" class="flex-check" data-id="'+r.id+'" data-has-checklist="'+(hasChecklistR?'1':'0')+'" aria-label="Tandai selesai">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
+      (doneR ? '' : (
+        '<button type="button" class="up-upd flex-upd'+(r.updMarked?' on':'')+'" data-id="'+r.id+'" aria-pressed="'+(r.updMarked?'true':'false')+'" aria-label="'+(r.updMarked?'Sudah diupdate (belum difinalisasi)':'Belum diupdate')+'" title="'+(r.updMarked?'Sudah diupdate, belum difinalisasi — ketuk untuk batalkan':'Tandai sudah diupdate (belum difinalisasi)')+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>')) +
       '<div class="body"><div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
-      '<div class="notes-collapsible">' +
-      '<div class="meta">'+c.label+'</div>' +
-      renderNotesOrderedHTML(r.notes) +
-      '</div>' +
-      '</div>' +
-      '<div class="acts">' +
+      '<div class="flex-more-row">' +
         '<button type="button" class="icon-btn toggle-archive'+(r.archived?' active':'')+'" aria-label="'+(r.archived?'Keluarkan dari arsip':'Arsipkan')+'" title="'+(r.archived?'Keluarkan dari arsip':'Arsipkan (untuk item yang mungkin sudah tidak relevan, tapi bisa dilihat lagi nanti)')+'" data-id="'+r.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="4" rx="1.2" stroke="currentColor" stroke-width="1.8" fill="'+(r.archived?'currentColor':'none')+'" fill-opacity="'+(r.archived?'0.18':'0')+'"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 13h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
         '</button>' +
@@ -7076,10 +7169,20 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             : '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>') +
         '</button>') : '') +
         '<button type="button" class="icon-btn toggle-priority" aria-label="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" title="'+(r.priority?'Jadikan standar':'Jadikan prioritas')+'" data-id="'+r.id+'">'+(r.priority?'★':'☆')+'</button>' +
-        '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" data-id="'+r.id+'">✎</button>' +
         '<button type="button" class="icon-btn flex-copy" aria-label="Salin" title="Salin" data-id="'+r.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
         '</button>' +
+      '</div>' +
+      '<div class="notes-collapsible">' +
+      '<div class="meta">'+c.label+'</div>' +
+      renderNotesOrderedHTML(r.notes) +
+      '</div>' +
+      '</div>' +
+      '<div class="acts">' +
+        '<button type="button" class="icon-btn flex-more" aria-label="Menu aksi" title="Menu aksi (arsip, sematan, prioritas, ubah, salin)" aria-expanded="'+(actionsOpenIds[r.id]?'true':'false')+'" data-akey="'+r.id+'" data-id="'+r.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>' +
+        '</button>' +
+        '<button type="button" class="icon-btn edit-flex" aria-label="Ubah" title="Ubah" data-id="'+r.id+'">✎</button>' +
         '<button type="button" class="icon-btn flex-collapse" aria-label="'+(notesHiddenR?'Tampilkan catatan':'Sembunyikan catatan')+'" title="'+(notesHiddenR?'Tampilkan catatan':'Sembunyikan catatan')+'" data-id="'+r.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
@@ -7165,6 +7268,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         guardedToggle(btn, function(){
           toggleFlexDone(btn.getAttribute('data-id'));
         });
+      });
+    });
+    bindMoreMenus(listEl);
+    Array.prototype.forEach.call(listEl.querySelectorAll('.flex-upd'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        guardedToggle(btn, function(){ toggleFlexUpdMark(btn.getAttribute('data-id')); });
       });
     });
     Array.prototype.forEach.call(listEl.querySelectorAll('.toggle-priority'), function(btn){
@@ -7624,6 +7734,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // bisa dilihat lagi nanti. Item yang diarsipkan otomatis disembunyikan
   // dari kolom Prioritas/Standar (dan dari daftar "selesai"), lalu muncul
   // di bagian "Tampilkan yang diarsipkan" di bawah "Tampilkan yang selesai".
+  // Centang bulat kecil "sudah diupdate, belum difinalisasi" untuk item
+  // Fleksibel/Pin (tidak punya tanggal kemunculan, jadi disimpan sebagai
+  // field updMarked di dokumen pengingatnya sendiri).
+  function toggleFlexUpdMark(id){
+    var idx = state.reminders.findIndex(function(x){ return x.id===id; });
+    if (idx === -1) return;
+    var updated = Object.assign({}, state.reminders[idx], { updMarked: !state.reminders[idx].updMarked });
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
+    renderFlexible();
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan penanda update. Coba lagi.');
+    });
+  }
   function toggleFlexArchive(id){
     var idx = state.reminders.findIndex(function(x){ return x.id===id; });
     if (idx === -1) return;
@@ -8919,6 +9044,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         // dari data lama supaya item yang sudah diarsipkan tidak tiba-tiba
         // muncul lagi di kolom utama hanya karena diedit.
         archived: existing ? !!existing.archived : false,
+        // penanda "sudah diupdate, belum difinalisasi" (centang bulat kecil) ikut dipertahankan saat diedit
+        updMarked: existing ? !!existing.updMarked : false,
         travel: false,
         done: existing ? !!existing.done : false,
         createdAt: existing ? (existing.createdAt || null) : Date.now(),
