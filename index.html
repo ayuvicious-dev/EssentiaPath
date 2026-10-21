@@ -575,6 +575,29 @@
   .up-item.swiping.swipe-ready::after{content:'Lepas untuk skip'; color:var(--ink); background:rgba(227,169,124,0.4);}
   .up-item.skipped.swiping::after{content:'Batalkan skip';}
   .up-item.skipped.swiping.swipe-ready::after{content:'Lepas untuk batal skip';}
+  /* Estimasi waktu penyelesaian (di kanan judul, Dashboard). Ketuk untuk mengatur. */
+  .up-est{
+    display:inline-flex; align-items:center; margin-left:6px; padding:1px 8px; border-radius:999px; vertical-align:middle;
+    border:1px solid var(--line); background:var(--line-soft); color:var(--moss-deep); cursor:pointer;
+    font-family:var(--font-mono); font-size:0.68rem; font-weight:600; line-height:1.4; white-space:nowrap;
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  }
+  .up-est.empty{color:var(--ink-soft); border-style:dashed; font-weight:500; opacity:0.75;}
+  .up-est:hover{border-color:var(--moss); opacity:1;}
+  .fs-popover.est-popover{width:240px;}
+  .est-quick{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;}
+  .est-quick button{
+    border:1px solid var(--line); background:transparent; color:var(--ink); cursor:pointer; font:inherit;
+    font-size:11.5px; font-weight:600; padding:4px 8px; border-radius:8px;
+  }
+  .est-quick button:hover, .est-quick button.on{background:var(--line-soft); border-color:var(--moss); color:var(--moss-deep);}
+  .est-row{display:flex; align-items:center; gap:8px;}
+  .est-row input{
+    flex:1; min-width:0; box-sizing:border-box; font:inherit; font-size:14px; padding:6px 8px; border-radius:8px;
+    border:1px solid var(--line); background:var(--paper-raised); color:var(--ink);
+  }
+  .est-row span{font-size:12px; color:var(--ink-soft);}
+  .est-save{background:var(--moss) !important; color:#fff !important; border-color:var(--moss) !important;}
   .up-item.skipped{opacity:0.75;}
   .up-item.skipped .title{color:var(--ink-soft);}
   /* Kartu pengingat yang sedang berlangsung (dulu ditampilkan terpisah di
@@ -2058,6 +2081,31 @@
   <div class="hb-empty" id="habitEmpty" hidden>Belum ada data. Centang atau skip tugas di Dashboard — riwayat mulai terekam otomatis.</div>
   <div class="fs-pop-foot">
     <span class="fs-pop-hint" id="habitHint">Persentase = dicentang ÷ (dicentang + di-skip + terlewat) pada tanggal yang sudah berjalan.</span>
+  </div>
+</div>
+
+<!-- Estimasi waktu penyelesaian (dibuka dari chip di kanan judul kartu Dashboard).
+     Disimpan di field estimateMin pada dokumen pengingat (berlaku untuk semua kemunculannya). -->
+<div class="fs-popover est-popover" id="estPopover" role="dialog" aria-label="Estimasi waktu penyelesaian" hidden>
+  <div class="fs-pop-head">
+    <span class="fs-pop-title">Estimasi selesai</span>
+    <span class="fs-pop-value" id="estValueLabel"></span>
+  </div>
+  <div class="est-quick" id="estQuick">
+    <button type="button" data-min="15">15 mnt</button>
+    <button type="button" data-min="30">30 mnt</button>
+    <button type="button" data-min="45">45 mnt</button>
+    <button type="button" data-min="60">1 jam</button>
+    <button type="button" data-min="90">1,5 jam</button>
+    <button type="button" data-min="120">2 jam</button>
+  </div>
+  <div class="est-row">
+    <input type="number" id="estInput" min="1" max="1440" step="1" inputmode="numeric" placeholder="atur manual" aria-label="Estimasi dalam menit">
+    <span>menit</span>
+  </div>
+  <div class="fs-pop-foot">
+    <button type="button" class="fs-pop-reset" id="estClear">Hapus</button>
+    <button type="button" class="fs-pop-reset est-save" id="estSave">Simpan</button>
   </div>
 </div>
 
@@ -6217,8 +6265,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>';
       })()) +
-      '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
-      '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>' +
+      '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+estimateChipHTML(it.reminder, isDone)+'</div>' +
+      '<div class="meta">'+it.time+(estimateOf(it.reminder) ? '–'+addMinutesToTime(it.time, estimateOf(it.reminder)) : '')+' · '+repeatLabel(it.reminder)+'</div>' +
       '<div class="flex-more-row">' +
         (canDragIt ? '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' : '') +
         '<button type="button" class="icon-btn up-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
@@ -6311,6 +6359,116 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     document.addEventListener('pointermove', onMove);
     document.addEventListener('pointerup', onUp);
     document.addEventListener('pointercancel', onUp);
+  }
+  // ---------- Estimasi waktu penyelesaian ----------
+  // Chip di kanan judul kartu Dashboard. Ketuk -> popover untuk memilih cepat
+  // (15 mnt, 30 mnt, ...) atau mengetik menit secara manual. Disimpan di
+  // field `estimateMin` pada dokumen pengingat, jadi berlaku untuk semua
+  // kemunculannya. Kalau diisi, jam di baris meta jadi rentang mulai-selesai.
+  function estimateOf(r){
+    var n = r && r.estimateMin;
+    return (typeof n === 'number' && isFinite(n) && n > 0) ? Math.round(n) : 0;
+  }
+  function estimateLabel(min){
+    if (min < 60) return min + ' mnt';
+    var h = Math.floor(min / 60), m = min % 60;
+    return h + ' j' + (m ? ' ' + m + ' mnt' : '');
+  }
+  function addMinutesToTime(hhmm, min){
+    var p = String(hhmm || '').split(':');
+    var total = ((parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0) + min) % 1440;
+    return pad2(Math.floor(total / 60)) + ':' + pad2(total % 60);
+  }
+  function estimateChipHTML(r, isDone){
+    var min = estimateOf(r);
+    if (!min && isDone) return '';
+    var label = min ? estimateLabel(min) : '+ estimasi';
+    var tip = min ? 'Estimasi selesai ' + estimateLabel(min) + ' — ketuk untuk mengubah' : 'Tambah estimasi waktu penyelesaian';
+    return '<button type="button" class="up-est' + (min ? '' : ' empty') + '" data-id="' + r.id + '" title="' + tip + '" aria-label="' + tip + '">' + label + '</button>';
+  }
+  var estPopover = document.getElementById('estPopover');
+  var estInput = document.getElementById('estInput');
+  var estValueLabel = document.getElementById('estValueLabel');
+  var estTargetId = null;
+  var estAnchor = null;
+  function positionEstPopover(){
+    if (!estPopover || estPopover.hidden || !estAnchor || !document.body.contains(estAnchor)) return;
+    var r = estAnchor.getBoundingClientRect();
+    var w = estPopover.offsetWidth || 240;
+    var left = r.left;
+    var maxLeft = window.innerWidth - w - 8;
+    if (left > maxLeft) left = maxLeft;
+    if (left < 8) left = 8;
+    estPopover.style.left = left + 'px';
+    estPopover.style.top = (r.bottom + 6) + 'px';
+  }
+  function setEstPopoverOpen(open, anchor, reminderId){
+    if (!estPopover) return;
+    estPopover.hidden = !open;
+    if (!open){ estTargetId = null; estAnchor = null; return; }
+    if (typeof setFontSizePopoverOpen === 'function') setFontSizePopoverOpen(false);
+    if (typeof setHabitPopoverOpen === 'function') setHabitPopoverOpen(false);
+    estTargetId = reminderId;
+    estAnchor = anchor;
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    var cur = estimateOf(r);
+    estInput.value = cur ? String(cur) : '';
+    estValueLabel.textContent = cur ? estimateLabel(cur) : '';
+    Array.prototype.forEach.call(estPopover.querySelectorAll('#estQuick button'), function(b){
+      b.classList.toggle('on', Number(b.getAttribute('data-min')) === cur);
+    });
+    positionEstPopover();
+    setTimeout(function(){ try { estInput.focus({ preventScroll: true }); } catch(e){} }, 0);
+  }
+  function saveEstimate(min){
+    var id = estTargetId;
+    if (!id || !currentUser) return;
+    var idx = state.reminders.findIndex(function(x){ return x.id === id; });
+    if (idx === -1) return;
+    var updated = Object.assign({}, state.reminders[idx], { estimateMin: min > 0 ? min : null });
+    state.reminders = state.reminders.slice();
+    state.reminders[idx] = updated;
+    setEstPopoverOpen(false);
+    renderUpcoming();
+    saveReminderToCloud(updated).catch(function(err){
+      console.error(err);
+      showToast('Gagal menyimpan estimasi. Coba lagi.');
+    });
+  }
+  function commitEstInput(){
+    var raw = String(estInput.value || '').trim();
+    if (!raw){ saveEstimate(0); return; }
+    var n = Math.round(Number(raw));
+    if (!isFinite(n) || n < 1 || n > 1440){ showToast('Isi estimasi 1–1440 menit'); return; }
+    saveEstimate(n);
+  }
+  if (estPopover){
+    estPopover.addEventListener('click', function(e){
+      e.stopPropagation();
+      var q = e.target.closest ? e.target.closest('#estQuick button') : null;
+      if (q) saveEstimate(Number(q.getAttribute('data-min')));
+    });
+    document.getElementById('estSave').addEventListener('click', commitEstInput);
+    document.getElementById('estClear').addEventListener('click', function(){ saveEstimate(0); });
+    estInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); commitEstInput(); }
+    });
+    document.addEventListener('click', function(){ if (!estPopover.hidden) setEstPopoverOpen(false); });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && !estPopover.hidden) setEstPopoverOpen(false);
+    });
+    window.addEventListener('resize', positionEstPopover);
+  }
+  function bindUpcomingEstimate(listEl){
+    Array.prototype.forEach.call(listEl.querySelectorAll('.up-est'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        e.preventDefault();
+        var id = btn.getAttribute('data-id');
+        if (!estPopover.hidden && estTargetId === id){ setEstPopoverOpen(false); return; }
+        setEstPopoverOpen(true, btn, id);
+      });
+    });
   }
   // ---------- Geser kanan = skip ----------
   // Pointer-based. Gerakan baru dianggap geser kalau dominan horizontal ke
@@ -6410,6 +6568,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
     });
     bindUpcomingSwipeSkip(listEl);
+    bindUpcomingEstimate(listEl);
     Array.prototype.forEach.call(listEl.querySelectorAll('.up-upd'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
@@ -9456,6 +9615,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         timeHoliday: null,
         workdaySatSpecial: false,
         timeWorkdaySat: null,
+        estimateMin: (existing && typeof existing.estimateMin === 'number') ? existing.estimateMin : null,
         notes: fNotesValue,
         link: document.getElementById('fLink').value.trim()
       };
@@ -9486,6 +9646,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         timeHoliday: useDayType ? (fTimeHoliday.value || baseTime) : null,
         workdaySatSpecial: (fRepeat.value==='workdaySat' && fWorkdaySatSpecial.checked),
         timeWorkdaySat: (fRepeat.value==='workdaySat' && fWorkdaySatSpecial.checked) ? (fTimeWorkdaySat.value || baseTime) : null,
+        estimateMin: (existing && typeof existing.estimateMin === 'number') ? existing.estimateMin : null,
         notes: fNotesValue,
         link: document.getElementById('fLink').value.trim()
       };
@@ -10442,6 +10603,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     fontSizeShortcut.addEventListener('click', function(e){
       e.stopPropagation();
       if (typeof setHabitPopoverOpen === 'function') setHabitPopoverOpen(false);
+      if (typeof setEstPopoverOpen === 'function') setEstPopoverOpen(false);
       setFontSizePopoverOpen(fontSizePopover.hidden);
     });
     fontSizePopover.addEventListener('click', function(e){ e.stopPropagation(); });
@@ -10668,6 +10830,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     habitShortcut.classList.toggle('active', open);
     if (open){
       if (typeof setFontSizePopoverOpen === 'function') setFontSizePopoverOpen(false);
+      if (typeof setEstPopoverOpen === 'function') setEstPopoverOpen(false);
       habitSyncNow(); // segarkan angka hari ini sebelum ditampilkan
       renderHabit();
       positionHabitPopover();
