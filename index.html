@@ -496,6 +496,19 @@
     fill:none; stroke:var(--moss); stroke-width:3; stroke-linecap:round;
     stroke-dasharray:43.98; stroke-dashoffset:43.98; transition:stroke-dashoffset 0.3s ease;
   }
+  /* Chip total sisa waktu (jumlah estimasi pengingat yang belum dicentang pada
+     tanggal yang ditampilkan), di kanan chip persentase. */
+  .up-remain{
+    display:inline-flex; align-items:center; gap:0.28rem; padding:0.26rem 0.5rem;
+    border:1px solid var(--line); border-radius:999px; background:var(--surface);
+    font-size:0.72rem; font-weight:700; line-height:1; color:var(--ink);
+    font-variant-numeric:tabular-nums; white-space:nowrap;
+  }
+  .up-remain[hidden]{display:none;}
+  .up-remain svg{width:14px; height:14px; flex:none; color:var(--amber);}
+  /* Kalau chip terlalu banyak untuk satu baris (layar sempit), kontrol tanggal turun ke baris berikutnya. */
+  .up-sticky-head .sidebar-head{flex-wrap:wrap; row-gap:0.3rem;}
+  .up-sticky-head .up-date-control{margin-left:auto;}
   .up-progress.is-complete{background:rgba(63,102,89,0.15); border-color:transparent;}
   @media (prefers-reduced-motion:reduce){ .up-progress .up-progress-bar{transition:none;} }
   @media (max-width:359px){ .up-progress svg{display:none;} }
@@ -2238,12 +2251,13 @@
             </button>
           </div>
           <div class="up-date-control">
-            <button type="button" class="icon-btn up-search-btn" id="upcomingSearchBtn" aria-label="Cari pengingat" title="Cari pengingat" aria-expanded="false">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </button>
             <div class="up-progress" id="upcomingProgress" role="img" aria-label="" title="" hidden>
               <svg viewBox="0 0 20 20" aria-hidden="true"><circle class="up-progress-track" cx="10" cy="10" r="7"/><circle class="up-progress-bar" id="upcomingProgressBar" cx="10" cy="10" r="7" transform="rotate(-90 10 10)"/></svg>
               <span id="upcomingProgressText">0%</span>
+            </div>
+            <div class="up-remain" id="upcomingRemain" role="img" aria-label="" title="" hidden>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span id="upcomingRemainText">0 mnt</span>
             </div>
             <div class="up-date-wrap">
               <input type="date" id="upcomingStartInput" aria-label="Mulai daftar dari tanggal">
@@ -2251,6 +2265,9 @@
             </div>
             <button type="button" class="icon-btn up-date-today-btn" id="upcomingResetToday" aria-label="Kembali ke hari ini" title="Kembali ke hari ini" hidden>
               <svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 4v5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="icon-btn up-search-btn" id="upcomingSearchBtn" aria-label="Cari pengingat" title="Cari pengingat" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             </button>
           </div>
         </div>
@@ -6153,8 +6170,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!upcomingProgressEl) return;
     var items = itemsForDate(upcomingStartDate);
     var total = 0, done = 0;
+    var remainMin = 0, remainNoEst = 0;
     items.forEach(function(it){
       if (isOccurrenceSkipped(it) && !isOccurrenceDone(it)) return; // ter-skip tidak dihitung
+      // Total sisa waktu: jumlah estimasi kemunculan yang belum selesai.
+      if (!isOccurrenceDone(it)){
+        var est = estimateOf(it.reminder);
+        if (est) remainMin += est; else remainNoEst++;
+      }
       var checklist = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
       if (checklist.length){
         total += checklist.length;
@@ -6168,6 +6191,20 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         if (isOccurrenceDone(it)) done++;
       }
     });
+    var remainEl = document.getElementById('upcomingRemain');
+    if (remainEl){
+      if (remainMin > 0){
+        var rLabel = 'Sisa waktu ' + (isUpcomingStartToday() ? 'hari ini' : 'tanggal ' + formatDMY(upcomingStartDate)) +
+          ': ' + estimateLabel(remainMin) + ' (jumlah estimasi pengingat yang belum dicentang' +
+          (remainNoEst ? '; ' + remainNoEst + ' belum punya estimasi' : '') + ')';
+        document.getElementById('upcomingRemainText').textContent = estimateLabel(remainMin);
+        remainEl.hidden = false;
+        remainEl.setAttribute('aria-label', rLabel);
+        remainEl.title = rLabel;
+      } else {
+        remainEl.hidden = true;
+      }
+    }
     if (!total){ upcomingProgressEl.hidden = true; return; }
     var pct = Math.round(done / total * 100);
     upcomingProgressEl.hidden = false;
