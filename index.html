@@ -5366,7 +5366,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
             '<span class="sub-check-label" title="Ketuk untuk mengedit baris ini">'+escapeHTML(dispTxt(it.text))+'</span>' +
           '</li>';
         };
-        // "Harian Rutin" & "Mingguan Rutin": item checklist yang sudah dicentang otomatis
+        // "Harian Rutin", "Mingguan Rutin" & "Harian Lanjutan": item checklist yang sudah dicentang otomatis
         // disembunyikan dari daftar utama (hilang begitu dicentang) dan
         // dipindah ke bagian "Riwayat tercentang" yang bisa dibuka — pola
         // yang sama seperti baris tabel ber-centang. Kalau salah centang,
@@ -5374,7 +5374,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var hideCheckedItems = false;
         if (reminderId && dateStr){
           var ownerR = state.reminders.find(function(x){ return x.id === reminderId; });
-          hideCheckedItems = !!(ownerR && (ownerR.repeat === 'dailyRoutine' || ownerR.repeat === 'weeklyRoutine'));
+          hideCheckedItems = !!(ownerR && (ownerR.repeat === 'dailyRoutine' || ownerR.repeat === 'weeklyRoutine' || ownerR.repeat === 'dailyCarry'));
         }
         if (!hideCheckedItems){
           return '<ul class="sub-checklist">' + b.items.map(chkLiHTML).join('') + '</ul>';
