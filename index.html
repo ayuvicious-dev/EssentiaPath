@@ -541,6 +541,8 @@
   .title-link .link-ico{width:11px; height:11px; flex:none; align-self:center; opacity:0.7;}
   .up-item.done .title{text-decoration:line-through; color:var(--ink-soft); font-weight:500;}
   .up-item .meta{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px;}
+  /* Sub judul (opsional) di bawah judul pada kartu Dashboard; gaya sama dengan baris jam di bawahnya. */
+  .up-item .up-sub{font-size:0.72rem; color:var(--ink-soft); font-family:var(--font-mono); margin-top:2px; word-break:break-word;}
   .up-item .acts{position:absolute; top:0.5rem; right:0.5rem; display:flex; gap:0.3rem; z-index:1;}
   /* Drag pindah atas/bawah untuk pengingat yang jamnya sama (Dashboard).
      Handle ⠿ hanya muncul kalau ada >=2 pengingat belum selesai di jam
@@ -1241,6 +1243,11 @@
   .settings-panel{display:none; padding:0.3rem 0.2rem 1rem; background:none; box-shadow:none; border:none;}
   .settings-block{padding:1rem 1.1rem; margin-bottom:0.85rem; background:var(--paper-raised); border:1px solid var(--line-soft); border-radius:var(--radius); box-shadow:var(--shadow);}
   .settings-block:last-child{margin-bottom:0;}
+  .settings-tool-row{display:flex; align-items:center; justify-content:space-between; gap:0.8rem; padding:0.35rem 0;}
+  .settings-tool-row + .settings-tool-row{border-top:1px solid var(--line-soft); margin-top:0.35rem; padding-top:0.7rem;}
+  .settings-tool-text{display:flex; flex-direction:column; gap:0.15rem; min-width:0;}
+  .settings-tool-text b{font-size:0.9rem; font-weight:600;}
+  .settings-tool-text span{font-size:0.78rem; color:var(--ink-soft);}
   .settings-block h2{font-family:var(--font-display); font-size:1.02rem; margin:0 0 0.6rem; font-weight:600;}
   .settings-account-email{font-size:0.9rem; font-weight:600; margin:0 0 0.7rem; word-break:break-word;}
   .settings-block .btn{margin-top:0.2rem;}
@@ -1992,7 +1999,7 @@
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3v4h-4M7 21v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span id="syncIndicatorText">Tersinkron</span>
       </div>
-      <!-- Pojok kanan: deretan tombol pintasan (shortcut). Baru berisi Setting, mode terang/gelap, dan Kalender;
+      <!-- Pojok kanan: deretan tombol pintasan (shortcut). Berisi backup, ukuran font, Setting, dan Kalender (mode terang/gelap & Habit Detection ada di Setting);
            pintasan lain menyusul. Tombol yang punya data-view otomatis
            membuka tab itu (lihat setView); tombol baru cukup <button class="shortcut-btn">. -->
       <div class="header-shortcuts" id="headerShortcuts">
@@ -2008,13 +2015,6 @@
         </button>
         <button type="button" class="shortcut-btn" id="settingsShortcut" data-view="display" aria-label="Setting" title="Setting">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button type="button" class="shortcut-btn theme-toggle" id="themeToggle" aria-label="Ganti ke mode gelap" title="Ganti ke mode gelap">
-          <svg class="theme-ico-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <svg class="theme-ico-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </button>
-        <button type="button" class="shortcut-btn" id="habitShortcut" aria-label="Habit Detection" title="Habit Detection" aria-haspopup="true" aria-expanded="false" aria-controls="habitPopover">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5 20v-6M12 20V5M19 20v-10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
         <button type="button" class="shortcut-btn" id="calendarShortcut" data-view="calendar" aria-label="Kalender" title="Kalender">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -2400,6 +2400,22 @@
 
   <section class="panel view-section settings-panel" data-view="display" aria-label="Setting">
     <div class="settings-block">
+      <h2>Tampilan</h2>
+      <div class="settings-tool-row">
+        <div class="settings-tool-text"><b>Mode gelap / terang</b><span>Ganti tema tampilan aplikasi.</span></div>
+          <button type="button" class="shortcut-btn theme-toggle" id="themeToggle" aria-label="Ganti ke mode gelap" title="Ganti ke mode gelap">
+    <svg class="theme-ico-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M20.5 14.7A8.5 8.5 0 1 1 9.3 3.5a7 7 0 0 0 11.2 11.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg class="theme-ico-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+      </div>
+      <div class="settings-tool-row">
+        <div class="settings-tool-text"><b>Habit Detection</b><span>Lihat ringkasan kebiasaan mencentang tugas.</span></div>
+          <button type="button" class="shortcut-btn" id="habitShortcut" aria-label="Habit Detection" title="Habit Detection" aria-haspopup="true" aria-expanded="false" aria-controls="habitPopover">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5 20v-6M12 20V5M19 20v-10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+      </div>
+    </div>
+    <div class="settings-block">
       <h2>Riwayat</h2>
       <p class="hint">Pengingat yang paling baru ditambahkan, lengkap dengan tanggal &amp; jam saat dibuat.</p>
       <div class="recent-filter-row">
@@ -2529,14 +2545,20 @@
     </div>
     <form id="reminderForm">
       <input type="hidden" id="reminderId">
-      <div class="field">
-        <label for="fTitle">Judul</label>
-        <div class="title-row">
-          <input type="text" id="fTitle" required placeholder="" maxlength="80">
-          <input type="checkbox" id="fEndOfDay" class="today-check-input">
-          <label class="title-eod" for="fEndOfDay" title="Hari ini pukul 23:55, tidak berulang" aria-label="Hari ini pukul 23:55, tidak berulang">
-            <svg class="field-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </label>
+      <div class="row-2">
+        <div class="field">
+          <label for="fTitle">Judul</label>
+          <div class="title-row">
+            <input type="text" id="fTitle" required placeholder="" maxlength="80">
+            <input type="checkbox" id="fEndOfDay" class="today-check-input">
+            <label class="title-eod" for="fEndOfDay" title="Hari ini pukul 23:55, tidak berulang" aria-label="Hari ini pukul 23:55, tidak berulang">
+              <svg class="field-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fSubtitle">Sub judul</label>
+          <input type="text" id="fSubtitle" maxlength="80" placeholder="" autocomplete="off">
         </div>
       </div>
       <div class="row-2">
@@ -6307,6 +6329,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '</button>';
       })()) +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+      (it.reminder.subtitle ? '<div class="up-sub">'+escapeHTML(it.reminder.subtitle)+'</div>' : '') +
       '<div class="meta">'+it.time+estimateChipHTML(it.reminder, isDone)+'</div>' +
       '<div class="flex-more-row">' +
         (canDragIt ? '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' : '') +
@@ -9490,6 +9513,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     workdaySatTimeRow.style.display = 'none';
     fTimeWorkdaySat.value = '09:00';
     document.getElementById('fLink').value = '';
+    document.getElementById('fSubtitle').value = '';
     fFlexible.checked = false;
     fPriority.checked = false;
     fTravel.checked = false;
@@ -9541,6 +9565,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       restoreBtnEl.style.display = 'none';
     }
     document.getElementById('fTitle').value = r.title;
+    document.getElementById('fSubtitle').value = r.subtitle || '';
     selectedCat = r.category;
     closeCatDropdown();
     catDropdownWrap.classList.remove('invalid');
@@ -9625,6 +9650,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       data = {
         id: id || uid(),
         title: document.getElementById('fTitle').value.trim(),
+        subtitle: document.getElementById('fSubtitle').value.trim(),
         category: selectedCat,
         flexible: true,
         priority: fPriority.checked,
@@ -9667,6 +9693,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       data = {
         id: id || uid(),
         title: document.getElementById('fTitle').value.trim(),
+        subtitle: document.getElementById('fSubtitle').value.trim(),
         category: selectedCat,
         flexible: false,
         priority: false,
