@@ -736,6 +736,8 @@
   .up-check::before{inset:-11px;}
   .up-check svg{width:11px; height:11px;}
   .sub-checklist{list-style:none; margin:0.4rem 0 0 1.3rem; padding:0; display:flex; flex-direction:column; gap:0.28rem;}
+  .sub-check-all{display:inline-flex; align-items:center; gap:0.25rem; margin:0.1rem 0 0.2rem 1.3rem; padding:0.12rem 0.5rem; font-size:0.66rem; font-family:inherit; color:var(--moss-deep); background:transparent; border:1px solid var(--moss); border-radius:999px; cursor:pointer;}
+  .sub-check-all:hover{background:var(--surface);}
   .sub-check-item{display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.7rem; color:var(--ink-soft);}
   .sub-check-box{
     width:14px; height:14px; border-radius:4px; border:1.5px solid var(--line); flex:none;
@@ -4350,7 +4352,28 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderFlexible();
     if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
   }
+  // Centang semua item (yang belum tercentang) pada satu blok checklist —
+  // tombol "Centang semua" di Harian Rutin / Mingguan Rutin.
+  function onChecklistCheckBlock(reminderId, lineIdxList, ctx){
+    var r = state.reminders.find(function(x){ return x.id===reminderId; });
+    if (!r || !ctx || !ctx.date || !lineIdxList.length) return;
+    if (!getNotesForOccurrence(reminderId, ctx.date)) return;
+    freezeCarryNotes(reminderId, ctx.date);
+    setAllChecklistProgress(reminderId, ctx.date, lineIdxList, true);
+    renderUpcoming();
+    renderFlexible();
+    if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+  }
   function bindChecklistClicks(container, ctxForItem){
+    Array.prototype.forEach.call(container.querySelectorAll('.sub-check-all'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var host = btn.closest('[data-checklist-owner]');
+        if (!host) return;
+        var idxs = (btn.getAttribute('data-lines') || '').split(',').map(function(x){ return parseInt(x, 10); }).filter(function(x){ return !isNaN(x); });
+        onChecklistCheckBlock(host.getAttribute('data-checklist-owner'), idxs, ctxForItem(host));
+      });
+    });
     Array.prototype.forEach.call(container.querySelectorAll('.sub-check-item'), function(li){
       li.addEventListener('click', function(e){
         e.stopPropagation();
@@ -5358,7 +5381,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         }
         var chkActive = b.items.filter(function(it){ return !it.checked; });
         var chkDone = b.items.filter(function(it){ return it.checked; });
-        var chkHTML = chkActive.length ? ('<ul class="sub-checklist">' + chkActive.map(chkLiHTML).join('') + '</ul>') : '';
+        var chkAllBtn = chkActive.length >= 2
+          ? '<button type="button" class="sub-check-all" data-lines="' + chkActive.map(function(it){ return it.idx; }).join(',') + '" title="Centang semua item di daftar ini" aria-label="Centang semua">\u2611 Centang semua</button>'
+          : '';
+        var chkHTML = chkActive.length ? (chkAllBtn + '<ul class="sub-checklist">' + chkActive.map(chkLiHTML).join('') + '</ul>') : '';
         if (chkDone.length){
           var chkHistKey = 'chk|' + reminderId + '|' + dateStr + '|' + b.items[0].idx;
           var chkExpanded = !!expandedTableHistory[chkHistKey];
