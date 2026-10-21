@@ -558,6 +558,20 @@
   .up-badge{display:inline-block; margin-top:0.32rem; font-size:0.64rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:999px; letter-spacing:0.02em;}
   .up-badge.done{background:rgba(63,102,89,0.15); color:var(--moss-deep);}
   .up-badge.ongoing{background:rgba(227,169,124,0.25); color:var(--amber-deep);}
+  .up-badge.skipped{background:rgba(120,130,124,0.18); color:var(--ink-soft);}
+  /* Tombol skip di kanan centang (Dashboard): pengingat kemunculan itu
+     dipindah ke bagian "Tampilan yang ter-skip" (tersembunyi otomatis). */
+  .up-skip{
+    width:16px; height:16px; flex:none; margin:1px 0 0 -0.1rem; padding:0; border:none; background:transparent;
+    color:var(--ink-soft); opacity:0.55; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    position:relative; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  }
+  .up-skip::before{content:''; position:absolute; inset:-4px;}
+  .up-skip svg{width:12px; height:12px; display:block;}
+  .up-skip:hover{opacity:1; color:var(--moss-deep);}
+  .up-skip.on{opacity:1; color:var(--amber-deep);}
+  .up-item.skipped{opacity:0.75;}
+  .up-item.skipped .title{color:var(--ink-soft);}
   /* Kartu pengingat yang sedang berlangsung (dulu ditampilkan terpisah di
      panel "Saat Ini") ditandai dengan garis kiri + latar amber lembut,
      supaya tetap menonjol di daftar "Mendatang" meski panel itu sudah tidak ada. */
@@ -2115,6 +2129,13 @@
           </button>
           <ul class="upcoming-list" id="upcomingListDone" hidden></ul>
         </div>
+        <div class="flex-done-toggle-wrap" id="upcomingSkipToggleWrap" hidden>
+          <button type="button" class="flex-done-toggle" id="upcomingSkipToggle" aria-expanded="false">
+            <span id="upcomingSkipToggleLabel">Tampilan yang ter-skip</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <ul class="upcoming-list" id="upcomingListSkip" hidden></ul>
+        </div>
       </section>
 
     </aside>
@@ -2470,6 +2491,7 @@
                   <option value="hourly" style="text-align:center;">Tiap beberapa jam</option>
                   <option value="daily" style="text-align:center;">Harian</option>
                   <option value="dailyCarry" style="text-align:center;">Harian Lanjutan</option>
+                  <option value="dailyTerm" style="text-align:center;">Harian Berjangka</option>
                   <option value="dailyRoutine" style="text-align:center;">Harian Rutin</option>
                   <option value="everyNDays" style="text-align:center;">Setiap X hari sekali</option>
                   <option value="everyNWeeks" style="text-align:center;">Setiap X minggu sekali</option>
@@ -2755,7 +2777,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var CATS = DEFAULT_CATS.slice();
 
   var REPEAT_LABEL = {
-    none:"Sekali", hourly:"Tiap jam", daily:"Harian", dailyCarry:"Harian Lanjutan", dailyRoutine:"Harian Rutin", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", workdaySat:"Hari Kerja (Sen–Sab)", weekend:"Akhir pekan",
+    none:"Sekali", hourly:"Tiap jam", daily:"Harian", dailyCarry:"Harian Lanjutan", dailyTerm:"Harian Berjangka", dailyRoutine:"Harian Rutin", everyNDays:"Setiap X hari", everyNWeeks:"Setiap X minggu", weekday:"Hari kerja", workdaySat:"Hari Kerja (Sen–Sab)", weekend:"Akhir pekan",
     weekly:"Mingguan", weeklyRoutine:"Mingguan Rutin", biweekly:"Dua mingguan", monthly:"Bulanan", monthlyRoutine:"Bulanan Rutin", endOfMonth:"Akhir bulan", quarterly:"Triwulanan", annually:"Tahunan", annuallyRoutine:"Tahunan Rutin"
   };
   function repeatLabel(r){
@@ -3018,7 +3040,13 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var parts = key.split('|'); // reminderId|date|time
     var date = parts[1];
     var cutoff = toISODate(new Date(Date.now() - 3*86400000));
-    return !date || date < cutoff;
+    if (!date || date >= cutoff) return !date;
+    // "Harian Berjangka": centang induk disimpan terus (tidak dibersihkan
+    // setelah 3 hari) karena tanggal tuntasnya dihitung dari centang itu.
+    var rid = String(parts[0] || '').replace(/^UPD:/, '');
+    var owner = state.reminders.find(function(x){ return x.id === rid; });
+    if (owner && owner.repeat === 'dailyTerm') return false;
+    return true;
   }
   // Membersihkan entri lebih tua dari 3 hari dari cloud, tapi hanya
   // menghapus key yang memang basi (satu field per key), tidak pernah
@@ -3276,7 +3304,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       return state.occurrenceNotes[key];
     }
     if (!r.repeat || r.repeat === 'none' || dateStr === r.date) return r.notes || '';
-    if (r.repeat === 'dailyCarry') return carryNotesForDate(r, dateStr);
+    if (r.repeat === 'dailyCarry' || r.repeat === 'dailyTerm') return carryNotesForDate(r, dateStr);
     if (r.repeat === 'dailyRoutine' || r.repeat === 'weeklyRoutine' || r.repeat === 'monthlyRoutine' || r.repeat === 'annuallyRoutine') return routineNotesForDate(r, dateStr);
     return '';
   }
@@ -3296,6 +3324,49 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // Hasilnya di-cache selama state.reminders / occurrenceNotes /
   // checklistProgress tidak berganti.
   var carryCache = { reminders:null, occ:null, prog:null, map:{} };
+  // ---------- Harian Berjangka ----------
+  // Sama seperti Harian Lanjutan (anak yang sudah dicentang tidak terbawa,
+  // yang belum dicentang terus terbawa), tapi begitu ada satu hari di mana
+  // induk DAN semua anak sudah tercentang, pengingat dianggap tuntas dan
+  // tidak muncul lagi di hari-hari sesudahnya. Selama belum tuntas, ia terus
+  // muncul tiap hari. Tanggal tuntas dihitung (bukan disimpan) dari data
+  // centang, dan di-cache selama data-data itu tidak berganti.
+  var termCache = { reminders:null, comp:null, prog:null, occ:null, byId:{}, maxDate:{} };
+  function termFinishDate(r){
+    if (!r || !r.date) return null;
+    if (termCache.reminders !== state.reminders || termCache.comp !== state.completions || termCache.prog !== state.checklistProgress || termCache.occ !== state.occurrenceNotes){
+      var maxDate = {};
+      [state.completions, state.checklistProgress, state.occurrenceNotes].forEach(function(m){
+        Object.keys(m || {}).forEach(function(k){
+          var parts = k.split('|');
+          var id = String(parts[0] || '').replace(/^UPD:/, '');
+          var dt = parts[1];
+          if (dt && (!maxDate[id] || dt > maxDate[id])) maxDate[id] = dt;
+        });
+      });
+      termCache = { reminders: state.reminders, comp: state.completions, prog: state.checklistProgress, occ: state.occurrenceNotes, byId: {}, maxDate: maxDate };
+    }
+    var hit = termCache.byId[r.id];
+    if (hit && hit.r === r) return hit.finish;
+    var limit = toISODate(new Date());
+    if (termCache.maxDate[r.id] && termCache.maxDate[r.id] > limit) limit = termCache.maxDate[r.id];
+    if (r.until && r.until < limit) limit = r.until;
+    var finish = null;
+    var cur = r.date;
+    var guard = 0;
+    while (cur <= limit && guard++ < 4000){
+      var t = resolveOccTime(r, parseISODate(cur));
+      if (isOccurrenceDone({ reminder: r, date: cur, time: t })){ finish = cur; break; }
+      cur = nextDateStr(cur);
+    }
+    termCache.byId[r.id] = { r: r, finish: finish };
+    return finish;
+  }
+  function nextDateStr(dateStr){
+    var d = parseISODate(dateStr);
+    d.setDate(d.getDate() + 1);
+    return toISODate(d);
+  }
   function prevDateStr(dateStr){
     var d = parseISODate(dateStr);
     d.setDate(d.getDate() - 1);
@@ -3360,7 +3431,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // checklist-nya tidak bergeser kalau hari sebelumnya baru dicentang belakangan.
   function freezeCarryNotes(reminderId, dateStr){
     var r = state.reminders.find(function(x){ return x.id === reminderId; });
-    if (!r || r.repeat !== 'dailyCarry' || !dateStr || dateStr <= r.date) return;
+    if (!r || (r.repeat !== 'dailyCarry' && r.repeat !== 'dailyTerm') || !dateStr || dateStr <= r.date) return;
     if (Object.prototype.hasOwnProperty.call(state.occurrenceNotes, occurrenceNotesKey(reminderId, dateStr))) return;
     var p = setNotesForOccurrence(reminderId, dateStr, getNotesForOccurrence(reminderId, dateStr));
     if (p && typeof p.catch === 'function') p.catch(function(){});
@@ -3654,6 +3725,11 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       case 'dailyCarry': // sama seperti Harian; bedanya ada di isi Catatan (lihat carryNotesForDate)
       case 'dailyRoutine': // sama seperti Harian; bedanya ada di isi Catatan (lihat routineNotesForDate)
         return [resolveOccTime(r, d)];
+      case 'dailyTerm': { // Harian Berjangka: seperti Harian Lanjutan, tapi berhenti muncul setelah hari "tuntas"
+        var termEnd = termFinishDate(r);
+        if (termEnd && dateStr > termEnd) return [];
+        return [resolveOccTime(r, d)];
+      }
       case 'everyNDays': {
         var nDays = Math.max(2, parseInt(r.everyNDaysInterval || 2, 10));
         var diffDaysN = Math.round((d - start) / 86400000);
@@ -4205,6 +4281,20 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   function parentCheckRequired(dateStr){ return !!dateStr && dateStr >= PARENT_CHECK_START; }
   function occurrenceParentChecked(reminderId, dateStr, time){
     return !!state.completions[completionKey(reminderId, dateStr, time)];
+  }
+  // "Skip": kemunculan ditandai dilewati (tombol di kanan centang Dashboard).
+  // Disimpan di dokumen completions yang sama dengan awalan "SKIP:" pada
+  // key-nya (ikut sinkron antar perangkat, dibersihkan otomatis setelah 3
+  // hari). Tidak dianggap selesai (isOccurrenceDone tidak berubah); hanya
+  // disembunyikan dari daftar utama, persentase, Terlewat, dan notifikasi.
+  function skipMarkKey(reminderId, dateStr, time){ return 'SKIP:' + completionKey(reminderId, dateStr, time); }
+  function isOccurrenceSkipped(it){
+    return !!state.completions[skipMarkKey(it.reminder.id, it.date, it.time)];
+  }
+  function toggleSkip(reminderId, dateStr, time){
+    if (!currentUser) return;
+    var key = skipMarkKey(reminderId, dateStr, time);
+    setCompletionByKey(key, !state.completions[key]);
   }
   function isOccurrenceDone(it){
     var items = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
@@ -5374,7 +5464,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var hideCheckedItems = false;
         if (reminderId && dateStr){
           var ownerR = state.reminders.find(function(x){ return x.id === reminderId; });
-          hideCheckedItems = !!(ownerR && (ownerR.repeat === 'dailyRoutine' || ownerR.repeat === 'weeklyRoutine' || ownerR.repeat === 'dailyCarry'));
+          hideCheckedItems = !!(ownerR && (ownerR.repeat === 'dailyRoutine' || ownerR.repeat === 'weeklyRoutine' || ownerR.repeat === 'dailyCarry' || ownerR.repeat === 'dailyTerm'));
         }
         if (!hideCheckedItems){
           return '<ul class="sub-checklist">' + b.items.map(chkLiHTML).join('') + '</ul>';
@@ -5704,10 +5794,10 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         pastItems.push(items[i]);
         // Kemunculan yang sudah ditandai selesai tidak dijadikan "sedang
         // berlangsung" lagi.
-        if (!isOccurrenceDone(items[i])) current = items[i];
+        if (!isOccurrenceDone(items[i]) && !isOccurrenceSkipped(items[i])) current = items[i];
       } else { next = items[i]; break; }
     }
-    var pastAllDone = pastItems.length>0 && pastItems.every(isOccurrenceDone);
+    var pastAllDone = pastItems.length>0 && pastItems.every(function(x){ return isOccurrenceDone(x) || isOccurrenceSkipped(x); });
     return { current: current, next: next, hasToday: items.length>0, pastAllDone: pastAllDone };
   }
   // Refresh berkala supaya marking "Berlangsung" di "Mendatang" tetap akurat
@@ -5721,6 +5811,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   var upcomingDoneToggleBtn = document.getElementById('upcomingDoneToggle');
   var upcomingDoneToggleLabel = document.getElementById('upcomingDoneToggleLabel');
   var upcomingListDone = document.getElementById('upcomingListDone');
+  var upcomingShowSkip = false;
+  var upcomingSkipToggleWrap = document.getElementById('upcomingSkipToggleWrap');
+  var upcomingSkipToggleBtn = document.getElementById('upcomingSkipToggle');
+  var upcomingSkipToggleLabel = document.getElementById('upcomingSkipToggleLabel');
+  var upcomingListSkip = document.getElementById('upcomingListSkip');
+  if (upcomingSkipToggleBtn){
+    upcomingSkipToggleBtn.addEventListener('click', function(){
+      upcomingShowSkip = !upcomingShowSkip;
+      renderUpcoming();
+    });
+  }
   if (upcomingDoneToggleBtn){
     upcomingDoneToggleBtn.addEventListener('click', function(){
       upcomingShowDone = !upcomingShowDone;
@@ -5844,6 +5945,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var items = itemsForDate(upcomingStartDate);
     var total = 0, done = 0;
     items.forEach(function(it){
+      if (isOccurrenceSkipped(it) && !isOccurrenceDone(it)) return; // ter-skip tidak dihitung
       var checklist = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date);
       if (checklist.length){
         total += checklist.length;
@@ -5939,15 +6041,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   function upcomingItemHtml(it, cur){
     var isDone = isOccurrenceDone(it);
-    var isOngoing = !isDone && cur.current && cur.current.reminder.id===it.reminder.id &&
+    var isSkipped = !isDone && isOccurrenceSkipped(it);
+    var isOngoing = !isDone && !isSkipped && cur.current && cur.current.reminder.id===it.reminder.id &&
       cur.current.date===it.date && cur.current.time===it.time;
     var badge = isDone ? '<span class="up-badge done">✓ Selesai</span>'
-      : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : '');
+      : (isSkipped ? '<span class="up-badge skipped">⏭ Ter-skip</span>' : (isOngoing ? '<span class="up-badge ongoing">● Berlangsung</span>' : ''));
     var hasChecklistIt = checklistItemsForDate(it.reminder.notes, it.reminder.id, it.date).length > 0;
     var notesHiddenIt = !expandedNotesIds[it.reminder.id];
-    var canDragIt = !!it.dragOk && !isDone;
+    var canDragIt = !!it.dragOk && !isDone && !isSkipped;
     var akeyIt = 'u|'+it.reminder.id+'|'+it.date+'|'+it.time;
-    return '<li class="up-item up-editable'+(canDragIt?' has-drag':'')+(isDone?' done':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+(notesHiddenIt?' notes-collapsed':'')+(actionsOpenIds[akeyIt]?' actions-open':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-checklist-owner="'+it.reminder.id+'">' +
+    return '<li class="up-item up-editable'+(canDragIt?' has-drag':'')+(isDone?' done':'')+(isSkipped?' skipped':'')+(!isDone && occurrenceParentTicked(it, hasChecklistIt)?' parent-checked':'')+(isOngoing?' ongoing':'')+(notesHiddenIt?' notes-collapsed':'')+(actionsOpenIds[akeyIt]?' actions-open':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-checklist-owner="'+it.reminder.id+'">' +
       '<button type="button" class="flex-check up-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistIt?'1':'0')+'" aria-label="Tandai sudah dilakukan">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button>' +
@@ -5957,6 +6060,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>';
       })()) +
+      (isDone ? '' : '<button type="button" class="up-skip'+(isSkipped?' on':'')+'" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" aria-pressed="'+(isSkipped?'true':'false')+'" aria-label="'+(isSkipped?'Batalkan skip':'Skip pengingat ini')+'" title="'+(isSkipped?'Ter-skip — ketuk untuk membatalkan':'Skip: pindahkan ke Tampilan yang ter-skip')+'">' +
+        '<svg viewBox="0 0 24 24" fill="none"><path d="M5 5l9 7-9 7V5z" fill="currentColor"/><path d="M19 5v14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>' +
+      '</button>') +
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
       '<div class="meta">'+it.time+' · '+repeatLabel(it.reminder)+'</div>' +
       '<div class="flex-more-row">' +
@@ -6066,6 +6172,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           var date = btn.getAttribute('data-date');
           var time = btn.getAttribute('data-time');
           onOccurrenceParentClick(id, date, time, btn.getAttribute('data-has-checklist') === '1', 'current');
+        });
+      });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll('.up-skip'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        guardedToggle(btn, function(){
+          toggleSkip(btn.getAttribute('data-id'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
         });
       });
     });
@@ -6280,7 +6394,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var allItems = itemsForDate(dateStr);
     // Pengingat yang sudah dicentang tidak ditampilkan di daftar PDF
     // (hanya dihitung di ringkasan di atas).
-    var items = allItems.filter(function(it){ return !isOccurrenceDone(it); });
+    var items = allItems.filter(function(it){ return !isOccurrenceDone(it) && !isOccurrenceSkipped(it); });
     var doc = new JsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
     var PW = 210, PH = 297, M = 16, CW = PW - 2 * M, BOTTOM = PH - 18, TOP = 16;
     var INK = [30,43,34], MOSS = [63,102,89], GRAY = [120,130,124], LINE = [222,226,216];
@@ -6483,7 +6597,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         showToast('Tidak ada pengingat pada tanggal ini');
         return;
       }
-      if (!itemsForDate(dateStr).some(function(it){ return !isOccurrenceDone(it); })){
+      if (!itemsForDate(dateStr).some(function(it){ return !isOccurrenceDone(it) && !isOccurrenceSkipped(it); })){
         showToast('Semua pengingat pada tanggal ini sudah selesai');
         return;
       }
@@ -6501,11 +6615,19 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       });
     });
   }
+  function hideUpcomingSkipSection(){
+    if (!upcomingSkipToggleWrap) return;
+    upcomingSkipToggleWrap.hidden = true;
+    upcomingShowSkip = false;
+    upcomingListSkip.hidden = true;
+    upcomingListSkip.innerHTML = '';
+  }
   function hideUpcomingDoneSection(){
     upcomingDoneToggleWrap.hidden = true;
     upcomingShowDone = false;
     upcomingListDone.hidden = true;
     upcomingListDone.innerHTML = '';
+    hideUpcomingSkipSection();
   }
   // Selama kolom isian di daftar "Mendatang" sedang difokus (judul/baris
   // catatan yang diedit di tempat), jangan gambar ulang daftarnya (refresh
@@ -6550,6 +6672,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var cur = getCurrentOccurrence();
     var html = '';
     var doneItems = [];
+    var skipItems = [];
     groups.forEach(function(g){
       var byPeriod = {};
       var timeCounts = {};
@@ -6558,6 +6681,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         // dikumpulkan dulu, nanti dirender di bagian "Selesai" yang bisa
         // dibuka/tutup di bawah "Mendatang".
         if (isOccurrenceDone(it)){ doneItems.push(it); return; }
+        if (isOccurrenceSkipped(it)){ skipItems.push(it); return; }
         var p = timeOfDayLabel(it.time);
         if (!byPeriod[p]) byPeriod[p] = [];
         byPeriod[p].push(it);
@@ -6578,10 +6702,31 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         list.forEach(function(it){ html += upcomingItemHtml(it, cur); });
       });
     });
-    upcomingList.innerHTML = html || '<div class="empty-state">Semua pengingat pada tanggal ini sudah selesai. 🎉</div>';
+    upcomingList.innerHTML = html || (skipItems.length && !doneItems.length ? '<div class="empty-state">Semua pengingat pada tanggal ini sudah selesai atau di-skip.</div>' : '<div class="empty-state">Semua pengingat pada tanggal ini sudah selesai. 🎉</div>');
     bindUpcomingItemEvents(upcomingList);
+    // Bagian "Tampilan yang ter-skip": tersembunyi otomatis, dibuka lewat tombol.
+    if (!skipItems.length){
+      hideUpcomingSkipSection();
+    } else {
+      skipItems.sort(function(a,b){ return a.time.localeCompare(b.time); });
+      upcomingSkipToggleWrap.hidden = false;
+      upcomingSkipToggleBtn.setAttribute('aria-expanded', upcomingShowSkip ? 'true' : 'false');
+      upcomingSkipToggleLabel.textContent = upcomingShowSkip
+        ? 'Sembunyikan yang ter-skip'
+        : 'Tampilan yang ter-skip (' + skipItems.length + ')';
+      upcomingListSkip.hidden = !upcomingShowSkip;
+      if (upcomingShowSkip){
+        upcomingListSkip.innerHTML = skipItems.map(function(it){ return upcomingItemHtml(it, cur); }).join('');
+        bindUpcomingItemEvents(upcomingListSkip);
+      } else {
+        upcomingListSkip.innerHTML = '';
+      }
+    }
     if (!doneItems.length){
-      hideUpcomingDoneSection();
+      upcomingDoneToggleWrap.hidden = true;
+      upcomingShowDone = false;
+      upcomingListDone.hidden = true;
+      upcomingListDone.innerHTML = '';
       return;
     }
     doneItems.sort(function(a,b){ return a.time.localeCompare(b.time); });
@@ -6887,7 +7032,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         if (r.flexible) return;
         var times = occurrencesOnDate(r, dateStr);
         times.forEach(function(t){
-          if (isOccurrenceDone({ reminder:r, date:dateStr, time:t })) return;
+          if (isOccurrenceDone({ reminder:r, date:dateStr, time:t }) || isOccurrenceSkipped({ reminder:r, date:dateStr, time:t })) return;
           out.push({ reminder:r, time:t, date:dateStr });
         });
       });
@@ -9571,6 +9716,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (times.indexOf(hhmm) === -1) return;
       var key = r.id + '_' + dateStr + '_' + hhmm;
       if (notified[key]) return;
+      if (isOccurrenceSkipped({ reminder:r, date:dateStr, time:hhmm })) return;
       notified[key] = { date: dateStr };
       fireNotification(r, hhmm);
     });
