@@ -3266,7 +3266,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     // sumber (bukan nomor baris) supaya centang tidak "bergeser" ke judul lain.
     var er = (reminderId && dateStr) ? state.reminders.find(function(x){ return x.id === reminderId; }) : null;
     if (er && er.repeat === 'essentime'){
-      var src = essentimeList(dateStr)[lineIdx];
+      var src = essentimeList(er, dateStr)[lineIdx];
       if (src) return reminderId + '|' + dateStr + '|E:' + src.id;
     }
     return reminderId + '|' + dateStr + '|' + lineIdx;
@@ -3281,26 +3281,50 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // Satu baris per pengingat (pengingat yang muncul beberapa kali sehari,
   // mis. tiap jam, tidak digandakan); pengingat Essentime sendiri dan item
   // Fleksibel (tanpa tanggal jadwal) tidak ikut masuk daftar.
-  var essCache = { rem:null, comp:null, prog:null, occ:null, byDate:{} };
-  function essentimeList(dateStr){
+  // Judul yang SUDAH dicentang (= sudah diinput ke Essentime) pada tanggal
+  // sebelumnya tidak dimunculkan lagi di hari-hari berikutnya. Yang masuk
+  // daftar sebuah hari hanyalah pengingat hari itu yang belum pernah dicentang
+  // di hari sebelumnya. Centang di hari yang sama tetap ada di daftar hari itu
+  // (lalu otomatis tersembunyi), jadi nomor baris hari itu tidak bergeser.
+  // Pengingat yang belum dicentang akan muncul lagi selama masih terjadwal.
+  var essCache = { rem:null, comp:null, prog:null, occ:null, byKey:{}, ticked:null };
+  function essentimeTickedMap(){
+    // { idEssentime: { idSumber: tanggalCentangTerawal } } dari checklistProgress
+    var map = {};
+    var prog = state.checklistProgress;
+    Object.keys(prog).forEach(function(k){
+      if (!prog[k]) return;
+      var parts = k.split('|'); // idEssentime|tanggal|E:idSumber
+      if (parts.length < 3 || parts[2].indexOf('E:') !== 0) return;
+      var eid = parts[0], date = parts[1], src = parts[2].slice(2);
+      var m = map[eid] || (map[eid] = {});
+      if (!m[src] || date < m[src]) m[src] = date;
+    });
+    return map;
+  }
+  function essentimeList(r, dateStr){
     if (essCache.rem !== state.reminders || essCache.comp !== state.completions ||
         essCache.prog !== state.checklistProgress || essCache.occ !== state.occurrenceNotes){
-      essCache = { rem: state.reminders, comp: state.completions, prog: state.checklistProgress, occ: state.occurrenceNotes, byDate: {} };
+      essCache = { rem: state.reminders, comp: state.completions, prog: state.checklistProgress, occ: state.occurrenceNotes, byKey: {}, ticked: null };
     }
-    if (essCache.byDate[dateStr]) return essCache.byDate[dateStr];
+    var ck = r.id + '|' + dateStr;
+    if (essCache.byKey[ck]) return essCache.byKey[ck];
+    if (!essCache.ticked) essCache.ticked = essentimeTickedMap();
+    var tickedFor = essCache.ticked[r.id] || {};
     var seen = {}, out = [];
     itemsForDateAll(dateStr).forEach(function(it){
       var rr = it.reminder;
       if (rr.repeat === 'essentime' || seen[rr.id]) return;
       seen[rr.id] = true;
+      if (tickedFor[rr.id] && tickedFor[rr.id] < dateStr) return; // sudah diinput di hari sebelumnya
       out.push({ id: rr.id, title: String(rr.title || '').replace(/\s*[\r\n]+\s*/g, ' ').trim() });
     });
-    essCache.byDate[dateStr] = out;
+    essCache.byKey[ck] = out;
     return out;
   }
   function essentimeNotesForDate(r, dateStr){
     if (!r.date || dateStr < r.date) return '';
-    return essentimeList(dateStr).map(function(x){ return '\u2610 ' + x.title; }).join('\n');
+    return essentimeList(r, dateStr).map(function(x){ return '\u2610 ' + x.title; }).join('\n');
   }
   // Menulis patch ke sebuah dokumen ("completions" atau "checklistProgress")
   // lewat updateDoc(), yang menurut dokumentasi resmi Firestore SELALU
