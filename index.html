@@ -506,9 +506,23 @@
   }
   .up-remain[hidden]{display:none;}
   .up-remain svg{width:14px; height:14px; flex:none; color:var(--amber);}
-  /* Kalau chip terlalu banyak untuk satu baris (layar sempit), kontrol tanggal turun ke baris berikutnya. */
-  .up-sticky-head .sidebar-head{flex-wrap:wrap; row-gap:0.3rem;}
-  .up-sticky-head .up-date-control{margin-left:auto;}
+  /* Header Dashboard selalu SATU baris: judul "Hari Ini" + panah di kiri, lalu
+     chip persen, chip sisa waktu, kolom tanggal, reset, dan cari. Kolom tanggal
+     yang "fit-in": lebar pas isi tanggal (maks 92px, tanpa ruang kosong antara teks dan ikon kalender),
+     dan menyusut otomatis (min-width:0) kalau layar sempit, jadi tidak memaksa
+     baris turun/terpotong. */
+  .up-sticky-head .sidebar-head{flex-wrap:nowrap; gap:0.3rem; padding-left:0.6rem; padding-right:0.6rem;}
+  .up-sticky-head .up-title-nav{flex:none; gap:0.05rem;}
+  .up-sticky-head .up-title-nav h2{font-size:0.98rem;}
+  .up-sticky-head .up-date-control{flex:0 1 auto; min-width:0; margin-left:auto; justify-content:flex-end; gap:0.22rem;}
+  .up-sticky-head .up-date-wrap{flex:0 1 92px; min-width:0;}
+  .up-sticky-head .up-date-control input[type="date"]::-webkit-calendar-picker-indicator{margin:0; padding:0; width:14px; height:14px;}
+  .up-sticky-head .up-date-control input[type="date"]{width:100%; min-width:0; box-sizing:border-box; padding-left:0.3rem; padding-right:0.3rem;}
+  .up-sticky-head .up-date-display{left:0.34rem; right:0.2rem; overflow:hidden; text-overflow:clip; font-size:0.7rem;}
+  .up-sticky-head .up-progress, .up-sticky-head .up-remain{flex:none; padding:0.24rem 0.38rem; gap:0.2rem; font-size:0.68rem;}
+  .up-sticky-head .up-progress svg{width:13px; height:13px;}
+  .up-sticky-head .up-remain svg{width:12px; height:12px;}
+  .up-sticky-head .up-date-control .icon-btn{flex:none;}
   .up-progress.is-complete{background:rgba(63,102,89,0.15); border-color:transparent;}
   @media (prefers-reduced-motion:reduce){ .up-progress .up-progress-bar{transition:none;} }
   @media (max-width:359px){ .up-progress svg{display:none;} }
