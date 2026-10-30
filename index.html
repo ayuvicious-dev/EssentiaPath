@@ -3469,14 +3469,24 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       .finally(function(){ strayMapRepairInFlight[ref.path] = false; });
   }
   // Menulis status centang satu item checklist untuk satu tanggal tertentu.
+  // Item Harian Lanjutan/Berjangka yang terbawa dari hari sebelumnya sebagai ☑
+  // di teks Catatan: membatalkan centangnya harus disimpan eksplisit sebagai
+  // false (bukan dihapus), kalau tidak status ☑ di teks akan muncul lagi.
+  function carriedCheckedLine(reminderId, dateStr, lineIdx){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r || (r.repeat !== 'dailyCarry' && r.repeat !== 'dailyTerm')) return false;
+    var ln = String(getNotesForOccurrence(reminderId, dateStr) || '').split('\n')[lineIdx];
+    return typeof ln === 'string' && ln.indexOf(CHECK_CHECKED) === 0;
+  }
   function setChecklistProgress(reminderId, dateStr, lineIdx, value){
     if (!currentUser) return;
     var key = checklistProgressKey(reminderId, dateStr, lineIdx);
     var previous = state.checklistProgress;
     var next = Object.assign({}, state.checklistProgress);
-    if (value) next[key] = true; else delete next[key];
+    var keepFalse = !value && carriedCheckedLine(reminderId, dateStr, lineIdx);
+    if (value) next[key] = true; else if (keepFalse) next[key] = false; else delete next[key];
     state.checklistProgress = next;
-    writeDotPatch(checklistProgressDocRef(), ['map.' + key, value ? true : deleteField()]).catch(function(err){
+    writeDotPatch(checklistProgressDocRef(), ['map.' + key, value ? true : (keepFalse ? false : deleteField())]).catch(function(err){
       console.error(err);
       state.checklistProgress = previous;
       renderUpcoming();
@@ -3494,8 +3504,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var fieldArgs = [];
     lineIdxList.forEach(function(lineIdx){
       var key = checklistProgressKey(reminderId, dateStr, lineIdx);
-      if (value) next[key] = true; else delete next[key];
-      fieldArgs.push('map.' + key, value ? true : deleteField());
+      var keepFalse = !value && carriedCheckedLine(reminderId, dateStr, lineIdx);
+      if (value) next[key] = true; else if (keepFalse) next[key] = false; else delete next[key];
+      fieldArgs.push('map.' + key, value ? true : (keepFalse ? false : deleteField()));
     });
     state.checklistProgress = next;
     writeDotPatch(checklistProgressDocRef(), fieldArgs).catch(function(err){
@@ -3642,14 +3653,17 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         var wasChecked = line.indexOf(CHECK_CHECKED) === 0;
         var key = checklistProgressKey(r.id, prevDate, idx);
         if (Object.prototype.hasOwnProperty.call(progress, key)) wasChecked = !!progress[key];
-        if (wasChecked) return; // sudah dicentang kemarin -> hilang hari ini
-        out.push(CHECK_UNCHECKED + line.slice(CHECK_UNCHECKED.length));
+        // Sudah dicentang kemarin -> TETAP terbawa sebagai tercentang (☑), jadi
+        // di hari ini ia langsung masuk \"Riwayat tercentang\" dan tidak pernah
+        // hilang (bisa dipakai untuk cross-check apa saja yang sudah dicentang).
+        // Belum dicentang -> terbawa sebagai ☐ (kosong) seperti biasa.
+        var restText = line.slice(line.indexOf(' ') + 1);
+        out.push((wasChecked ? CHECK_CHECKED : CHECK_UNCHECKED) + restText);
         return;
       }
       // Baris tabel yang sudah dicentang di hari sebelumnya otomatis
       // hilang (auto hide) di hari ini, sama seperti item checklist ☐/☑
       // di atas. Baris yang belum dicentang tetap terbawa apa adanya.
-      if (isTableRow(line) && tableRowCheckState(line) === true) return;
       out.push(line);
     });
     return out.join('\n');
