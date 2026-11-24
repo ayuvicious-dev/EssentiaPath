@@ -1867,6 +1867,32 @@
   .modal-actions .btn.icon-only{padding:0.55rem 0.75rem; font-size:1.05rem; line-height:1; display:inline-flex; align-items:center; justify-content:center;}
   .hint{font-size:0.72rem; color:var(--ink-soft); margin-top:0.3rem;}
 
+  /* ---------- Impor (Pengaturan) ---------- */
+  .import-row{display:flex; align-items:center; flex-wrap:wrap; gap:0.6rem; margin:0.6rem 0 0;}
+  .import-row .btn{margin-top:0;}
+  .import-row .btn:disabled{opacity:0.6; cursor:default;}
+  .import-help{margin-top:0.7rem; font-size:0.78rem; color:var(--ink-soft);}
+  .import-help summary{cursor:pointer; font-weight:600; color:var(--ink);}
+  .import-help ul{margin:0.5rem 0 0; padding-left:1.1rem; display:flex; flex-direction:column; gap:0.35rem; line-height:1.4;}
+  .import-help code{font-size:0.74rem; background:var(--line-soft); padding:0 0.25rem; border-radius:4px;}
+  .import-preview{margin-top:0.9rem; padding-top:0.8rem; border-top:1px solid var(--line-soft);}
+  .import-summary{font-size:0.85rem; font-weight:600; margin:0 0 0.5rem;}
+  .import-list{list-style:none; margin:0 0 0.7rem; padding:0; max-height:18rem; overflow:auto; border:1px solid var(--line-soft); border-radius:var(--radius);}
+  .import-list li{padding:0.45rem 0.7rem; font-size:0.78rem; line-height:1.35; border-top:1px solid var(--line-soft); word-break:break-word;}
+  .import-list li:first-child{border-top:none;}
+  .import-list li .ri-meta{display:block; color:var(--ink-soft); font-size:0.72rem;}
+  .import-list li.ri-err{background:var(--danger-bg); color:var(--danger);}
+  .import-list li.ri-err .ri-meta{color:var(--danger);}
+  .import-list li.ri-dup{opacity:0.6;}
+  .import-hist-title{font-family:var(--font-display); font-size:0.95rem; font-weight:600; margin:1.1rem 0 0; padding-top:0.9rem; border-top:1px solid var(--line-soft);}
+  .import-hist{list-style:none; margin:0.6rem 0 0; padding:0; display:flex; flex-direction:column; gap:0.45rem;}
+  .import-hist li{display:flex; align-items:center; justify-content:space-between; gap:0.7rem; padding:0.55rem 0.7rem; border:1px solid var(--line-soft); border-radius:var(--radius);}
+  .import-hist .ih-text{min-width:0; display:flex; flex-direction:column; gap:0.1rem;}
+  .import-hist .ih-text b{font-size:0.84rem; font-weight:600; word-break:break-word;}
+  .import-hist .ih-text span{font-size:0.72rem; color:var(--ink-soft);}
+  .import-hist-empty{font-size:0.78rem; color:var(--ink-soft); padding:0.2rem 0;}
+  .import-skip{display:flex; align-items:center; gap:0.5rem; font-size:0.78rem; color:var(--ink-soft); margin:0 0 0.5rem;}
+
   /* ---------- Auth (login/register) ---------- */
   .auth-overlay{
     background:linear-gradient(180deg, var(--hero-top), var(--hero-bottom)); align-items:center; z-index:100;
@@ -2474,6 +2500,45 @@
         </div>
         <button type="button" class="btn btn-primary" id="pdfDownloadBtn">Unduh PDF</button>
       </div>
+    </div>
+    <div class="settings-block" id="importBlock">
+      <h2>Impor</h2>
+      <p class="hint">Tambahkan banyak pengingat sekaligus dari file CSV (bisa dibuat dari Excel / Google Sheets). Kolom: Judul, Kategori, Tanggal Mulai, Waktu, Ulangi, Catatan.</p>
+      <div class="import-row">
+        <select id="importTemplateSelect" class="recent-filter-select" aria-label="Pilih template impor">
+          <option value="harian">Template Jadwal Harian</option>
+          <option value="mingguan">Template Jadwal Mingguan</option>
+          <option value="campuran">Template Campuran (berbagai jenis Ulangi)</option>
+        </select>
+        <button type="button" class="btn btn-ghost" id="importTemplateBtn">Unduh template</button>
+      </div>
+      <div class="import-row">
+        <button type="button" class="btn btn-primary" id="importPickBtn">Pilih file CSV…</button>
+        <input type="file" id="importFileInput" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>
+      </div>
+      <details class="import-help">
+        <summary>Panduan pengisian kolom</summary>
+        <ul>
+          <li><b>Judul</b>: wajib, maksimal 80 karakter.</li>
+          <li><b>Kategori</b>: nama kategori yang sudah ada. Nama yang belum ada akan dibuat otomatis. Kosong = <i>Lainnya</i>.</li>
+          <li><b>Tanggal Mulai</b>: wajib. Format <code>2026-12-01</code> atau <code>01/12/2026</code> (hari/bulan/tahun).</li>
+          <li><b>Waktu</b>: wajib. Format <code>07:30</code> (24 jam).</li>
+          <li><b>Ulangi</b>: Tidak berulang, Harian, Harian Lanjutan, Harian Berjangka, Harian Rutin, Hari kerja (Sen–Jum), Hari Kerja (Sen–Sab), Akhir pekan (Sab–Min), Mingguan, Mingguan Rutin, Dua mingguan, Bulanan, Bulanan Rutin, Akhir bulan, Triwulanan, Tahunan, Tahunan Rutin. Untuk interval tulis angkanya, mis. <code>Tiap 4 jam</code>, <code>3 hari sekali</code>, <code>3 minggu sekali</code>. Kosong = Tidak berulang.</li>
+          <li><b>Catatan</b>: opsional. Boleh beberapa baris jika diapit tanda kutip.</li>
+        </ul>
+      </details>
+      <div id="importPreview" class="import-preview" hidden>
+        <p class="import-summary" id="importSummary"></p>
+        <ul class="import-list" id="importList"></ul>
+        <label class="import-skip"><input type="checkbox" id="importSkipDup" checked> Lewati pengingat yang sudah ada (judul, tanggal, dan waktu sama)</label>
+        <div class="import-row">
+          <button type="button" class="btn btn-primary" id="importConfirmBtn">Impor</button>
+          <button type="button" class="btn btn-ghost" id="importCancelBtn">Batal</button>
+        </div>
+      </div>
+      <h3 class="import-hist-title">Riwayat Impor</h3>
+      <p class="hint">Menghapus satu riwayat impor akan menghapus semua pengingat yang berasal dari impor itu dari jadwal.</p>
+      <ul class="import-hist" id="importHistoryList"></ul>
     </div>
     <div class="settings-block">
       <h2>Kategori</h2>
@@ -10378,6 +10443,515 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     reader.readAsText(file);
   }
 
+
+  // ---------- Impor pengingat dari CSV (Pengaturan) ----------
+  // Kolom: Judul, Kategori, Tanggal Mulai, Waktu, Ulangi, Catatan.
+  // Pengingat hasil impor dibuat dengan bentuk data yang sama persis dengan
+  // pengingat terjadwal dari form (lihat reminderForm submit).
+  var IMPORT_TEMPLATES = {
+    harian: {
+      file: 'template-jadwal-harian.csv',
+      rows: [
+        ['Bangun & rapikan tempat tidur','Pribadi','2026-12-01','05:00','Harian',''],
+        ['Olahraga pagi','Kesehatan','2026-12-01','05:30','Harian','Jogging 30 menit'],
+        ['Sarapan & minum vitamin','Kesehatan','2026-12-01','07:00','Harian',''],
+        ['Cek email & rencana kerja','Kerja','2026-12-01','08:30','Hari kerja (Sen–Jum)','Prioritaskan 3 tugas utama'],
+        ['Minum air putih','Kesehatan','2026-12-01','10:00','Tiap 3 jam',''],
+        ['Review hari ini','Pribadi','2026-12-01','21:00','Harian','Tulis 3 hal yang disyukuri']
+      ]
+    },
+    mingguan: {
+      file: 'template-jadwal-mingguan.csv',
+      rows: [
+        ['Rapat tim mingguan','Kerja','2026-12-07','09:00','Mingguan','Siapkan agenda'],
+        ['Belanja kebutuhan rumah','Pribadi','2026-12-06','10:00','Mingguan',''],
+        ['Bersih-bersih rumah','Pribadi','2026-12-06','08:00','Akhir pekan (Sab–Min)',''],
+        ['Laporan mingguan','Kerja','2026-12-05','16:00','Hari Kerja (Sen–Sab)','']
+      ]
+    },
+    campuran: {
+      file: 'template-campuran.csv',
+      rows: [
+        ['Janji sekali jalan','Pribadi','2026-12-10','14:00','Tidak berulang','Contoh pengingat sekali saja'],
+        ['Cek tekanan darah','Kesehatan','2026-12-01','07:00','2 minggu sekali',''],
+        ['Bayar tagihan listrik','Keuangan','2026-12-05','09:00','Bulanan','Cek token / tagihan'],
+        ['Rekap keuangan akhir bulan','Keuangan','2026-12-31','17:00','Akhir bulan',''],
+        ['Evaluasi 3 bulanan','Kerja','2027-01-05','10:00','Triwulanan',''],
+        ['Perpanjang STNK','Lainnya','2027-03-15','08:00','Tahunan','']
+      ]
+    }
+  };
+  var IMPORT_HEADERS = ['Judul','Kategori','Tanggal Mulai','Waktu','Ulangi','Catatan'];
+
+  function impNorm(s){ return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+  var IMPORT_REPEAT_ALIASES = {
+    none: ['tidakberulang','sekali','none','tidak','-'],
+    hourly: ['tiapbeberapajam','tiapjam','perjam','hourly','setiapjam'],
+    daily: ['harian','setiaphari','daily','tiaphari'],
+    dailyCarry: ['harianlanjutan'],
+    dailyTerm: ['harianberjangka'],
+    dailyRoutine: ['harianrutin'],
+    essentime: ['essentime'],
+    weekday: ['harikerja','weekday','harikerjasenjum'],
+    workdaySat: ['harikerjasensab','workdaysat'],
+    weekend: ['akhirpekan','akhirpekansabmin','weekend'],
+    weekly: ['mingguan','weekly','setiapminggu'],
+    weeklyRoutine: ['mingguanrutin'],
+    biweekly: ['duamingguan','biweekly'],
+    monthly: ['bulanan','monthly','setiapbulan'],
+    monthlyRoutine: ['bulananrutin'],
+    endOfMonth: ['akhirbulan'],
+    quarterly: ['triwulanan','triwulananties3bulan','triwulanantiap3bulan','quarterly','tigabulanan'],
+    annually: ['tahunan','annually','yearly','setiaptahun'],
+    annuallyRoutine: ['tahunanrutin']
+  };
+  var IMPORT_REPEAT_LOOKUP = (function(){
+    var m = {};
+    Object.keys(IMPORT_REPEAT_ALIASES).forEach(function(k){
+      m[impNorm(k)] = k;
+      IMPORT_REPEAT_ALIASES[k].forEach(function(a){ m[impNorm(a)] = k; });
+    });
+    return m;
+  })();
+
+  // Mengembalikan { repeat, hourly, nDays, nWeeks } atau null kalau tidak dikenali.
+  function importParseRepeat(raw){
+    var txt = String(raw || '').trim();
+    if (!txt) return { repeat:'none', hourly:null, nDays:null, nWeeks:null };
+    var low = txt.toLowerCase();
+    var m;
+    if ((m = low.match(/(\d+)\s*jam/))){
+      var h = parseInt(m[1],10);
+      if (h < 1 || h > 23) return null;
+      return { repeat:'hourly', hourly:h, nDays:null, nWeeks:null };
+    }
+    if ((m = low.match(/(\d+)\s*hari/)) && /sekali|setiap|tiap|per|x/.test(low)){
+      var d = parseInt(m[1],10);
+      if (d < 1 || d > 365) return null;
+      if (d === 1) return { repeat:'daily', hourly:null, nDays:null, nWeeks:null };
+      return { repeat:'everyNDays', hourly:null, nDays:d, nWeeks:null };
+    }
+    if ((m = low.match(/(\d+)\s*minggu/))){
+      var w = parseInt(m[1],10);
+      if (w < 1 || w > 52) return null;
+      if (w === 1) return { repeat:'weekly', hourly:null, nDays:null, nWeeks:null };
+      return { repeat:'everyNWeeks', hourly:null, nDays:null, nWeeks:w };
+    }
+    var key = IMPORT_REPEAT_LOOKUP[impNorm(txt)];
+    if (!key) return null;
+    return { repeat:key, hourly: key==='hourly' ? 4 : null, nDays:null, nWeeks:null };
+  }
+
+  function importPad(n){ return (n < 10 ? '0' : '') + n; }
+  function importValidYMD(y, mo, d){
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || y < 1900 || y > 2200) return null;
+    var dt = new Date(y, mo-1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo-1 || dt.getDate() !== d) return null;
+    return y + '-' + importPad(mo) + '-' + importPad(d);
+  }
+  var IMPORT_MONTHS = { jan:1, januari:1, january:1, feb:2, februari:2, february:2, mar:3, maret:3, march:3, apr:4, april:4, mei:5, may:5, jun:6, juni:6, june:6, jul:7, juli:7, july:7, agu:8, agt:8, agustus:8, aug:8, august:8, sep:9, sept:9, september:9, okt:10, oktober:10, oct:10, october:10, nov:11, november:11, des:12, desember:12, dec:12, december:12 };
+  function importParseDate(raw){
+    var t = String(raw || '').trim();
+    if (!t) return null;
+    var m;
+    if ((m = t.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[T\s].*)?$/))) return importValidYMD(+m[1], +m[2], +m[3]);
+    if ((m = t.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/))){
+      var y = +m[3]; if (y < 100) y += 2000;
+      return importValidYMD(y, +m[2], +m[1]);
+    }
+    if ((m = t.match(/^(\d{1,2})\s+([A-Za-z]+)\.?,?\s+(\d{4})$/))){
+      var mo = IMPORT_MONTHS[m[2].toLowerCase()];
+      return mo ? importValidYMD(+m[3], mo, +m[1]) : null;
+    }
+    if (/^\d{5}$/.test(t)){ // nomor seri tanggal Excel
+      var dt = new Date(Date.UTC(1899, 11, 30) + parseInt(t,10) * 86400000);
+      return importValidYMD(dt.getUTCFullYear(), dt.getUTCMonth()+1, dt.getUTCDate());
+    }
+    return null;
+  }
+  function importParseTime(raw){
+    var t = String(raw || '').trim().toLowerCase();
+    if (!t) return null;
+    var m, h, mi;
+    if ((m = t.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*(am|pm)?$/))){
+      h = +m[1]; mi = +m[2];
+      if (m[3]){ if (h < 1 || h > 12) return null; if (m[3]==='pm' && h < 12) h += 12; if (m[3]==='am' && h === 12) h = 0; }
+    } else if ((m = t.match(/^(\d{2})(\d{2})$/))){
+      h = +m[1]; mi = +m[2];
+    } else if ((m = t.match(/^(\d{1,2})$/))){
+      h = +m[1]; mi = 0;
+    } else if (/^0?\.\d+$/.test(t)){ // pecahan hari Excel
+      var total = Math.round(parseFloat(t) * 1440);
+      h = Math.floor(total / 60) % 24; mi = total % 60;
+    } else return null;
+    if (h < 0 || h > 23 || mi < 0 || mi > 59) return null;
+    return importPad(h) + ':' + importPad(mi);
+  }
+
+  // Parser CSV: tanda kutip ganda, baris baru di dalam sel, pemisah otomatis (, ; atau tab).
+  function importParseCSV(text){
+    text = String(text || '').replace(/^\uFEFF/, '');
+    var firstLine = text.split(/\r?\n/).filter(function(l){ return l.trim() && !/^sep=/i.test(l.trim()); })[0] || '';
+    var counts = { ',':0, ';':0, '\t':0 }, inQ = false, i, ch;
+    for (i = 0; i < firstLine.length; i++){
+      ch = firstLine.charAt(i);
+      if (ch === '"') inQ = !inQ;
+      else if (!inQ && counts.hasOwnProperty(ch)) counts[ch]++;
+    }
+    var delim = ',';
+    if (counts[';'] > counts[delim]) delim = ';';
+    if (counts['\t'] > counts[delim]) delim = '\t';
+    var rows = [], row = [], cell = '';
+    inQ = false;
+    for (i = 0; i < text.length; i++){
+      ch = text.charAt(i);
+      if (inQ){
+        if (ch === '"'){
+          if (text.charAt(i+1) === '"'){ cell += '"'; i++; }
+          else inQ = false;
+        } else cell += ch;
+      } else if (ch === '"'){
+        inQ = true;
+      } else if (ch === delim){
+        row.push(cell); cell = '';
+      } else if (ch === '\n' || ch === '\r'){
+        if (ch === '\r' && text.charAt(i+1) === '\n') i++;
+        row.push(cell); cell = '';
+        rows.push(row); row = [];
+      } else cell += ch;
+    }
+    if (cell !== '' || row.length){ row.push(cell); rows.push(row); }
+    return rows.filter(function(r){
+      if (/^sep=/i.test(String(r[0]).trim()) && r.slice(1).every(function(c){ return String(c).trim() === ''; })) return false;
+      return r.some(function(c){ return String(c).trim() !== ''; });
+    });
+  }
+  function importCSVEscape(v, delim){
+    var s = String(v == null ? '' : v);
+    return (s.indexOf('"') !== -1 || s.indexOf(delim) !== -1 || /[\r\n]/.test(s)) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function downloadImportTemplate(){
+    var key = document.getElementById('importTemplateSelect').value;
+    var tpl = IMPORT_TEMPLATES[key] || IMPORT_TEMPLATES.harian;
+    // Pemisah titik koma + baris "sep=;" supaya Excel (pengaturan regional Indonesia) langsung memisahkan kolom.
+    var lines = ['sep=;', IMPORT_HEADERS.join(';')];
+    tpl.rows.forEach(function(r){ lines.push(r.map(function(c){ return importCSVEscape(c, ';'); }).join(';')); });
+    var blob = new Blob(['\uFEFF' + lines.join('\r\n') + '\r\n'], { type:'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = tpl.file;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    showToast('Template diunduh: ' + tpl.file);
+  }
+
+  var IMPORT_COLS = {
+    title:    ['judul','namajudul','nama','namapengingat','title','kegiatan','aktivitas'],
+    category: ['kategori','category'],
+    date:     ['tanggalmulai','tanggal','mulai','tgl','tglmulai','date','startdate'],
+    time:     ['waktu','jam','time'],
+    repeat:   ['ulangi','pengulangan','ulang','repeat'],
+    notes:    ['catatan','notes','note','keterangan'],
+    subtitle: ['subjudul','subtitle'],
+    link:     ['link','tautan','url'],
+    until:    ['berakhir','sampai','until','tanggalberakhir']
+  };
+  function importMapHeader(row){
+    var map = {};
+    row.forEach(function(h, idx){
+      var n = impNorm(h);
+      Object.keys(IMPORT_COLS).forEach(function(f){
+        if (map[f] == null && IMPORT_COLS[f].indexOf(n) !== -1) map[f] = idx;
+      });
+    });
+    return map;
+  }
+
+  var importPending = null; // { items:[...], newCats:[{id,label}] }
+
+  function importBuild(rows){
+    var headerIdx = -1, map = null, i;
+    for (i = 0; i < rows.length && i < 10; i++){
+      var mm = importMapHeader(rows[i]);
+      if (mm.title != null){ headerIdx = i; map = mm; break; }
+    }
+    if (headerIdx < 0) return { error: 'Kolom "Judul" tidak ditemukan. Pakai template impor supaya nama kolomnya sesuai.' };
+    var missing = [];
+    if (map.date == null) missing.push('Tanggal Mulai');
+    if (map.time == null) missing.push('Waktu');
+    if (missing.length) return { error: 'Kolom wajib belum ada: ' + missing.join(', ') + '.' };
+
+    function cellOf(r, f){ return map[f] == null ? '' : String(r[map[f]] == null ? '' : r[map[f]]).trim(); }
+
+    var catByName = {};
+    CATS.forEach(function(c){ catByName[impNorm(c.label)] = c.id; catByName[impNorm(c.id)] = c.id; });
+    var defaultCat = catByName['lainnya'] || (CATS[0] && CATS[0].id) || '';
+    var newCats = [];
+    var existingKeys = {};
+    state.reminders.forEach(function(r){
+      if (r && !r.flexible && r.title) existingKeys[(r.title+'').trim().toLowerCase() + '|' + r.date + '|' + r.time] = true;
+    });
+    var seenInFile = {};
+    var items = [];
+    var baseTs = Date.now();
+
+    for (i = headerIdx + 1; i < rows.length; i++){
+      var r = rows[i];
+      var line = i + 1;
+      var item = { line: line, status: 'ok', msg: '', data: null };
+      var title = cellOf(r, 'title');
+      var dateRaw = cellOf(r, 'date');
+      var timeRaw = cellOf(r, 'time');
+      var repRaw = cellOf(r, 'repeat');
+      var catRaw = cellOf(r, 'category');
+      item.title = title;
+      var errs = [];
+      if (!title) errs.push('Judul kosong');
+      var date = importParseDate(dateRaw);
+      if (!date) errs.push(dateRaw ? 'Tanggal tidak valid: ' + dateRaw : 'Tanggal kosong');
+      var time = importParseTime(timeRaw);
+      if (!time) errs.push(timeRaw ? 'Waktu tidak valid: ' + timeRaw : 'Waktu kosong');
+      var rep = importParseRepeat(repRaw);
+      if (!rep) errs.push('Ulangi tidak dikenali: ' + repRaw);
+      var untilRaw = cellOf(r, 'until'), until = null;
+      if (untilRaw){
+        until = importParseDate(untilRaw);
+        if (!until) errs.push('Tanggal berakhir tidak valid: ' + untilRaw);
+      }
+      if (errs.length){
+        item.status = 'error'; item.msg = errs.join('; ');
+        items.push(item); continue;
+      }
+      var catId = defaultCat;
+      if (catRaw){
+        var nk = impNorm(catRaw);
+        if (catByName[nk]) catId = catByName[nk];
+        else {
+          var created = null;
+          newCats.forEach(function(c){ if (impNorm(c.label) === nk) created = c; });
+          if (!created){
+            created = { id: catUid() + importPad(newCats.length), label: catRaw.slice(0, 40) };
+            newCats.push(created);
+          }
+          catId = created.id;
+          item.newCat = created.label;
+        }
+      }
+      title = title.slice(0, 80);
+      var key = title.toLowerCase() + '|' + date + '|' + time;
+      if (existingKeys[key] || seenInFile[key]){
+        item.status = 'dup'; item.msg = 'Sudah ada, dilewati';
+      }
+      seenInFile[key] = true;
+      item.title = title; item.date = date; item.time = time; item.repeat = rep.repeat;
+      item.data = {
+        id: uid() + importPad(items.length % 100),
+        title: title,
+        subtitle: cellOf(r, 'subtitle').slice(0, 80),
+        category: catId,
+        flexible: false,
+        priority: false,
+        pinned: false,
+        timeRank: null,
+        travel: false,
+        done: null,
+        createdAt: baseTs + items.length,
+        date: date,
+        time: time,
+        repeat: rep.repeat,
+        hourlyInterval: rep.repeat === 'hourly' ? rep.hourly : null,
+        everyNDaysInterval: rep.repeat === 'everyNDays' ? rep.nDays : null,
+        everyNWeeksInterval: rep.repeat === 'everyNWeeks' ? rep.nWeeks : null,
+        until: until,
+        timeMode: null,
+        timeSaturday: null,
+        timeHoliday: null,
+        workdaySatSpecial: false,
+        timeWorkdaySat: null,
+        estimateMin: null,
+        notes: cellOf(r, 'notes'),
+        link: cellOf(r, 'link').slice(0, 500)
+      };
+      items.push(item);
+    }
+    return { items: items, newCats: newCats };
+  }
+
+  var importPreviewEl = document.getElementById('importPreview');
+  var importSummaryEl = document.getElementById('importSummary');
+  var importListEl = document.getElementById('importList');
+  var importSkipDupEl = document.getElementById('importSkipDup');
+  var importConfirmBtn = document.getElementById('importConfirmBtn');
+
+  function importRepeatText(it){
+    var d = it.data;
+    return d ? repeatLabel(d) : '';
+  }
+  function renderImportPreview(){
+    if (!importPending){ importPreviewEl.hidden = true; return; }
+    var items = importPending.items;
+    var skipDup = importSkipDupEl.checked;
+    var ok = 0, err = 0, dup = 0;
+    items.forEach(function(it){
+      if (it.status === 'error') err++;
+      else if (it.status === 'dup') dup++;
+      else ok++;
+    });
+    var willImport = ok + (skipDup ? 0 : dup);
+    var usedNewCats = {};
+    items.forEach(function(it){
+      if (it.newCat && it.data && (it.status === 'ok' || (!skipDup && it.status === 'dup'))) usedNewCats[it.newCat] = true;
+    });
+    var newCatNames = Object.keys(usedNewCats);
+    var sum = willImport + ' pengingat siap diimpor';
+    if (dup && skipDup) sum += ' · ' + dup + ' dilewati (sudah ada)';
+    if (err) sum += ' · ' + err + ' baris bermasalah';
+    if (newCatNames.length) sum += ' · kategori baru: ' + newCatNames.join(', ');
+    importSummaryEl.textContent = sum;
+    importListEl.innerHTML = items.map(function(it){
+      var cls = it.status === 'error' ? ' class="ri-err"' : (it.status === 'dup' && skipDup ? ' class="ri-dup"' : '');
+      var meta;
+      if (it.status === 'error') meta = 'Baris ' + it.line + ': ' + it.msg;
+      else meta = it.date + ' · ' + it.time + ' · ' + importRepeatText(it) + (it.status === 'dup' ? ' · ' + it.msg : '');
+      return '<li' + cls + '><b>' + escapeHTML(it.title || '(tanpa judul)') + '</b><span class="ri-meta">' + escapeHTML(meta) + '</span></li>';
+    }).join('');
+    importConfirmBtn.textContent = 'Impor ' + willImport + ' pengingat';
+    importConfirmBtn.disabled = willImport === 0;
+    importPreviewEl.hidden = false;
+  }
+  function clearImportPreview(){
+    importPending = null;
+    importPreviewEl.hidden = true;
+    importListEl.innerHTML = '';
+  }
+
+  function handleImportFile(file){
+    if (!currentUser){ showToast('Masuk dulu untuk mengimpor.'); return; }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var rows = importParseCSV(reader.result);
+      if (!rows.length){ clearImportPreview(); showToast('File kosong.', 4000); return; }
+      var built = importBuild(rows);
+      if (built.error){ clearImportPreview(); showToast(built.error, 6000); return; }
+      if (!built.items.length){ clearImportPreview(); showToast('Tidak ada baris data di file ini.', 4000); return; }
+      importPending = built;
+      importPending.fileName = file.name;
+      renderImportPreview();
+      importPreviewEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    };
+    reader.onerror = function(){ showToast('Gagal membaca file.', 4000); };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function confirmImport(){
+    if (!importPending || !currentUser) return;
+    var skipDup = importSkipDupEl.checked;
+    var toSave = importPending.items.filter(function(it){
+      return it.data && (it.status === 'ok' || (!skipDup && it.status === 'dup'));
+    });
+    if (!toSave.length) return;
+    var batchId = 'imp' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    var batchAt = Date.now();
+    toSave.forEach(function(it){
+      it.data.importId = batchId;
+      it.data.importFile = importPending.fileName || 'File impor';
+      it.data.importAt = batchAt;
+    });
+    var usedCatIds = {};
+    toSave.forEach(function(it){ usedCatIds[it.data.category] = true; });
+    var catsToAdd = importPending.newCats.filter(function(c){ return usedCatIds[c.id]; });
+    importConfirmBtn.disabled = true;
+    showToast('Mengimpor ' + toSave.length + ' pengingat…', 4000);
+
+    var chain = Promise.resolve();
+    if (catsToAdd.length){
+      chain = chain.then(function(){ return saveCategoriesToCloud(CATS.concat(catsToAdd)); });
+    }
+    var CHUNK = 20;
+    for (var s0 = 0; s0 < toSave.length; s0 += CHUNK){
+      (function(slice){
+        chain = chain.then(function(){
+          return Promise.all(slice.map(function(it){ return saveReminderToCloud(it.data); }));
+        });
+      })(toSave.slice(s0, s0 + CHUNK));
+    }
+    chain.then(function(){
+      showToast(toSave.length + ' pengingat berhasil diimpor.', 3500);
+      clearImportPreview();
+    }).catch(function(err){
+      console.error('Gagal impor', err);
+      importConfirmBtn.disabled = false;
+      showToast('Sebagian/seluruh impor gagal. Cek koneksi lalu coba lagi.', 6000);
+    });
+  }
+
+  var importFileInput = document.getElementById('importFileInput');
+  document.getElementById('importTemplateBtn').addEventListener('click', downloadImportTemplate);
+  document.getElementById('importPickBtn').addEventListener('click', function(){
+    importFileInput.value = '';
+    importFileInput.click();
+  });
+  importFileInput.addEventListener('change', function(){
+    var f = importFileInput.files && importFileInput.files[0];
+    if (f) handleImportFile(f);
+  });
+  importSkipDupEl.addEventListener('change', renderImportPreview);
+  importConfirmBtn.addEventListener('click', confirmImport);
+  document.getElementById('importCancelBtn').addEventListener('click', clearImportPreview);
+
+
+  // Riwayat impor: dikelompokkan dari pengingat yang punya importId, jadi ikut
+  // ter-backup/pulihkan dan otomatis hilang saat semua pengingatnya terhapus.
+  var importHistoryListEl = document.getElementById('importHistoryList');
+  function importHistoryGroups(){
+    var g = {};
+    state.reminders.forEach(function(r){
+      if (!r || !r.importId) return;
+      var x = g[r.importId] || (g[r.importId] = { id:r.importId, file:r.importFile || 'File impor', at:r.importAt || 0, ids:[] });
+      x.ids.push(r.id);
+    });
+    return Object.keys(g).map(function(k){ return g[k]; }).sort(function(a,b){ return b.at - a.at; });
+  }
+  function renderImportHistory(){
+    if (!importHistoryListEl) return;
+    var groups = importHistoryGroups();
+    if (!groups.length){
+      importHistoryListEl.innerHTML = '<li class="import-hist-empty" style="border:none;padding:0.2rem 0;">Belum ada riwayat impor.</li>';
+      return;
+    }
+    importHistoryListEl.innerHTML = groups.map(function(g){
+      var when = g.at ? new Date(g.at).toLocaleString('id-ID', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' }) : 'waktu tidak diketahui';
+      return '<li><div class="ih-text"><b>' + escapeHTML(g.file) + '</b><span>' + escapeHTML(when) + ' · ' + g.ids.length + ' pengingat</span></div>' +
+        '<button type="button" class="icon-btn import-hist-del" data-id="' + escapeHTML(g.id) + '" aria-label="Hapus riwayat impor beserta pengingatnya" title="Hapus riwayat impor">🗑</button></li>';
+    }).join('');
+  }
+  function deleteImportBatch(batchId){
+    if (!currentUser) return;
+    var g = importHistoryGroups().filter(function(x){ return x.id === batchId; })[0];
+    if (!g) return;
+    if (!confirm('Hapus riwayat impor "' + g.file + '"?\n\n' + g.ids.length + ' pengingat hasil impor ini akan ikut dihapus dari jadwal. Tindakan ini tidak bisa dibatalkan.')) return;
+    showToast('Menghapus ' + g.ids.length + ' pengingat…', 4000);
+    var chain = Promise.resolve(), CH = 20;
+    for (var i = 0; i < g.ids.length; i += CH){
+      (function(slice){
+        chain = chain.then(function(){ return Promise.all(slice.map(function(id){ return deleteReminderFromCloud(id); })); });
+      })(g.ids.slice(i, i + CH));
+    }
+    chain.then(function(){
+      showToast('Riwayat impor dan ' + g.ids.length + ' pengingatnya dihapus.', 3500);
+    }).catch(function(err){
+      console.error('Gagal hapus impor', err);
+      showToast('Sebagian gagal dihapus. Cek koneksi lalu coba lagi.', 6000);
+    });
+  }
+  importHistoryListEl.addEventListener('click', function(e){
+    var btn = e.target.closest ? e.target.closest('.import-hist-del') : null;
+    if (btn) deleteImportBatch(btn.getAttribute('data-id'));
+  });
+  renderImportHistory();
+
   document.getElementById('backupDownloadShortcut').addEventListener('click', downloadBackupJson);
   var restoreJsonInput = document.getElementById('restoreJsonInput');
   document.getElementById('backupRestoreShortcut').addEventListener('click', function(){
@@ -10996,6 +11570,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     renderRecentAdded();
     renderRecurringHistory();
     renderFlexible();
+    renderImportHistory();
   }
   renderAll();
   refreshNotifyBanner();
