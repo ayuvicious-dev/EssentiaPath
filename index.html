@@ -625,18 +625,12 @@
   }
   .est-quick button:hover, .est-quick button.on{background:var(--line-soft); border-color:var(--moss); color:var(--moss-deep);}
   .f-est > label{display:block; text-align:center;}
-  .f-est .est-quick{flex-wrap:nowrap; justify-content:center; align-items:stretch; gap:4px; margin-bottom:0;}
-  .f-est .est-quick button{flex:1 1 0; min-width:0; padding:7px 2px; border-radius:999px; background:var(--surface); white-space:nowrap; line-height:1.2;}
+  .f-est .est-quick{justify-content:center; align-items:center; margin-bottom:0;}
+  .f-est .est-quick button{padding:7px 10px; border-radius:999px; background:var(--surface);}
   .f-est .est-quick button:hover:not(.on){border-color:var(--line); color:var(--ink);}
   .f-est .est-quick button.on{background:var(--selected-bg); border-color:var(--moss); color:var(--moss-deep);}
-  .f-est .est-quick input#fEstimate{flex:1.2 1 0; width:0; min-width:0; box-sizing:border-box; font-size:12px; padding:6px 2px; border-radius:999px; text-align:center; -moz-appearance:textfield; appearance:textfield;}
-  .f-est .est-quick input#fEstimate::-webkit-inner-spin-button, .f-est .est-quick input#fEstimate::-webkit-outer-spin-button{-webkit-appearance:none; margin:0;}
-  /* Layar sempit: angka & satuan ditumpuk supaya tetap muat satu deret. */
-  @media (max-width:480px){
-    .f-est .est-quick{gap:3px;}
-    .f-est .est-quick button{white-space:normal; font-size:10.5px; padding:4px 1px; border-radius:10px;}
-    .f-est .est-quick input#fEstimate{border-radius:10px; font-size:11px;}
-  }
+  .f-est-manual{display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft);}
+  .f-est-manual input#fEstimate{width:84px; box-sizing:border-box; font-size:13px; padding:6px 8px; border-radius:999px; text-align:center;}
   .est-row{display:flex; align-items:center; gap:8px;}
   .est-row input{
     flex:1; min-width:0; box-sizing:border-box; font:inherit; font-size:14px; padding:6px 8px; border-radius:8px;
@@ -989,6 +983,12 @@
      dibuka lewat tombol chevron. Baris di dalamnya tetap baris tabel yang
      sama (bisa diedit/dihapus/dibatalkan centangnya seperti biasa),
      cuma dipisah tampilannya biar tabel utama tetap ringkas. */
+  .notes-table-more-toggle{
+    display:block; margin:0.35rem 0 0; border:1px dashed var(--line); background:transparent; color:var(--moss-deep);
+    border-radius:6px; font:inherit; font-size:0.66rem; font-weight:600; padding:0.15rem 0.6rem; cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .notes-table-more-toggle:hover{background:var(--surface);}
   .notes-table-history{margin-top:0.35rem;}
   .notes-table-history-toggle{
     display:flex; align-items:center; gap:0.25rem; border:none; background:none; padding:0.15rem 0.1rem;
@@ -1056,12 +1056,10 @@
   .flex-item.has-table-btn .title, .flex-item.pinned-item.has-table-btn .title{padding-right:8.7rem;}
   .flex-more svg{width:15px; height:15px;}
   /* Kartu Dashboard (Mendatang, Baru Ditambahkan, rincian hari) memakai pola
-     menu aksi yang sama: salin + ✎ + panah di pojok; ⋯ (di kanan salin) hanya
-     ada kalau kartu bisa diurutkan, membuka baris seret urutan di bawah meta. */
+     menu aksi yang sama: ⋯ + ✎ + panah di pojok, sisanya (seret urutan, salin)
+     di baris di bawah meta saat ⋯ diketuk. */
   .up-item .title, .up-item.has-drag .title{padding-right:6.1rem;}
   .up-item.has-table-btn .title{padding-right:8.7rem;}
-  .up-item.has-drag .title{padding-right:8.2rem;}
-  .up-item.has-drag.has-table-btn .title{padding-right:10.8rem;}
   .up-item.actions-open .flex-more{background:var(--line-soft); color:var(--moss-deep);}
   .up-item.actions-open .flex-more-row{display:flex;}
   .flex-item.actions-open .flex-more{background:var(--line-soft); color:var(--moss-deep);}
@@ -2908,7 +2906,10 @@
             <button type="button" data-min="60">1 jam</button>
             <button type="button" data-min="90">1,5 jam</button>
             <button type="button" data-min="120">2 jam</button>
-            <input type="number" id="fEstimate" inputmode="numeric" placeholder="menit" aria-label="Estimasi manual dalam menit" title="Estimasi manual (menit)">
+            <span class="f-est-manual">
+              <input type="number" id="fEstimate" inputmode="numeric" placeholder="manual" aria-label="Estimasi dalam menit">
+              <span>menit</span>
+            </span>
           </div>
         </div>
       </div>
@@ -5639,6 +5640,16 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         if (body) body.hidden = !expanded;
       });
     });
+    Array.prototype.forEach.call(container.querySelectorAll('.notes-table-more-toggle'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var key = btn.getAttribute('data-more-key');
+        expandedTableHistory[key] = !expandedTableHistory[key];
+        renderUpcoming();
+        renderFlexible();
+        if (dayOverlay && !dayOverlay.hidden) renderDayPanelList();
+      });
+    });
     Array.prototype.forEach.call(container.querySelectorAll('.notes-row-del'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
@@ -5951,6 +5962,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         }
         var histKey = (reminderId||'') + '|' + (dateStr||'') + '|' + headItem.idx;
         var histExpanded = !!expandedTableHistory[histKey];
+        // "Harian Lanjutan": tabel bisa sangat panjang, jadi default hanya
+        // 7 baris aktif paling awal yang tampil (baris tercentang sudah
+        // otomatis pindah ke Riwayat). Tombol di bawah tabel menampilkan semua.
+        var limitOwner = reminderId ? state.reminders.find(function(x){ return x.id === reminderId; }) : null;
+        var limitRows = !!(limitOwner && limitOwner.repeat === 'dailyCarry');
+        var moreKey = 'all|' + histKey;
+        var showAllRows = !!expandedTableHistory[moreKey];
+        var visibleActive = activeItems;
+        var moreBtnHTML = '';
+        if (limitRows && activeItems.length > TABLE_ROW_LIMIT){
+          if (!showAllRows) visibleActive = activeItems.slice(0, TABLE_ROW_LIMIT);
+          moreBtnHTML = '<button type="button" class="notes-table-more-toggle" data-more-key="'+escapeHTML(moreKey)+'" aria-expanded="'+(showAllRows?'true':'false')+'">' +
+            (showAllRows ? 'Tampilkan '+TABLE_ROW_LIMIT+' saja' : 'Tampilkan semua ('+activeItems.length+' baris, '+(activeItems.length-TABLE_ROW_LIMIT)+' tersembunyi)') +
+            '</button>';
+        }
         var historyHTML = '';
         if (tblHasChk && historyItems.length){
           historyHTML = '<div class="notes-table-history'+(histExpanded?' expanded':'')+'" data-hist-key="'+escapeHTML(histKey)+'">' +
@@ -5969,8 +5995,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         return '<div class="notes-table-wrap" data-lines="'+tblLines+'">' +
           '<table class="notes-plain-table"><tbody>' +
             tblRowHTML(headItem, 0, false) +
-            activeItems.map(function(it){ return tblRowHTML(it, 1, false); }).join('') +
+            visibleActive.map(function(it){ return tblRowHTML(it, 1, false); }).join('') +
           '</tbody></table>' +
+          moreBtnHTML +
           historyHTML +
           '<button type="button" class="notes-row-add notes-row-add-bottom" data-after="'+tblLastIdx+'" data-cols="'+tblCols+'" aria-label="Tambah baris" title="Tambah baris">+ baris</button>' +
           '<button type="button" class="notes-chk-toggle" data-on="'+(tblHasChk?'1':'0')+'" aria-label="'+(tblHasChk?'Matikan centang per baris':'Aktifkan centang per baris')+'" title="'+(tblHasChk?'Matikan centang per baris':'Aktifkan centang per baris')+'">'+(tblHasChk?'\u2611 centang: hidup':'\u2610 centang: mati')+'</button>' +
@@ -6555,6 +6582,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   // hanya disembunyikan dari tabel utama supaya baris yang belum
   // dicentang lebih ringkas dilihat. Kunci: reminderId|dateStr|idxHeader.
   var expandedTableHistory = {};
+  var TABLE_ROW_LIMIT = 7; // Harian Lanjutan: jumlah baris tabel yang tampil by default
   // Buka/tutup rincian catatan satu kartu di tempat (tanpa render ulang).
   // host = elemen <li> kartu (punya data-checklist-owner/data-id), btn =
   // tombol panah (.flex-collapse) di kartu itu kalau ada (dipakai untuk
@@ -6610,21 +6638,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link, it.reminder)+'</div>' +
       (it.reminder.subtitle ? '<div class="up-sub">'+escapeHTML(it.reminder.subtitle)+'</div>' : '') +
       '<div class="meta">'+it.time+estimateChipHTML(it.reminder, isDone)+'</div>' +
-      (canDragIt ? '<div class="flex-more-row">' +
-        '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' +
-      '</div>' : '') +
+      '<div class="flex-more-row">' +
+        (canDragIt ? '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' : '') +
+        '<button type="button" class="icon-btn up-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+        '</button>' +
+      '</div>' +
       '<div class="notes-collapsible">' +
       badge +
       renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
       '</div>' +
       '</div>' +
       '<div class="acts">' +
-        '<button type="button" class="icon-btn up-copy" aria-label="Salin catatan" title="Salin catatan" data-id="'+it.reminder.id+'">' +
-          '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-        '</button>' +
-        (canDragIt ? '<button type="button" class="icon-btn flex-more" aria-label="Menu aksi" title="Menu aksi (seret urutan)" aria-expanded="'+(actionsOpenIds[akeyIt]?'true':'false')+'" data-akey="'+akeyIt+'">' +
+        '<button type="button" class="icon-btn flex-more" aria-label="Menu aksi" title="Menu aksi (seret urutan, salin)" aria-expanded="'+(actionsOpenIds[akeyIt]?'true':'false')+'" data-akey="'+akeyIt+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>' +
-        '</button>' : '') +
+        '</button>' +
         '<button type="button" class="icon-btn edit-up" aria-label="Ubah" title="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
         '<button type="button" class="icon-btn flex-collapse" aria-label="'+(notesHiddenIt?'Tampilkan catatan':'Sembunyikan catatan')+'" title="'+(notesHiddenIt?'Tampilkan catatan':'Sembunyikan catatan')+'" data-id="'+it.reminder.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -6929,12 +6957,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(listEl.querySelectorAll('.up-copy'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
-        // Dashboard: yang disalin HANYA Catatan milik tanggal kartu ini (judul
-        // tidak pernah ikut, juga saat catatannya kosong).
-        var card = btn.closest('.up-item');
-        var notes = getNotesForOccurrence(btn.getAttribute('data-id'), card && card.getAttribute('data-date'));
-        if (!stripMarksFromNotes(notes).trim()){ showToast('Tidak ada catatan untuk disalin'); return; }
-        copyNotesToClipboard(notes, btn);
+        var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
+        if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
       });
     });
     // Sembunyikan/tampilkan rincian catatan di kartu "Mendatang": lewat
