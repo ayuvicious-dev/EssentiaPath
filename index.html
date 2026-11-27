@@ -1056,10 +1056,12 @@
   .flex-item.has-table-btn .title, .flex-item.pinned-item.has-table-btn .title{padding-right:8.7rem;}
   .flex-more svg{width:15px; height:15px;}
   /* Kartu Dashboard (Mendatang, Baru Ditambahkan, rincian hari) memakai pola
-     menu aksi yang sama: ⋯ + ✎ + panah di pojok, sisanya (seret urutan, salin)
-     di baris di bawah meta saat ⋯ diketuk. */
+     menu aksi yang sama: salin + ✎ + panah di pojok; ⋯ (di kanan salin) hanya
+     ada kalau kartu bisa diurutkan, membuka baris seret urutan di bawah meta. */
   .up-item .title, .up-item.has-drag .title{padding-right:6.1rem;}
   .up-item.has-table-btn .title{padding-right:8.7rem;}
+  .up-item.has-drag .title{padding-right:8.2rem;}
+  .up-item.has-drag.has-table-btn .title{padding-right:10.8rem;}
   .up-item.actions-open .flex-more{background:var(--line-soft); color:var(--moss-deep);}
   .up-item.actions-open .flex-more-row{display:flex;}
   .flex-item.actions-open .flex-more{background:var(--line-soft); color:var(--moss-deep);}
@@ -6608,21 +6610,21 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link, it.reminder)+'</div>' +
       (it.reminder.subtitle ? '<div class="up-sub">'+escapeHTML(it.reminder.subtitle)+'</div>' : '') +
       '<div class="meta">'+it.time+estimateChipHTML(it.reminder, isDone)+'</div>' +
-      '<div class="flex-more-row">' +
-        (canDragIt ? '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' : '') +
-        '<button type="button" class="icon-btn up-copy" aria-label="Salin" title="Salin" data-id="'+it.reminder.id+'">' +
-          '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-        '</button>' +
-      '</div>' +
+      (canDragIt ? '<div class="flex-more-row">' +
+        '<span class="icon-btn up-drag-handle" role="button" aria-label="Seret untuk memindah urutan (jam sama)" title="Seret untuk memindah urutan (jam sama)">⠿</span>' +
+      '</div>' : '') +
       '<div class="notes-collapsible">' +
       badge +
       renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
       '</div>' +
       '</div>' +
       '<div class="acts">' +
-        '<button type="button" class="icon-btn flex-more" aria-label="Menu aksi" title="Menu aksi (seret urutan, salin)" aria-expanded="'+(actionsOpenIds[akeyIt]?'true':'false')+'" data-akey="'+akeyIt+'">' +
-          '<svg viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>' +
+        '<button type="button" class="icon-btn up-copy" aria-label="Salin catatan" title="Salin catatan" data-id="'+it.reminder.id+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
         '</button>' +
+        (canDragIt ? '<button type="button" class="icon-btn flex-more" aria-label="Menu aksi" title="Menu aksi (seret urutan)" aria-expanded="'+(actionsOpenIds[akeyIt]?'true':'false')+'" data-akey="'+akeyIt+'">' +
+          '<svg viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>' +
+        '</button>' : '') +
         '<button type="button" class="icon-btn edit-up" aria-label="Ubah" title="Ubah" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'">✎</button>' +
         '<button type="button" class="icon-btn flex-collapse" aria-label="'+(notesHiddenIt?'Tampilkan catatan':'Sembunyikan catatan')+'" title="'+(notesHiddenIt?'Tampilkan catatan':'Sembunyikan catatan')+'" data-id="'+it.reminder.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -6927,8 +6929,12 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     Array.prototype.forEach.call(listEl.querySelectorAll('.up-copy'), function(btn){
       btn.addEventListener('click', function(e){
         e.stopPropagation();
-        var r = state.reminders.find(function(x){ return x.id === btn.getAttribute('data-id'); });
-        if (r) copyNotesToClipboard((r.notes && r.notes.trim()) ? r.notes : r.title, btn);
+        // Dashboard: yang disalin HANYA Catatan milik tanggal kartu ini (judul
+        // tidak pernah ikut, juga saat catatannya kosong).
+        var card = btn.closest('.up-item');
+        var notes = getNotesForOccurrence(btn.getAttribute('data-id'), card && card.getAttribute('data-date'));
+        if (!stripMarksFromNotes(notes).trim()){ showToast('Tidak ada catatan untuk disalin'); return; }
+        copyNotesToClipboard(notes, btn);
       });
     });
     // Sembunyikan/tampilkan rincian catatan di kartu "Mendatang": lewat
