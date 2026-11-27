@@ -624,6 +624,19 @@
     font-size:11.5px; font-weight:600; padding:4px 8px; border-radius:8px;
   }
   .est-quick button:hover, .est-quick button.on{background:var(--line-soft); border-color:var(--moss); color:var(--moss-deep);}
+  .f-est > label{display:block; text-align:center;}
+  .f-est .est-quick{flex-wrap:nowrap; justify-content:center; align-items:stretch; gap:4px; margin-bottom:0;}
+  .f-est .est-quick button{flex:1 1 0; min-width:0; padding:7px 2px; border-radius:999px; background:var(--surface); white-space:nowrap; line-height:1.2;}
+  .f-est .est-quick button:hover:not(.on){border-color:var(--line); color:var(--ink);}
+  .f-est .est-quick button.on{background:var(--selected-bg); border-color:var(--moss); color:var(--moss-deep);}
+  .f-est .est-quick input#fEstimate{flex:1.2 1 0; width:0; min-width:0; box-sizing:border-box; font-size:12px; padding:6px 2px; border-radius:999px; text-align:center; -moz-appearance:textfield; appearance:textfield;}
+  .f-est .est-quick input#fEstimate::-webkit-inner-spin-button, .f-est .est-quick input#fEstimate::-webkit-outer-spin-button{-webkit-appearance:none; margin:0;}
+  /* Layar sempit: angka & satuan ditumpuk supaya tetap muat satu deret. */
+  @media (max-width:480px){
+    .f-est .est-quick{gap:3px;}
+    .f-est .est-quick button{white-space:normal; font-size:10.5px; padding:4px 1px; border-radius:10px;}
+    .f-est .est-quick input#fEstimate{border-radius:10px; font-size:11px;}
+  }
   .est-row{display:flex; align-items:center; gap:8px;}
   .est-row input{
     flex:1; min-width:0; box-sizing:border-box; font:inherit; font-size:14px; padding:6px 8px; border-radius:8px;
@@ -1586,9 +1599,58 @@
     background:var(--paper-raised); color:var(--ink-soft); font-size:0.74rem; font-weight:700;
     padding:0.3rem 0.6rem; cursor:pointer; line-height:1; flex:none; white-space:nowrap;
   }
+
+  /* ---------- Lampiran file (jpg/png, PDF, Word) ---------- */
+  .att-add-row{display:flex; justify-content:center; margin-bottom:0.4rem;}
+  .att-add-btn{
+    display:flex; align-items:center; gap:0.35rem; border:1.5px dashed var(--line); border-radius:999px;
+    background:var(--paper-raised); color:var(--ink-soft); font-size:0.78rem; font-weight:700;
+    padding:0.4rem 0.8rem; cursor:pointer; font-family:inherit; line-height:1;
+  }
+  .att-add-btn:hover{border-color:var(--moss); color:var(--moss-deep);}
+  .att-add-btn svg{width:15px; height:15px; flex:none;}
+  .att-list{display:flex; flex-direction:column; gap:0.35rem;}
+  .att-list:empty{display:none;}
+  .att-item{
+    display:flex; align-items:center; gap:0.5rem; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface); padding:0.4rem 0.55rem; min-width:0;
+  }
+  .att-thumb{
+    width:34px; height:34px; flex:none; border-radius:7px; background:var(--selected-bg); color:var(--moss-deep);
+    display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-weight:800; overflow:hidden;
+  }
+  .att-thumb img{width:100%; height:100%; object-fit:cover;}
+  .att-meta{flex:1; min-width:0; text-align:left; background:none; border:0; padding:0; cursor:pointer; font-family:inherit; color:var(--ink); touch-action:manipulation; user-select:none; -webkit-user-select:none;}
+  .att-thumb{cursor:pointer; touch-action:manipulation;}
+  .att-pv-modal{max-width:720px; display:flex; flex-direction:column;}
+  .att-pv-modal h2{font-size:1rem; overflow-wrap:anywhere; min-width:0;}
+  .att-pv-body{flex:1; min-height:160px; overflow:auto; text-align:center; border:1px solid var(--line); border-radius:10px; background:var(--surface); padding:0.5rem;}
+  .att-pv-body img, .att-pv-body canvas{display:block; max-width:100%; height:auto; margin:0 auto;}
+  .att-pv-body canvas{background:#fff;}
+  .att-pv-body canvas + canvas{margin-top:0.5rem;}
+  .att-pv-msg{font-size:0.82rem; color:var(--ink-soft); margin:3.5rem 0.5rem;}
+  .att-name{display:block; font-size:0.82rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .att-size{display:block; font-size:0.7rem; color:var(--ink-soft);}
+  .att-remove{
+    flex:none; border:0; background:none; color:var(--ink-soft); font-size:1rem; cursor:pointer; padding:0.2rem 0.4rem; line-height:1;
+  }
+  .att-remove:hover{color:var(--danger);}
+  .att-busy{font-size:0.72rem; color:var(--ink-soft); text-align:center; margin:0.3rem 0 0;}
+  .att-ico-btn{
+    display:inline-flex; align-items:center; gap:2px; border:0; background:none; color:var(--ink-soft);
+    cursor:pointer; padding:5px; margin:-5px 0 -5px 2px; font-size:0.68rem; font-weight:700; vertical-align:middle; font-family:inherit;
+  }
+  .att-ico-btn:hover{color:var(--moss);}
+  .att-ico-btn svg{width:12px; height:12px; flex:none;}
   .notes-fmt-btn svg{width:15px; height:15px; flex:none;}
   .notes-fmt-btn:hover{border-color:var(--moss);}
   .notes-fmt-btn.active{border-color:var(--moss); background:var(--selected-bg); color:var(--moss-deep);}
+  .workday-sat-line{display:contents;}
+  #repeatUntilRow .workday-sat-line > .field{margin:1.3rem 0 0; min-width:0;}
+  #repeatUntilRow .workday-sat-line > .field input{padding:0.55rem 0.5rem;}
+  /* Saat "Hari Kerja (Sen–Sab)" dipilih: Ulangi | Sabtu | Jam jadi satu deret 3 kolom */
+  #repeatUntilRow.row-2:has(#workdaySatToggleRow[style*="flex"]){grid-template-columns:minmax(0,1.5fr) minmax(0,0.85fr) minmax(0,1fr); gap:0.5rem;}
+  #repeatUntilRow.row-2:has(#workdaySatToggleRow[style*="flex"]) .checkbox-field.compact{padding:0.55rem 0.4rem;}
   .row-2{display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;}
   .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;}
   .row-3 .checkbox-field.compact{padding:0.5rem 0.5rem;}
@@ -1890,6 +1952,8 @@
   .import-hist .ih-text{min-width:0; display:flex; flex-direction:column; gap:0.1rem;}
   .import-hist .ih-text b{font-size:0.84rem; font-weight:600; word-break:break-word;}
   .import-hist .ih-text span{font-size:0.72rem; color:var(--ink-soft);}
+  .import-hist .ih-actions{display:flex; align-items:center; gap:0.35rem; flex:none;}
+  .import-hist-dl svg{width:16px; height:16px; display:block;}
   .import-hist-empty{font-size:0.78rem; color:var(--ink-soft); padding:0.2rem 0;}
   .import-skip{display:flex; align-items:center; gap:0.5rem; font-size:0.78rem; color:var(--ink-soft); margin:0 0 0.5rem;}
 
@@ -2503,7 +2567,7 @@
     </div>
     <div class="settings-block" id="importBlock">
       <h2>Impor</h2>
-      <p class="hint">Tambahkan banyak pengingat sekaligus dari file CSV (bisa dibuat dari Excel / Google Sheets). Kolom: Judul, Kategori, Tanggal Mulai, Waktu, Ulangi, Catatan.</p>
+      <p class="hint">Tambahkan banyak pengingat sekaligus dari file CSV (bisa dibuat dari Excel / Google Sheets). Kolom: Judul, Kategori, Tanggal Mulai, Waktu, Ulangi, Estimasi, Catatan.</p>
       <div class="import-row">
         <select id="importTemplateSelect" class="recent-filter-select" aria-label="Pilih template impor">
           <option value="harian">Template Jadwal Harian</option>
@@ -2524,6 +2588,7 @@
           <li><b>Tanggal Mulai</b>: wajib. Format <code>2026-12-01</code> atau <code>01/12/2026</code> (hari/bulan/tahun).</li>
           <li><b>Waktu</b>: wajib. Format <code>07:30</code> (24 jam).</li>
           <li><b>Ulangi</b>: Tidak berulang, Harian, Harian Lanjutan, Harian Berjangka, Harian Rutin, Hari kerja (Sen–Jum), Hari Kerja (Sen–Sab), Akhir pekan (Sab–Min), Mingguan, Mingguan Rutin, Dua mingguan, Bulanan, Bulanan Rutin, Akhir bulan, Triwulanan, Tahunan, Tahunan Rutin. Untuk interval tulis angkanya, mis. <code>Tiap 4 jam</code>, <code>3 hari sekali</code>, <code>3 minggu sekali</code>. Kosong = Tidak berulang.</li>
+          <li><b>Estimasi</b>: opsional, lama pengerjaan (1 menit – 24 jam). Contoh <code>30</code> (menit), <code>45 mnt</code>, <code>1 jam</code>, <code>1,5 jam</code>, <code>1 jam 30 mnt</code>. Kosong = tanpa estimasi.</li>
           <li><b>Catatan</b>: opsional. Boleh beberapa baris jika diapit tanda kutip.</li>
         </ul>
       </details>
@@ -2537,7 +2602,7 @@
         </div>
       </div>
       <h3 class="import-hist-title">Riwayat Impor</h3>
-      <p class="hint">Menghapus satu riwayat impor akan menghapus semua pengingat yang berasal dari impor itu dari jadwal.</p>
+      <p class="hint">Unduh satu riwayat impor sebagai CSV berisi data pengingatnya saat ini. Menghapus satu riwayat impor akan menghapus semua pengingat yang berasal dari impor itu dari jadwal.</p>
       <ul class="import-hist" id="importHistoryList"></ul>
     </div>
     <div class="settings-block">
@@ -2782,6 +2847,15 @@
             <button type="button" class="info-tip-btn" id="dayTypeInfoBtn" aria-label="Info Jam Khusus" aria-expanded="false">i</button>
             <div class="info-tip-popover" id="dayTypeInfoPopover" hidden>Khusus Sabtu dan hari libur.</div>
           </div>
+          <div class="workday-sat-line">
+            <div class="checkbox-field compact" id="workdaySatToggleRow" style="display:none;">
+              <input type="checkbox" id="fWorkdaySatSpecial">
+              <label for="fWorkdaySatSpecial">Sabtu</label>
+            </div>
+            <div class="field" id="workdaySatTimeRow" style="display:none;">
+              <input type="time" id="fTimeWorkdaySat" aria-label="Jam khusus hari Sabtu" title="Jam khusus hari Sabtu (Senin–Jumat tetap memakai jam di atas)">
+            </div>
+          </div>
         </div>
         <div class="row-2" id="hourlyRow" style="display:none;">
           <div class="field">
@@ -2813,15 +2887,6 @@
             <p class="hint" style="margin-top:0.6rem;">Dihitung dari tanggal mulai di atas, lalu berulang tiap N minggu di hari yang sama (mis. pulang tiap Sabtu akhir bulan → 4 minggu sekali).</p>
           </div>
         </div>
-        <div class="checkbox-field compact" id="workdaySatToggleRow" style="display:none;">
-          <input type="checkbox" id="fWorkdaySatSpecial">
-          <label for="fWorkdaySatSpecial">Sabtu</label>
-        </div>
-        <div class="field" id="workdaySatTimeRow" style="display:none;">
-          <label for="fTimeWorkdaySat">Jam khusus hari Sabtu</label>
-          <input type="time" id="fTimeWorkdaySat">
-          <p class="hint">Hari Senin–Jumat tetap memakai jam di atas; hari Sabtu memakai jam ini.</p>
-        </div>
         <div class="row-2" id="dayTypeTimesRow" style="display:none;">
           <div class="field">
             <label for="fTimeSaturday">Jam hari Sabtu</label>
@@ -2830,6 +2895,18 @@
           <div class="field">
             <label for="fTimeHoliday">Jam hari libur</label>
             <input type="time" id="fTimeHoliday">
+          </div>
+        </div>
+        <div class="field f-est">
+          <label for="fEstimate">Estimasi selesai</label>
+          <div class="est-quick" id="fEstQuick" role="group" aria-label="Pilihan cepat estimasi">
+            <button type="button" data-min="15">15 mnt</button>
+            <button type="button" data-min="30">30 mnt</button>
+            <button type="button" data-min="45">45 mnt</button>
+            <button type="button" data-min="60">1 jam</button>
+            <button type="button" data-min="90">1,5 jam</button>
+            <button type="button" data-min="120">2 jam</button>
+            <input type="number" id="fEstimate" inputmode="numeric" placeholder="menit" aria-label="Estimasi manual dalam menit" title="Estimasi manual (menit)">
           </div>
         </div>
       </div>
@@ -2869,6 +2946,18 @@
           </button>
         </div>
         <textarea id="fNotes" placeholder=""></textarea>
+      </div>
+      <div class="field" id="attField">
+        <label>Lampiran</label>
+        <div class="att-add-row">
+          <button type="button" class="att-add-btn" id="attAddBtn">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 01-7.8-7.8l8.6-8.6a3.7 3.7 0 015.2 5.2l-8.6 8.6a1.8 1.8 0 01-2.6-2.6l7.9-7.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Tambah file
+          </button>
+          <input type="file" id="attInput" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+        </div>
+        <div class="att-list" id="attList"></div>
+        <p class="att-busy" id="attBusy" hidden></p>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger icon-only" id="deleteBtn" style="display:none;" aria-label="Hapus" title="Hapus">🗑</button>
@@ -2957,6 +3046,41 @@
   </div>
 </div>
 
+<!-- Daftar lampiran pengingat (dibuka dari ikon klip di kartu) -->
+<div class="overlay day-panel" id="attOverlay" hidden style="z-index:60;">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="attOverlayTitle">
+    <div class="modal-head">
+      <h2 id="attOverlayTitle">Lampiran</h2>
+      <button type="button" class="modal-close" id="attOverlayClose" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="att-list" id="attOverlayList"></div>
+    <div class="modal-actions">
+      <div style="flex:1;"></div>
+      <button type="button" class="btn btn-ghost" id="attOverlayDone">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pratinjau lampiran (ketuk 1x pada file) -->
+<div class="overlay" id="attPreviewOverlay" hidden style="z-index:70;">
+  <div class="modal att-pv-modal" role="dialog" aria-modal="true" aria-labelledby="attPvTitle">
+    <div class="modal-head">
+      <h2 id="attPvTitle">Pratinjau</h2>
+      <button type="button" class="modal-close" id="attPvClose" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="att-pv-body" id="attPvBody"></div>
+    <div class="modal-actions">
+      <div style="flex:1;"></div>
+      <button type="button" class="btn btn-ghost" id="attPvDownload">Unduh</button>
+      <button type="button" class="btn btn-ghost" id="attPvDone">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -2967,7 +3091,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
   getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, deleteField, FieldPath
+  collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, deleteField, FieldPath
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration (from Firebase console → Project settings)
@@ -3204,7 +3328,59 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return setDoc(reminderDocRef(data.id), data);
   }
   function deleteReminderFromCloud(id){
-    return deleteDoc(reminderDocRef(id));
+    var old = state.reminders.find(function(x){ return x.id === id; });
+    var atts = (old && old.attachments) ? old.attachments.slice() : [];
+    return deleteDoc(reminderDocRef(id)).then(function(){
+      if (atts.length) cleanupOrphanFiles(atts, id);
+    });
+  }
+
+  // ---------- Lampiran file: disimpan di Firestore per potongan (chunk) ----------
+  // Isi file di-encode base64 lalu dipotong ±700 KB per dokumen di
+  // users/{uid}/files/{fileId}_{n}; dokumen pengingat hanya menyimpan metadata
+  // (id, nama, tipe, ukuran, jumlah potongan) di field `attachments`.
+  var ATT_CHUNK = 700000;
+  var ATT_MAX_BYTES = 4 * 1024 * 1024;   // batas per file (setelah gambar dikompres)
+  var ATT_MAX_COUNT = 10;                // batas jumlah file per pengingat
+  function attFileDocRef(fileId, n){
+    return doc(db, 'users', currentUser.uid, 'files', fileId + '_' + n);
+  }
+  function attUploadFile(att){
+    var tasks = [];
+    for (var i = 0; i < att.chunks; i++){
+      tasks.push(setDoc(attFileDocRef(att.id, i), { data: att.b64.slice(i * ATT_CHUNK, (i + 1) * ATT_CHUNK) }));
+    }
+    return Promise.all(tasks);
+  }
+  function attDeleteFile(att){
+    var tasks = [];
+    for (var i = 0; i < att.chunks; i++){ tasks.push(deleteDoc(attFileDocRef(att.id, i)).catch(function(){})); }
+    return Promise.all(tasks);
+  }
+  function attFetchBlob(att){
+    var tasks = [];
+    for (var i = 0; i < att.chunks; i++){ tasks.push(getDoc(attFileDocRef(att.id, i))); }
+    return Promise.all(tasks).then(function(snaps){
+      var parts = snaps.map(function(sn){
+        if (!sn.exists()) throw new Error('Potongan file hilang');
+        return sn.data().data;
+      });
+      var bin = atob(parts.join(''));
+      var bytes = new Uint8Array(bin.length);
+      for (var j = 0; j < bin.length; j++) bytes[j] = bin.charCodeAt(j);
+      return new Blob([bytes], { type: att.type || 'application/octet-stream' });
+    });
+  }
+  // Hapus file yang tidak lagi dipakai pengingat mana pun (mis. setelah
+  // pengingat dihapus / lampiran dibuang). `exceptId` = pengingat yang baru
+  // dihapus/diubah, tidak dihitung sebagai pemakai.
+  function cleanupOrphanFiles(atts, exceptId){
+    atts.forEach(function(a){
+      var stillUsed = state.reminders.some(function(r){
+        return r.id !== exceptId && (r.attachments || []).some(function(x){ return x.id === a.id; });
+      });
+      if (!stillUsed) attDeleteFile(a);
+    });
   }
 
   // ---------- Firestore-backed category list (per signed-in user) ----------
@@ -4504,17 +4680,25 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     if (!/^https?:\/\//i.test(t)) t = 'https://' + t;
     return t;
   }
-  function titleWithLinkHTML(title, link){
+  function attButtonHTML(r){
+    if (!r || !r.attachments || !r.attachments.length) return '';
+    return '<button type="button" class="att-ico-btn" aria-label="Lihat lampiran" title="Lihat lampiran" ' +
+      'onclick="event.stopPropagation(); window.__openAtt(\'' + escapeHTML(r.id) + '\')">' +
+      '<svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 01-7.8-7.8l8.6-8.6a3.7 3.7 0 015.2 5.2l-8.6 8.6a1.8 1.8 0 01-2.6-2.6l7.9-7.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      r.attachments.length + '</button>';
+  }
+  function titleWithLinkHTML(title, link, rem){
     // Teks judul dibungkus <span class="title-text"> supaya kartu Fleksibel
     // bisa memasang klik-untuk-edit-judul (lihat bindFlexTitleEdit) tanpa
     // ikut menangkap klik pada ikon tautan.
     var safeTitle = '<span class="title-text">' + escapeHTML(title) + '</span>';
     var url = normalizeReminderLink(link);
-    if (!url) return safeTitle;
+    var attBtn = attButtonHTML(rem);
+    if (!url) return safeTitle + attBtn;
     return '<a class="title-link" href="'+escapeHTML(url)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">' +
       safeTitle +
       '<svg class="link-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5h5v5M19 5l-9 9M8 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-      '</a>';
+      '</a>' + attBtn;
   }
   // ---------- Catatan: sub-checklist (☐/☑) ----------
   var CHECK_UNCHECKED = '\u2610 ';
@@ -6421,7 +6605,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>';
       })()) +
-      '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+      '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link, it.reminder)+'</div>' +
       (it.reminder.subtitle ? '<div class="up-sub">'+escapeHTML(it.reminder.subtitle)+'</div>' : '') +
       '<div class="meta">'+it.time+estimateChipHTML(it.reminder, isDone)+'</div>' +
       '<div class="flex-more-row">' +
@@ -7402,7 +7586,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var c = catInfo(r.category);
       var ms = reminderCreatedAtMs(r);
       return '<li class="up-item" data-id="' + r.id + '">' +
-        '<div class="body"><div class="title">' + titleWithLinkHTML(r.title, r.link) + '</div>' +
+        '<div class="body"><div class="title">' + titleWithLinkHTML(r.title, r.link, r) + '</div>' +
         '<div class="meta">Ditambahkan ' + (ms ? formatDMYHM(ms) : 'tidak diketahui') + ' · ' + escapeHTML(repeatLabel(r)) + '</div></div>' +
         '<div class="acts">' +
           '<button type="button" class="icon-btn edit-recent" aria-label="Ubah" data-id="' + r.id + '">✎</button>' +
@@ -7502,7 +7686,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var c = catInfo(r.category);
       var meta = c.label + ' · ' + repeatLabel(r);
       return '<li class="up-item recurring-history-item" data-id="' + r.id + '">' +
-        '<div class="body"><div class="title">' + titleWithLinkHTML(r.title, r.link) + '</div>' +
+        '<div class="body"><div class="title">' + titleWithLinkHTML(r.title, r.link, r) + '</div>' +
         '<div class="meta">' + meta + '</div></div>' +
       '</li>';
     }).join('');
@@ -7864,7 +8048,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '<button type="button" class="up-upd flex-upd'+(r.updMarked?' on':'')+'" data-id="'+r.id+'" aria-pressed="'+(r.updMarked?'true':'false')+'" aria-label="'+(r.updMarked?'Sudah diupdate (belum difinalisasi)':'Belum diupdate')+'" title="'+(r.updMarked?'Sudah diupdate, belum difinalisasi — ketuk untuk batalkan':'Tandai sudah diupdate (belum difinalisasi)')+'">' +
           '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>')) +
-      '<div class="body"><div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
+      '<div class="body"><div class="title">'+titleWithLinkHTML(r.title, r.link, r)+'</div>' +
       '<div class="flex-more-row">' +
         '<button type="button" class="icon-btn toggle-archive'+(r.archived?' active':'')+'" aria-label="'+(r.archived?'Keluarkan dari arsip':'Arsipkan')+'" title="'+(r.archived?'Keluarkan dari arsip':'Arsipkan (untuk item yang mungkin sudah tidak relevan, tapi bisa dilihat lagi nanti)')+'" data-id="'+r.id+'">' +
           '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="4" rx="1.2" stroke="currentColor" stroke-width="1.8" fill="'+(r.archived?'currentColor':'none')+'" fill-opacity="'+(r.archived?'0.18':'0')+'"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 13h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
@@ -8201,7 +8385,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
           '<button type="button" class="flex-check missed-check" data-id="'+it.reminder.id+'" data-date="'+it.date+'" data-time="'+it.time+'" data-has-checklist="'+(hasChecklistM?'1':'0')+'" aria-label="Tandai selesai">' +
             '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</button>' +
-          '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link)+'</div>' +
+          '<div class="body"><div class="title">'+titleWithLinkHTML(it.reminder.title, it.reminder.link, it.reminder)+'</div>' +
           '<div class="meta">'+c.label+' · Terlewat '+dtLabel+' '+it.time+'</div>' +
           '<div class="notes-collapsible">' +
           renderNotesOrderedHTML(it.reminder.notes, it.reminder.id, it.date) +
@@ -9564,6 +9748,300 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
   }
   function resetNotesToolbar(){ setNotesFmtMode('none'); }
 
+  // ---------- Lampiran file di form pengingat ----------
+  var formAtts = [];          // lampiran yang sedang ditampilkan di form
+  var formAttsOriginal = [];  // lampiran tersimpan saat form dibuka (untuk deteksi yang dibuang)
+  var attInputEl = document.getElementById('attInput');
+  var attListEl = document.getElementById('attList');
+  var attBusyEl = document.getElementById('attBusy');
+  function attNewId(){ return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function attFmtSize(n){
+    if (n >= 1048576) return (n / 1048576).toFixed(1).replace('.', ',') + ' MB';
+    return Math.max(1, Math.round(n / 1024)) + ' KB';
+  }
+  function attLabel(a){
+    var t = (a.type || '').toLowerCase(), n = (a.name || '').toLowerCase();
+    if (t.indexOf('image/') === 0) return t.indexOf('png') > -1 ? 'PNG' : 'JPG';
+    if (t === 'application/pdf' || /\.pdf$/.test(n)) return 'PDF';
+    return 'DOC';
+  }
+  function attIsImage(a){ return (a.type || '').toLowerCase().indexOf('image/') === 0; }
+  function attBlobToB64(blob){
+    return new Promise(function(resolve, reject){
+      var fr = new FileReader();
+      fr.onload = function(){ resolve(String(fr.result).split(',')[1] || ''); };
+      fr.onerror = function(){ reject(fr.error); };
+      fr.readAsDataURL(blob);
+    });
+  }
+  function attCompressImage(file){
+    return new Promise(function(resolve){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        var max = 1600, w = img.naturalWidth, h = img.naturalHeight;
+        var sc = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function(b){
+          if (b && b.size < file.size) resolve({ blob: b, type: 'image/jpeg', recompressed: true });
+          else resolve({ blob: file, type: file.type || 'image/jpeg', recompressed: false });
+        }, 'image/jpeg', 0.82);
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); resolve({ blob: file, type: file.type || 'image/jpeg', recompressed: false }); };
+      img.src = url;
+    });
+  }
+  function attDetectType(file){
+    var n = (file.name || '').toLowerCase(), t = (file.type || '').toLowerCase();
+    if (t.indexOf('image/') === 0) return 'image';
+    if (/\.(jpe?g|png|webp|heic|heif)$/.test(n)) return 'image';
+    if (t === 'application/pdf' || /\.pdf$/.test(n)) return 'pdf';
+    if (/\.(docx?)$/.test(n) || t === 'application/msword' || t.indexOf('wordprocessingml') > -1) return 'word';
+    return null;
+  }
+  function attRenderItems(listEl, atts, removable){
+    listEl.innerHTML = atts.map(function(a, i){
+      var thumb = (a.thumbUrl) ? '<img src="' + a.thumbUrl + '" alt="">' : attLabel(a);
+      return '<div class="att-item">' +
+        '<div class="att-thumb" data-att-open="' + i + '">' + thumb + '</div>' +
+        '<button type="button" class="att-meta" data-att-open="' + i + '" title="Ketuk 1x: pratinjau · 2x: unduh">' +
+          '<span class="att-name">' + escapeHTML(a.name) + '</span>' +
+          '<span class="att-size">' + attFmtSize(a.size) + (a.isNew ? ' · belum disimpan' : '') + '</span>' +
+        '</button>' +
+        (removable ? '<button type="button" class="att-remove" data-att-remove="' + i + '" aria-label="Hapus lampiran" title="Hapus lampiran">✕</button>' : '') +
+      '</div>';
+    }).join('');
+  }
+  function renderFormAtts(){ attRenderItems(attListEl, formAtts, true); }
+  // Ketuk 1x = pratinjau, ketuk 2x = unduh.
+  var ATT_DBL_MS = 300;
+  var attTapTimer = null, attTapItem = null;
+  function attTap(a){
+    if (attTapTimer && attTapItem === a){
+      clearTimeout(attTapTimer); attTapTimer = null; attTapItem = null;
+      attDownload(a);
+      return;
+    }
+    clearTimeout(attTapTimer);
+    attTapItem = a;
+    attTapTimer = setTimeout(function(){ attTapTimer = null; attTapItem = null; attPreview(a); }, ATT_DBL_MS);
+  }
+  function attGetBlob(a){ return a.blob ? Promise.resolve(a.blob) : attFetchBlob(a); }
+  function attDownload(a){
+    showToast('Mengunduh file…');
+    attGetBlob(a).then(function(blob){
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url; link.download = a.name;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 120000);
+    }).catch(function(err){
+      console.error(err);
+      showToast('Gagal mengunduh file. Coba lagi.');
+    });
+  }
+
+  var attPvEl = document.getElementById('attPreviewOverlay');
+  var attPvBodyEl = document.getElementById('attPvBody');
+  var attPvItem = null, attPvUrl = null, attPvTask = null;
+  var attPvSeq = 0; // supaya hasil muat yang terlambat tidak menimpa pratinjau lain
+  function attPvMessage(text){
+    attPvBodyEl.innerHTML = '';
+    var p = document.createElement('p');
+    p.className = 'att-pv-msg'; p.textContent = text;
+    attPvBodyEl.appendChild(p);
+  }
+  function attPvReset(){
+    attPvSeq++;
+    if (attPvTask){ attPvTask.destroy(); attPvTask = null; }
+    if (attPvUrl){ URL.revokeObjectURL(attPvUrl); attPvUrl = null; }
+    attPvBodyEl.innerHTML = '';
+  }
+  function closeAttPreview(){ attPvReset(); attPvItem = null; attPvEl.hidden = true; }
+  var PDFJS_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  function loadPdfJs(){
+    return new Promise(function(resolve, reject){
+      if (window.pdfjsLib){ resolve(window.pdfjsLib); return; }
+      var sc = document.createElement('script');
+      sc.src = PDFJS_BASE + 'pdf.min.js';
+      sc.onload = function(){
+        if (!window.pdfjsLib){ reject(new Error('pdf.js tidak tersedia')); return; }
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js';
+        resolve(window.pdfjsLib);
+      };
+      sc.onerror = function(){ sc.remove(); reject(new Error('Gagal memuat pdf.js')); };
+      document.head.appendChild(sc);
+    });
+  }
+  function attRenderPdf(blob, seq){
+    return Promise.all([loadPdfJs(), blob.arrayBuffer()]).then(function(res){
+      if (seq !== attPvSeq) return;
+      attPvTask = res[0].getDocument({ data: new Uint8Array(res[1]), isEvalSupported: false });
+      return attPvTask.promise.then(function(pdf){
+        if (seq !== attPvSeq) return;
+        var width = Math.max(240, attPvBodyEl.clientWidth - 16);
+        var dpr = Math.min(2, window.devicePixelRatio || 1);
+        attPvBodyEl.innerHTML = '';
+        var chain = Promise.resolve();
+        for (var n = 1; n <= pdf.numPages; n++){
+          (function(num){
+            chain = chain.then(function(){
+              if (seq !== attPvSeq) return;
+              return pdf.getPage(num).then(function(page){
+                if (seq !== attPvSeq) return;
+                var scale = width / page.getViewport({ scale: 1 }).width;
+                var vp = page.getViewport({ scale: scale * dpr });
+                var c = document.createElement('canvas');
+                c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+                attPvBodyEl.appendChild(c);
+                return page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+              });
+            });
+          })(n);
+        }
+        return chain;
+      });
+    });
+  }
+  function attPreview(a){
+    attPvReset();
+    var seq = attPvSeq;
+    attPvItem = a;
+    document.getElementById('attPvTitle').textContent = a.name;
+    attPvEl.hidden = false;
+    var isImg = attIsImage(a), isPdf = attLabel(a) === 'PDF';
+    if (!isImg && !isPdf){
+      attPvMessage('File Word tidak bisa dipratinjau. Tekan Unduh untuk membukanya.');
+      return;
+    }
+    attPvMessage('Memuat pratinjau…');
+    attGetBlob(a).then(function(blob){
+      if (seq !== attPvSeq) return;
+      if (isPdf) return attRenderPdf(blob, seq);
+      return new Promise(function(resolve, reject){
+        attPvUrl = URL.createObjectURL(blob);
+        var img = new Image();
+        img.alt = a.name;
+        img.onload = function(){
+          if (seq === attPvSeq){ attPvBodyEl.innerHTML = ''; attPvBodyEl.appendChild(img); }
+          resolve();
+        };
+        img.onerror = function(){ reject(new Error('Gambar tidak bisa ditampilkan')); };
+        img.src = attPvUrl;
+      });
+    }).catch(function(err){
+      if (seq !== attPvSeq) return;
+      console.error(err);
+      attPvMessage('Pratinjau gagal dimuat. Periksa koneksi, atau tekan Unduh.');
+    });
+  }
+  document.getElementById('attPvClose').addEventListener('click', closeAttPreview);
+  document.getElementById('attPvDone').addEventListener('click', closeAttPreview);
+  document.getElementById('attPvDownload').addEventListener('click', function(){ if (attPvItem) attDownload(attPvItem); });
+  attPvEl.addEventListener('click', function(e){ if (e.target === attPvEl) closeAttPreview(); });
+  document.addEventListener('keydown', function(e){
+    // fase capture: Escape menutup pratinjau saja, bukan form di belakangnya
+    if (e.key === 'Escape' && !attPvEl.hidden){ e.stopPropagation(); closeAttPreview(); }
+  }, true);
+  document.getElementById('attAddBtn').addEventListener('click', function(){ attInputEl.click(); });
+  attInputEl.addEventListener('change', function(){
+    var files = Array.prototype.slice.call(attInputEl.files || []);
+    attInputEl.value = '';
+    if (!files.length) return;
+    attBusyEl.hidden = false; attBusyEl.textContent = 'Memproses file…';
+    var chain = Promise.resolve();
+    files.forEach(function(file){
+      chain = chain.then(function(){
+        if (formAtts.length >= ATT_MAX_COUNT){ showToast('Maksimal ' + ATT_MAX_COUNT + ' file per pengingat'); return; }
+        var kind = attDetectType(file);
+        if (!kind){ showToast('Format ' + file.name + ' tidak didukung (pakai JPG, PNG, PDF, Word)'); return; }
+        var prep = (kind === 'image')
+          ? attCompressImage(file)
+          : Promise.resolve({ blob: file, type: file.type || (kind === 'pdf' ? 'application/pdf' : 'application/octet-stream'), recompressed: false });
+        return prep.then(function(res){
+          if (res.blob.size > ATT_MAX_BYTES){ showToast(file.name + ' terlalu besar (maks. 4 MB)'); return; }
+          var name = file.name;
+          if (res.recompressed) name = name.replace(/\.[^.]+$/, '') + '.jpg';
+          var att = {
+            id: attNewId(), name: name, type: res.type, size: res.blob.size,
+            chunks: Math.max(1, Math.ceil(Math.ceil(res.blob.size / 3) * 4 / ATT_CHUNK)),
+            blob: res.blob, isNew: true
+          };
+          if (attIsImage(att)) att.thumbUrl = URL.createObjectURL(res.blob);
+          formAtts.push(att);
+        });
+      });
+    });
+    chain.then(function(){ attBusyEl.hidden = true; renderFormAtts(); })
+         .catch(function(err){ console.error(err); attBusyEl.hidden = true; renderFormAtts(); showToast('Gagal memproses file'); });
+  });
+  attListEl.addEventListener('click', function(e){
+    var rm = e.target.closest('[data-att-remove]');
+    if (rm){
+      var gone = formAtts.splice(parseInt(rm.getAttribute('data-att-remove'), 10), 1)[0];
+      if (gone && gone.thumbUrl) URL.revokeObjectURL(gone.thumbUrl);
+      renderFormAtts();
+      return;
+    }
+    var op = e.target.closest('[data-att-open]');
+    if (op){ var a = formAtts[parseInt(op.getAttribute('data-att-open'), 10)]; if (a) attTap(a); }
+  });
+  function setFormAtts(list){
+    formAtts.forEach(function(a){ if (a.thumbUrl) URL.revokeObjectURL(a.thumbUrl); });
+    formAtts = (list || []).map(function(a){ return { id: a.id, name: a.name, type: a.type, size: a.size, chunks: a.chunks }; });
+    formAttsOriginal = formAtts.map(function(a){ return { id: a.id, name: a.name, type: a.type, size: a.size, chunks: a.chunks }; });
+    attBusyEl.hidden = true;
+    renderFormAtts();
+  }
+  function attPrepareUpload(a){
+    return attBlobToB64(a.blob).then(function(b64){ a.b64 = b64; return attUploadFile(a); });
+  }
+  // Daftar lampiran yang dibuka dari ikon klip pada kartu pengingat.
+  var attOverlayEl = document.getElementById('attOverlay');
+  var attOverlayListEl = document.getElementById('attOverlayList');
+  var attOverlayItems = [];
+  window.__openAtt = function(reminderId){
+    var r = state.reminders.find(function(x){ return x.id === reminderId; });
+    if (!r || !r.attachments || !r.attachments.length) return;
+    attOverlayItems = r.attachments;
+    document.getElementById('attOverlayTitle').textContent = 'Lampiran · ' + (r.title || '');
+    attRenderItems(attOverlayListEl, attOverlayItems, false);
+    attOverlayEl.hidden = false;
+  };
+  function closeAttOverlay(){ attOverlayEl.hidden = true; }
+  document.getElementById('attOverlayClose').addEventListener('click', closeAttOverlay);
+  document.getElementById('attOverlayDone').addEventListener('click', closeAttOverlay);
+  attOverlayEl.addEventListener('click', function(e){ if (e.target === attOverlayEl) closeAttOverlay(); });
+  attOverlayListEl.addEventListener('click', function(e){
+    var op = e.target.closest('[data-att-open]');
+    if (op){ var a = attOverlayItems[parseInt(op.getAttribute('data-att-open'), 10)]; if (a) attTap(a); }
+  });
+
+  // Estimasi selesai di form pengingat (field yang sama dengan chip di Dashboard).
+  var fEstimateEl = document.getElementById('fEstimate');
+  var fEstQuickEl = document.getElementById('fEstQuick');
+  function syncFormEstimate(){
+    var cur = Number(fEstimateEl.value);
+    Array.prototype.forEach.call(fEstQuickEl.querySelectorAll('button'), function(b){
+      var on = Number(b.getAttribute('data-min')) === cur;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  function setFormEstimate(min){ fEstimateEl.value = min ? String(min) : ''; syncFormEstimate(); }
+  fEstQuickEl.addEventListener('click', function(e){
+    var q = e.target.closest('button[data-min]');
+    if (!q) return;
+    // Ketuk pilihan yang sedang aktif = kosongkan estimasi.
+    setFormEstimate(q.classList.contains('on') ? 0 : Number(q.getAttribute('data-min')));
+  });
+  fEstimateEl.addEventListener('input', syncFormEstimate);
+
   function openAddForm(prefillDate){
     document.getElementById('formTitle').textContent = 'Pengingat baru';
     document.getElementById('reminderId').value = '';
@@ -9606,6 +10084,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     workdaySatTimeRow.style.display = 'none';
     fTimeWorkdaySat.value = '09:00';
     document.getElementById('fLink').value = '';
+    setFormAtts([]);
+    setFormEstimate(0);
     document.getElementById('fSubtitle').value = '';
     fFlexible.checked = false;
     fPriority.checked = false;
@@ -9697,6 +10177,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     var effectiveNotes = formOccurrenceDate ? getNotesForOccurrence(r.id, formOccurrenceDate) : (r.notes || '');
     document.getElementById('fNotes').value = effectiveNotes;
     document.getElementById('fLink').value = r.link || '';
+    setFormAtts(r.attachments || []);
+    setFormEstimate(estimateOf(r));
     (function(){
       var lastLine = (effectiveNotes || '').split('\n').slice(-1)[0] || '';
       var info = lineMarkerInfo(lastLine);
@@ -9783,6 +10265,14 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     } else {
       var useDayType = fRepeat.value !== 'hourly' && fByDayType.checked;
       var baseTime = document.getElementById('fTime').value;
+      // Input angka yang tidak terbaca browser punya value kosong tapi badInput.
+      var estRaw = fEstimateEl.value.trim();
+      var estMin = estRaw ? Math.round(Number(estRaw)) : 0;
+      if (fEstimateEl.validity.badInput || (estRaw && !(estMin >= 1 && estMin <= 1440))){
+        fEstimateEl.focus();
+        showToast('Isi estimasi 1–1440 menit');
+        return;
+      }
       data = {
         id: id || uid(),
         title: document.getElementById('fTitle').value.trim(),
@@ -9807,7 +10297,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         timeHoliday: useDayType ? (fTimeHoliday.value || baseTime) : null,
         workdaySatSpecial: (fRepeat.value==='workdaySat' && fWorkdaySatSpecial.checked),
         timeWorkdaySat: (fRepeat.value==='workdaySat' && fWorkdaySatSpecial.checked) ? (fTimeWorkdaySat.value || baseTime) : null,
-        estimateMin: (existing && typeof existing.estimateMin === 'number') ? existing.estimateMin : null,
+        estimateMin: estMin || null,
         notes: fNotesValue,
         link: document.getElementById('fLink').value.trim()
       };
@@ -9828,8 +10318,26 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       data.notes = existing ? (existing.notes || '') : '';
     }
 
+    // Lampiran: metadata ikut disimpan di dokumen pengingat; isi file baru
+    // diunggah dulu (per potongan) sebelum dokumen pengingat disimpan.
+    data.attachments = formAtts.map(function(a){
+      return { id: a.id, name: a.name, type: a.type, size: a.size, chunks: a.chunks };
+    });
+    var newAtts = formAtts.filter(function(a){ return a.isNew; });
+    var removedAtts = formAttsOriginal.filter(function(o){
+      return !formAtts.some(function(a){ return a.id === o.id; });
+    });
     closeForm();
-    saveReminderToCloud(data).then(function(){
+    var uploadP = Promise.resolve();
+    if (newAtts.length){
+      showToast('Mengunggah lampiran…', 6000);
+      uploadP = Promise.all(newAtts.map(attPrepareUpload));
+    }
+    uploadP.then(function(){
+      return saveReminderToCloud(data);
+    }).then(function(){
+      if (removedAtts.length) cleanupOrphanFiles(removedAtts, data.id);
+      newAtts.forEach(function(a){ a.b64 = null; });
       if (occDateForNotes) return setNotesForOccurrence(data.id, occDateForNotes, fNotesValue);
     }).then(function(){
       showToast(id ? 'Pengingat diperbarui' : 'Pengingat disimpan');
@@ -9944,7 +10452,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         '</button>' +
         '<div class="body">' +
           '<div class="title dp-title" role="button" tabindex="0" aria-expanded="'+(expanded?'true':'false')+'">' +
-            titleWithLinkHTML(it.reminder.title, it.reminder.link) +
+            titleWithLinkHTML(it.reminder.title, it.reminder.link, it.reminder) +
             '<svg class="dp-chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</div>' +
           '<div class="dp-detail"'+(expanded?'':' hidden')+'>' +
@@ -10063,7 +10571,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var meta = r.flexible ? 'Fleksibel' : (r.time || '--:--') + ' · ' + repeatLabel(r);
       return '<div class="up-item">' +
         '<div class="body">' +
-          '<div class="title">'+titleWithLinkHTML(r.title, r.link)+'</div>' +
+          '<div class="title">'+titleWithLinkHTML(r.title, r.link, r)+'</div>' +
           '<div class="meta">'+meta+'</div>' +
         '</div>' +
         '<div class="acts">' +
@@ -10452,36 +10960,36 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     harian: {
       file: 'template-jadwal-harian.csv',
       rows: [
-        ['Bangun & rapikan tempat tidur','Pribadi','2026-12-01','05:00','Harian',''],
-        ['Olahraga pagi','Kesehatan','2026-12-01','05:30','Harian','Jogging 30 menit'],
-        ['Sarapan & minum vitamin','Kesehatan','2026-12-01','07:00','Harian',''],
-        ['Cek email & rencana kerja','Kerja','2026-12-01','08:30','Hari kerja (Sen–Jum)','Prioritaskan 3 tugas utama'],
-        ['Minum air putih','Kesehatan','2026-12-01','10:00','Tiap 3 jam',''],
-        ['Review hari ini','Pribadi','2026-12-01','21:00','Harian','Tulis 3 hal yang disyukuri']
+        ['Bangun & rapikan tempat tidur','Pribadi','2026-12-01','05:00','Harian','15 mnt',''],
+        ['Olahraga pagi','Kesehatan','2026-12-01','05:30','Harian','30 mnt','Jogging 30 menit'],
+        ['Sarapan & minum vitamin','Kesehatan','2026-12-01','07:00','Harian','20 mnt',''],
+        ['Cek email & rencana kerja','Kerja','2026-12-01','08:30','Hari kerja (Sen–Jum)','30 mnt','Prioritaskan 3 tugas utama'],
+        ['Minum air putih','Kesehatan','2026-12-01','10:00','Tiap 3 jam','5 mnt',''],
+        ['Review hari ini','Pribadi','2026-12-01','21:00','Harian','15 mnt','Tulis 3 hal yang disyukuri']
       ]
     },
     mingguan: {
       file: 'template-jadwal-mingguan.csv',
       rows: [
-        ['Rapat tim mingguan','Kerja','2026-12-07','09:00','Mingguan','Siapkan agenda'],
-        ['Belanja kebutuhan rumah','Pribadi','2026-12-06','10:00','Mingguan',''],
-        ['Bersih-bersih rumah','Pribadi','2026-12-06','08:00','Akhir pekan (Sab–Min)',''],
-        ['Laporan mingguan','Kerja','2026-12-05','16:00','Hari Kerja (Sen–Sab)','']
+        ['Rapat tim mingguan','Kerja','2026-12-07','09:00','Mingguan','1 jam','Siapkan agenda'],
+        ['Belanja kebutuhan rumah','Pribadi','2026-12-06','10:00','Mingguan','1,5 jam',''],
+        ['Bersih-bersih rumah','Pribadi','2026-12-06','08:00','Akhir pekan (Sab–Min)','2 jam',''],
+        ['Laporan mingguan','Kerja','2026-12-05','16:00','Hari Kerja (Sen–Sab)','45 mnt','']
       ]
     },
     campuran: {
       file: 'template-campuran.csv',
       rows: [
-        ['Janji sekali jalan','Pribadi','2026-12-10','14:00','Tidak berulang','Contoh pengingat sekali saja'],
-        ['Cek tekanan darah','Kesehatan','2026-12-01','07:00','2 minggu sekali',''],
-        ['Bayar tagihan listrik','Keuangan','2026-12-05','09:00','Bulanan','Cek token / tagihan'],
-        ['Rekap keuangan akhir bulan','Keuangan','2026-12-31','17:00','Akhir bulan',''],
-        ['Evaluasi 3 bulanan','Kerja','2027-01-05','10:00','Triwulanan',''],
-        ['Perpanjang STNK','Lainnya','2027-03-15','08:00','Tahunan','']
+        ['Janji sekali jalan','Pribadi','2026-12-10','14:00','Tidak berulang','1 jam','Contoh pengingat sekali saja'],
+        ['Cek tekanan darah','Kesehatan','2026-12-01','07:00','2 minggu sekali','10 mnt',''],
+        ['Bayar tagihan listrik','Keuangan','2026-12-05','09:00','Bulanan','10 mnt','Cek token / tagihan'],
+        ['Rekap keuangan akhir bulan','Keuangan','2026-12-31','17:00','Akhir bulan','1 jam 30 mnt',''],
+        ['Evaluasi 3 bulanan','Kerja','2027-01-05','10:00','Triwulanan','2 jam',''],
+        ['Perpanjang STNK','Lainnya','2027-03-15','08:00','Tahunan','','']
       ]
     }
   };
-  var IMPORT_HEADERS = ['Judul','Kategori','Tanggal Mulai','Waktu','Ulangi','Catatan'];
+  var IMPORT_HEADERS = ['Judul','Kategori','Tanggal Mulai','Waktu','Ulangi','Estimasi','Catatan'];
 
   function impNorm(s){ return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); }
 
@@ -10589,6 +11097,22 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     return importPad(h) + ':' + importPad(mi);
   }
 
+  // Estimasi selesai -> menit (1–1440). Menerima "30", "30 mnt", "1 jam",
+  // "1,5 jam", "1 jam 30 mnt", atau "1:30". Kosong = 0; tidak dikenali = null.
+  function importParseEstimate(raw){
+    var t = String(raw || '').trim().toLowerCase();
+    if (!t || t === '-') return 0;
+    var m, min;
+    if (/^\d+$/.test(t)) min = +t;
+    else if ((m = t.match(/^(\d{1,2}):([0-5]\d)(?::00)?$/))) min = +m[1] * 60 + +m[2];
+    else {
+      m = t.match(/^(?:(\d+(?:[.,]\d+)?)\s*(?:jam|j|hours?|h)\.?)?\s*(?:(\d+)\s*(?:menit|mnt|min|m)\.?)?$/);
+      if (!m || (!m[1] && !m[2])) return null;
+      min = Math.round((m[1] ? parseFloat(m[1].replace(',', '.')) * 60 : 0) + (m[2] ? +m[2] : 0));
+    }
+    return (min >= 1 && min <= 1440) ? min : null;
+  }
+
   // Parser CSV: tanda kutip ganda, baris baru di dalam sel, pemisah otomatis (, ; atau tab).
   function importParseCSV(text){
     text = String(text || '').replace(/^\uFEFF/, '');
@@ -10653,6 +11177,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     date:     ['tanggalmulai','tanggal','mulai','tgl','tglmulai','date','startdate'],
     time:     ['waktu','jam','time'],
     repeat:   ['ulangi','pengulangan','ulang','repeat'],
+    estimate: ['estimasi','estimasiselesai','estimasiwaktu','estimasimenit','durasi','estimate','duration'],
     notes:    ['catatan','notes','note','keterangan'],
     subtitle: ['subjudul','subtitle'],
     link:     ['link','tautan','url'],
@@ -10715,6 +11240,9 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       if (!time) errs.push(timeRaw ? 'Waktu tidak valid: ' + timeRaw : 'Waktu kosong');
       var rep = importParseRepeat(repRaw);
       if (!rep) errs.push('Ulangi tidak dikenali: ' + repRaw);
+      var estRaw = cellOf(r, 'estimate');
+      var estMin = importParseEstimate(estRaw);
+      if (estMin === null) errs.push('Estimasi tidak valid: ' + estRaw);
       var untilRaw = cellOf(r, 'until'), until = null;
       if (untilRaw){
         until = importParseDate(untilRaw);
@@ -10770,7 +11298,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
         timeHoliday: null,
         workdaySatSpecial: false,
         timeWorkdaySat: null,
-        estimateMin: null,
+        estimateMin: estMin || null,
         notes: cellOf(r, 'notes'),
         link: cellOf(r, 'link').slice(0, 500)
       };
@@ -10814,7 +11342,7 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
       var cls = it.status === 'error' ? ' class="ri-err"' : (it.status === 'dup' && skipDup ? ' class="ri-dup"' : '');
       var meta;
       if (it.status === 'error') meta = 'Baris ' + it.line + ': ' + it.msg;
-      else meta = it.date + ' · ' + it.time + ' · ' + importRepeatText(it) + (it.status === 'dup' ? ' · ' + it.msg : '');
+      else meta = it.date + ' · ' + it.time + ' · ' + importRepeatText(it) + (it.data.estimateMin ? ' · estimasi ' + estimateLabel(it.data.estimateMin) : '') + (it.status === 'dup' ? ' · ' + it.msg : '');
       return '<li' + cls + '><b>' + escapeHTML(it.title || '(tanpa judul)') + '</b><span class="ri-meta">' + escapeHTML(meta) + '</span></li>';
     }).join('');
     importConfirmBtn.textContent = 'Impor ' + willImport + ' pengingat';
@@ -10924,8 +11452,49 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     importHistoryListEl.innerHTML = groups.map(function(g){
       var when = g.at ? new Date(g.at).toLocaleString('id-ID', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' }) : 'waktu tidak diketahui';
       return '<li><div class="ih-text"><b>' + escapeHTML(g.file) + '</b><span>' + escapeHTML(when) + ' · ' + g.ids.length + ' pengingat</span></div>' +
-        '<button type="button" class="icon-btn import-hist-del" data-id="' + escapeHTML(g.id) + '" aria-label="Hapus riwayat impor beserta pengingatnya" title="Hapus riwayat impor">🗑</button></li>';
+        '<div class="ih-actions">' +
+        '<button type="button" class="icon-btn import-hist-dl" data-id="' + escapeHTML(g.id) + '" aria-label="Unduh file riwayat impor" title="Unduh file (CSV)">' +
+          '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        '<button type="button" class="icon-btn import-hist-del" data-id="' + escapeHTML(g.id) + '" aria-label="Hapus riwayat impor beserta pengingatnya" title="Hapus riwayat impor">🗑</button></div></li>';
     }).join('');
+  }
+  // File asli tidak disimpan, jadi CSV disusun ulang dari pengingat milik
+  // impor tersebut (kondisi saat ini). Formatnya sama dengan template impor.
+  function importRepeatCell(r){
+    if (r.repeat === 'hourly') return 'Tiap ' + Math.max(1, parseInt(r.hourlyInterval || 1, 10)) + ' jam';
+    var key = r.repeat || 'none';
+    var label = repeatLabel({ repeat: key, everyNDaysInterval: r.everyNDaysInterval, everyNWeeksInterval: r.everyNWeeksInterval });
+    var back = importParseRepeat(label);
+    return (back && back.repeat === key) ? label : key; // kunci internal juga dikenali saat impor
+  }
+  function importHistoryCSV(items){
+    var catName = {};
+    CATS.forEach(function(c){ catName[c.id] = c.label; });
+    var extra = [['Sub Judul','subtitle'], ['Link','link'], ['Berakhir','until']].filter(function(x){
+      return items.some(function(r){ return r[x[1]]; });
+    });
+    var lines = [IMPORT_HEADERS.concat(extra.map(function(x){ return x[0]; }))];
+    items.forEach(function(r){
+      var min = estimateOf(r);
+      lines.push([r.title, catName[r.category] || '', r.date || '', r.time || '', importRepeatCell(r),
+        min ? estimateLabel(min) : '', r.notes || ''].concat(extra.map(function(x){ return r[x[1]] || ''; })));
+    });
+    return 'sep=;\r\n' + lines.map(function(row){
+      return row.map(function(c){ return importCSVEscape(c, ';'); }).join(';');
+    }).join('\r\n') + '\r\n';
+  }
+  function downloadImportBatch(batchId){
+    var items = state.reminders.filter(function(r){ return r && r.importId === batchId; });
+    if (!items.length) return;
+    items.sort(function(a,b){ return (a.createdAt || 0) - (b.createdAt || 0); });
+    var name = String(items[0].importFile || 'riwayat-impor').replace(/\.(csv|tsv|txt)$/i, '') + '.csv';
+    var blob = new Blob(['\uFEFF' + importHistoryCSV(items)], { type:'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    showToast('File diunduh: ' + name);
   }
   function deleteImportBatch(batchId){
     if (!currentUser) return;
@@ -10947,6 +11516,8 @@ setPersistence(auth, browserLocalPersistence).catch(function(){});
     });
   }
   importHistoryListEl.addEventListener('click', function(e){
+    var dl = e.target.closest ? e.target.closest('.import-hist-dl') : null;
+    if (dl){ downloadImportBatch(dl.getAttribute('data-id')); return; }
     var btn = e.target.closest ? e.target.closest('.import-hist-del') : null;
     if (btn) deleteImportBatch(btn.getAttribute('data-id'));
   });
